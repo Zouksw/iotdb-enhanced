@@ -1,482 +1,394 @@
-# IoTDB Enhanced Platform - Deployment Guide
+# IoTDB Enhanced Platform - 部署指南
 
-## Table of Contents
+## 目录
 
-1. [Prerequisites](#prerequisites)
-2. [Quick Start (Docker)](#quick-start-docker)
-3. [Manual Deployment](#manual-deployment)
-4. [Production Configuration](#production-configuration)
-5. [Monitoring & Maintenance](#monitoring--maintenance)
-6. [Troubleshooting](#troubleshooting)
+1. [部署要求](#部署要求)
+2. [快速部署 (Docker)](#快速部署-docker)
+3. [手动部署](#手动部署)
+4. [生产环境配置](#生产环境配置)
+5. [服务管理](#服务管理)
+6. [监控与维护](#监控与维护)
+7. [故障排查](#故障排查)
 
 ---
 
-## Prerequisites
+## 部署要求
 
-### System Requirements
+### 系统要求
 
-- **Operating System**: Linux (Ubuntu 20.04+ recommended) or macOS
-- **RAM**: 4GB minimum, 8GB recommended
-- **Disk Space**: 20GB minimum
-- **CPU**: 2 cores minimum, 4 cores recommended
+| 项目 | 最低配置 | 推荐配置 |
+|------|---------|---------|
+| 操作系统 | Linux (Ubuntu 20.04+) | Ubuntu 22.04 LTS |
+| 内存 | 4GB | 8GB+ |
+| 磁盘空间 | 20GB | 50GB+ (SSD) |
+| CPU | 2 核 | 4 核+ |
 
-### Software Requirements
+### 软件要求
 
 - **Docker**: 20.10+
 - **Docker Compose**: 2.0+
-- **Node.js**: 18+ (for manual deployment)
+- **Node.js**: 18+ (手动部署)
 - **PostgreSQL**: 15+
 - **Redis**: 7+
 - **Apache IoTDB**: 2.0.5+
 
 ---
 
-## Quick Start (Docker)
+## 快速部署 (Docker)
 
-### 1. Clone the Repository
+### 1. 克隆项目
 
 ```bash
-git clone https://github.com/your-org/iotdb-enhanced.git
+git clone https://github.com/Zouksw/iotdb-enhanced.git
 cd iotdb-enhanced
 ```
 
-### 2. Configure Environment Variables
+### 2. 配置环境变量
 
 ```bash
-# Copy environment example files
+# 复制环境变量模板
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 
-# Generate secure secrets
-node -e "console.log('JWT_SECRET=' + require('crypto').randomBytes(32).toString('base64'))"
-node -e "console.log('SESSION_SECRET=' + require('crypto').randomBytes(32).toString('base64'))"
+# 生成安全密钥
+JWT_SECRET=$(openssl rand -base64 32)
+SESSION_SECRET=$(openssl rand -base64 32)
 
-# Update backend/.env with the generated secrets
-# Update database credentials, Redis password, etc.
+# 更新 backend/.env
+cat >> backend/.env << EOF
+JWT_SECRET=$JWT_SECRET
+SESSION_SECRET=$SESSION_SECRET
+EOF
 ```
 
-### 3. Start All Services
+### 3. 启动服务
 
 ```bash
-# Start PostgreSQL, Redis, IoTDB, Backend, and Frontend
+# 启动所有服务
 docker-compose up -d
 
-# View logs
+# 查看日志
 docker-compose logs -f
 
-# Check service status
+# 检查状态
 docker-compose ps
 ```
 
-### 4. Initialize Database
+### 4. 初始化数据库
 
 ```bash
-# Run database migrations
+# 运行数据库迁移
 cd backend
-docker-compose exec backend npx prisma migrate deploy
+npx prisma migrate deploy
 
-# (Optional) Seed with sample data
-docker-compose exec backend npx prisma db seed
-```
-
-### 5. Access the Application
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/api-docs
-- **IoTDB REST**: http://localhost:18080
-
-### 6. Stop Services
-
-```bash
-docker-compose down
-
-# Stop and remove volumes (WARNING: deletes data)
-docker-compose down -v
+# (可选) 创建初始管理员用户
+./scripts/create-admin.sh
 ```
 
 ---
 
-## Manual Deployment
+## 手动部署
 
-### Backend Setup
+### 1. 安装 Apache IoTDB + AI Node
 
-#### 1. Install Dependencies
+```bash
+# 下载 IoTDB 2.0.5 with AI Node
+wget https://downloads.apache.org/iotdb/2.0.5/apache-iotdb-2.0.5-all-bin.zip
+unzip apache-iotdb-2.0.5-all-bin.zip
+sudo mv apache-iotdb-2.0.5-all-bin /opt/iotdb-ainode
+
+# 启动 IoTDB
+cd /opt/iotdb-ainode
+./sbin/start-standalone.sh
+
+# 验证安装
+curl http://localhost:18080/rest/v1/version
+```
+
+### 2. 安装 PostgreSQL
+
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# 创建数据库
+sudo -u postgres psql
+CREATE DATABASE iotdb_enhanced;
+CREATE USER iotdb_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE iotdb_enhanced TO iotdb_user;
+\q
+```
+
+### 3. 安装 Redis
+
+```bash
+sudo apt install redis-server
+
+# 配置 Redis（设置密码）
+sudo nano /etc/redis/redis.conf
+# 添加: requirepass your_redis_password
+
+sudo systemctl restart redis
+```
+
+### 4. 部署后端
 
 ```bash
 cd backend
+
+# 安装依赖
 npm install
-```
 
-#### 2. Configure Environment
-
-```bash
+# 配置环境变量
 cp .env.example .env
-# Edit .env with your configuration
-```
+# 编辑 .env 配置数据库连接等
 
-#### 3. Setup Database
-
-```bash
-# Install Prisma CLI globally
-npm install -g prisma
-
-# Generate Prisma Client
-npx prisma generate
-
-# Run migrations
+# 运行迁移
 npx prisma migrate deploy
 
-# (Optional) Seed database
-npx prisma db seed
-```
-
-#### 4. Build and Start
-
-```bash
-# Development
-npm run dev
-
-# Production
+# 构建
 npm run build
-npm start
 
-# With PM2 (recommended for production)
+# 使用 PM2 启动
 pm2 start dist/server.js --name iotdb-backend
 ```
 
-### Frontend Setup
-
-#### 1. Install Dependencies
+### 5. 部署前端
 
 ```bash
 cd frontend
+
+# 安装依赖
 npm install
-```
 
-#### 2. Configure Environment
-
-```bash
+# 配置环境变量
 cp .env.example .env.local
-# Edit .env.local with your configuration
-```
+# 编辑 .env.local 配置 API 地址等
 
-#### 3. Build and Start
-
-```bash
-# Development
-npm run dev
-
-# Production
+# 构建
 npm run build
-npm start
 
-# With PM2
+# 使用 PM2 启动
 pm2 start npm --name iotdb-frontend -- start
 ```
 
-### IoTDB with AI Node Setup
-
-#### 1. Download and Extract IoTDB
+### 6. 配置 Nginx
 
 ```bash
-wget https://downloads.apache.org/iotdb/2.0.5/apache-iotdb-2.0.5-all-bin.zip
-unzip apache-iotdb-2.0.5-all-bin.zip
-cd apache-iotdb-2.0.5-all-bin
-```
-
-#### 2. Start IoTDB
-
-```bash
-# Start Config Node
-./bin/config-node-start.sh
-
-# Start Data Node
-./bin/data-node-start.sh
-
-# Start AI Node (if available)
-./bin/ainode-start.sh
+sudo cp nginx/iotdb-enhanced.conf /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/iotdb-enhanced.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
 ---
 
-## Production Configuration
+## 生产环境配置
 
-### Security Best Practices
+### 安全配置
 
-#### 1. Generate Secure Secrets
+详细安全配置请参考 [安全配置指南](SECURITY_SETUP.md)
 
-```bash
-# Generate JWT Secret
-JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
+关键安全项：
+- ✅ 更新所有默认密码
+- ✅ 配置 HTTPS (SSL/TLS)
+- ✅ 启用防火墙
+- ✅ 限制数据库访问
+- ✅ 配置 CORS 白名单
 
-# Generate Session Secret
-SESSION_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
-```
-
-#### 2. Configure Firewall
-
-```bash
-# Allow only necessary ports
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 22/tcp
-sudo ufw enable
-```
-
-#### 3. Set Up SSL/TLS
-
-**Using Let's Encrypt with Certbot:**
+### 环境变量清单
 
 ```bash
-# Install Certbot
-sudo apt-get install certbot python3-certbot-nginx
-
-# Obtain certificate
-sudo certbot --nginx -d yourdomain.com
-
-# Auto-renewal
-sudo certbot renew --dry-run
-```
-
-#### 4. Update Nginx Configuration
-
-Edit `nginx/nginx.conf` and uncomment the HTTPS server block:
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name yourdomain.com;
-
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-}
-```
-
-### Database Configuration
-
-#### PostgreSQL Tuning
-
-Edit `/etc/postgresql/15/main/postgresql.conf`:
-
-```ini
-# Memory settings
-shared_buffers = 256MB
-effective_cache_size = 1GB
-maintenance_work_mem = 64MB
-
-# Connection settings
-max_connections = 100
-
-# Query tuning
-random_page_cost = 1.1
-effective_io_concurrency = 200
-```
-
-### Performance Optimization
-
-#### 1. Enable Redis Caching
-
-Ensure `CACHE_ENABLED=true` in backend `.env`.
-
-#### 2. Configure Connection Pooling
-
-```env
-DATABASE_POOL_MIN=5
-DATABASE_POOL_MAX=20
-IOTDB_MAX_CONNECTIONS=50
-```
-
-#### 3. Enable Rate Limiting
-
-```env
-RATE_LIMIT_ENABLED=true
-RATE_LIMIT_API=100
-RATE_LIMIT_AI=20
+# backend/.env
+DATABASE_URL=postgresql://user:password@localhost:5432/iotdb_enhanced
+REDIS_URL=redis://:password@localhost:6379
+JWT_SECRET=your_jwt_secret_32_chars_min
+SESSION_SECRET=your_session_secret_32_chars_min
+IOTDB_REST_URL=http://localhost:18080
+CORS_ORIGIN=https://your-domain.com
 ```
 
 ---
 
-## Monitoring & Maintenance
+## 服务管理
 
-### Health Checks
-
-```bash
-# Backend health
-curl http://localhost:8000/health
-
-# Liveness check
-curl http://localhost:8000/health/live
-
-# Readiness check
-curl http://localhost:8000/health/ready
-```
-
-### Logs Management
+### 启动脚本
 
 ```bash
-# View application logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
+# 启动所有服务
+./start.sh
 
-# Check IoTDB logs
-tail -f /opt/iotdb-ainode/apache-iotdb-2.0.5-all-bin/logs/iotdb.log
+# 停止所有服务
+./stop.sh
+
+# 查看服务状态
+./status.sh
 ```
 
-### Database Backups
+### PM2 管理
 
 ```bash
-# Automated backup script
-cat > backup.sh << 'EOF'
-#!/bin/bash
-BACKUP_DIR="/backups/iotdb"
-DATE=$(date +%Y%m%d_%H%M%S)
+# 查看状态
+pm2 status
 
-# PostgreSQL backup
-docker-compose exec -T postgres pg_dump -U iotdb iotdb_enhanced > $BACKUP_DIR/postgres_$DATE.sql
+# 查看日志
+pm2 logs
 
-# IoTDB data backup
-tar -czf $BACKUP_DIR/iotdb_$DATE.tar.gz /opt/iotdb-ainode/apache-iotdb-2.0.5-all-bin/data
+# 重启服务
+pm2 restart all
 
-# Keep last 7 days
-find $BACKUP_DIR -name "postgres_*.sql" -mtime +7 -delete
-find $BACKUP_DIR -name "iotdb_*.tar.gz" -mtime +7 -delete
-EOF
-
-chmod +x backup.sh
-
-# Add to crontab for daily backups at 2 AM
-crontab -e
-# 0 2 * * * /path/to/backup.sh
+# 设置开机自启
+pm2 startup
+pm2 save
 ```
 
-### System Monitoring
+### 数据库管理
 
-Use Prometheus + Grafana for monitoring:
+```bash
+# 备份数据库
+./scripts/backup-db.sh
 
-```yaml
-# Add to docker-compose.yml
-prometheus:
-  image: prom/prometheus:latest
-  ports:
-    - "9090:9090"
-  volumes:
-    - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-  networks:
-    - iotdb-network
+# 恢复数据库
+./scripts/restore-db.sh
 
-grafana:
-  image: grafana/grafana:latest
-  ports:
-    - "3001:3000"
-  environment:
-    - GF_SECURITY_ADMIN_PASSWORD=admin
-  networks:
-    - iotdb-network
+# 健康检查
+./scripts/health-check.sh
 ```
 
 ---
 
-## Troubleshooting
+## 监控与维护
 
-### Common Issues
+### 日志位置
 
-#### 1. Database Connection Failed
+| 服务 | 日志位置 |
+|------|---------|
+| Backend | `~/.pm2/logs/` |
+| Frontend | `~/.pm2/logs/` |
+| IoTDB | `/opt/iotdb-ainode/logs/` |
+| Nginx | `/var/log/nginx/` |
+| PostgreSQL | `/var/log/postgresql/` |
 
-```bash
-# Check PostgreSQL status
-docker-compose ps postgres
+### 性能监控
 
-# View logs
-docker-compose logs postgres
-
-# Restart database
-docker-compose restart postgres
-```
-
-#### 2. AI Node Not Responding
+推荐使用 Prometheus + Grafana：
 
 ```bash
-# Check AI Node process
-ps aux | grep ainode
-
-# Restart AI Node
-cd /opt/iotdb-ainode/apache-iotdb-2.0.5-all-bin
-./bin/ainode-start.sh
-
-# Check port 10810
-netstat -tulpn | grep 10810
+./scripts/setup-monitoring.sh
 ```
 
-#### 3. High Memory Usage
+### 定期维护
 
-```bash
-# Check memory usage
-docker stats
-
-# Restart services
-docker-compose restart backend frontend
-```
-
-#### 4. CORS Errors
-
-Update `CORS_ORIGIN` in backend `.env`:
-
-```env
-CORS_ORIGIN=https://yourdomain.com,https://www.yourdomain.com
-```
-
-### Getting Help
-
-- **Documentation**: [docs/](../docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/iotdb-enhanced/issues)
-- **Community**: [Discord Server](https://discord.gg/iotdb-enhanced)
+- **每日**: 检查服务状态 (`./status.sh`)
+- **每周**: 备份数据库 (`./scripts/backup-db.sh`)
+- **每月**: 清理日志文件，检查磁盘空间
 
 ---
 
-## Scaling Considerations
+## 故障排查
 
-### Horizontal Scaling
+### 常见问题
 
-For multiple backend instances:
+#### 1. IoTDB 无法启动
 
-1. Use a load balancer (Nginx, HAProxy)
-2. Configure Redis for session sharing
-3. Use external PostgreSQL (RDS, Cloud SQL)
-4. Implement distributed tracing
+```bash
+# 检查端口占用
+netstat -tlnp | grep 6667
 
-### IoTDB Clustering
+# 检查日志
+tail -f /opt/iotdb-ainode/logs/iotdb.log
 
-See [IoTDB Cluster Configuration](https://iotdb.apache.org/UserGuide/Master/Cluster/Cluster-Config.html) for setting up a distributed IoTDB deployment.
+# 重启 IoTDB
+cd /opt/iotdb-ainode
+./sbin/stop-standalone.sh
+./sbin/start-standalone.sh
+```
+
+#### 2. 后端 API 无响应
+
+```bash
+# 检查 PM2 状态
+pm2 status
+
+# 查看错误日志
+pm2 logs iotdb-backend --err
+
+# 重启后端
+pm2 restart iotdb-backend
+```
+
+#### 3. 数据库连接失败
+
+```bash
+# 检查 PostgreSQL 状态
+sudo systemctl status postgresql
+
+# 测试连接
+psql -U iotdb_user -d iotdb_enhanced
+
+# 检查环境变量
+cat backend/.env | grep DATABASE_URL
+```
+
+#### 4. 前端页面无法访问
+
+```bash
+# 检查 Nginx 状态
+sudo systemctl status nginx
+
+# 检查配置
+sudo nginx -t
+
+# 查看 Nginx 日志
+sudo tail -f /var/log/nginx/error.log
+```
+
+### 获取帮助
+
+- GitHub Issues: https://github.com/Zouksw/iotdb-enhanced/issues
+- IoTDB 文档: https://iotdb.apache.org/docs/UserGuide/latest/
 
 ---
 
-## Production Checklist
+## 部署检查清单
 
-Before going to production:
+部署前请确保：
 
-- [ ] Change default JWT_SECRET and SESSION_SECRET
-- [ ] Set strong database passwords
-- [ ] Configure SSL/TLS certificates
-- [ ] Set up automated backups
-- [ ] Configure rate limiting
-- [ ] Enable monitoring and alerting
-- [ ] Review security headers
-- [ ] Set up error tracking (Sentry)
-- [ ] Configure log aggregation (ELK)
-- [ ] Load test the system
-- [ ] Document disaster recovery procedures
-- [ ] Set up CI/CD pipeline
-- [ ] Review audit logging
+- [ ] 已更新所有默认密码
+- [ ] 已配置 JWT_SECRET 和 SESSION_SECRET
+- [ ] 已设置防火墙规则
+- [ ] 已配置 HTTPS (生产环境)
+- [ ] 已配置数据库备份
+- [ ] 已测试所有服务启动
+- [ ] 已验证 AI 功能可用
+- [ ] 已配置日志轮转
+- [ ] 已设置监控告警
 
 ---
 
-## Support
+## 附录
 
-For production support and enterprise features, contact us at:
-- **Email**: support@iotdb-enhanced.com
-- **Website**: https://iotdb-enhanced.com
+### 端口清单
+
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| Frontend | 3000 | Next.js 开发服务器 |
+| Backend | 8000 | Express API |
+| PostgreSQL | 5432 | 数据库 |
+| Redis | 6379 | 缓存 |
+| IoTDB DataNode | 6667 | RPC 服务 |
+| IoTDB ConfigNode | 10710 | 配置服务 |
+| IoTDB REST | 18080 | REST API |
+| Nginx | 80/443 | 反向代理 |
+
+### 目录结构
+
+```
+iotdb-enhanced/
+├── backend/              # 后端服务
+├── frontend/             # 前端应用
+├── scripts/              # 管理脚本
+├── docs/                 # 文档
+├── nginx/                # Nginx 配置
+└── docker-compose.yml    # Docker 编排
+```
