@@ -1,0 +1,80 @@
+/**
+ * Health check routes
+ * Provides system health status and readiness checks
+ */
+
+import { Router, Request, Response } from 'express';
+import { prisma } from '../lib';
+import { asyncHandler } from '../middleware/errorHandler';
+
+const router = Router();
+
+/**
+ * GET /health
+ * Basic health check
+ */
+router.get('/', (req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
+/**
+ * GET /health/ready
+ * Readiness check - verifies all services are connected
+ */
+router.get('/ready', asyncHandler(async (req: Request, res: Response) => {
+  const checks = {
+    database: false,
+    redis: false,
+    iotdb: false,
+  };
+
+  let allHealthy = true;
+
+  // Check database connection
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.database = true;
+  } catch (error) {
+    allHealthy = false;
+  }
+
+  // Check Redis connection (if configured)
+  // Note: Redis check would go here when Redis is properly integrated
+
+  // Check IoTDB connection (if configured)
+  // Note: IoTDB check would go here
+
+  if (allHealthy) {
+    res.json({
+      status: 'ready',
+      checks,
+      timestamp: new Date().toISOString(),
+    });
+  } else {
+    res.status(503).json({
+      status: 'not ready',
+      checks,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}));
+
+/**
+ * GET /health/live
+ * Liveness check - verifies the process is running
+ */
+router.get('/live', (req: Request, res: Response) => {
+  res.json({
+    status: 'alive',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+  });
+});
+
+export default router;

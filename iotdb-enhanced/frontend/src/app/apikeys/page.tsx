@@ -1,0 +1,443 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import {
+  Table,
+  Button,
+  Space,
+  Typography,
+  Tag,
+  message,
+  Modal,
+  Input,
+  Card,
+  Popconfirm,
+  Alert,
+  Row,
+  Col,
+} from "antd";
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  KeyOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+} from "@ant-design/icons";
+import dayjs from "dayjs";
+
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatCard } from "@/components/ui/StatCard";
+import { DataTable } from "@/components/tables/DataTable";
+
+const { Text } = Typography;
+
+interface ApiKey {
+  id: string;
+  name: string;
+  lastCharacters: number;
+  isActive: boolean;
+  usageCount: number;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+interface CreateResponse {
+  id: string;
+  apiKey: string;
+  name: string;
+  lastCharacters: number;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
+
+const getAuthToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("token");
+  }
+  return null;
+};
+
+export default function ApiKeyList() {
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [expiryDays, setExpiryDays] = useState<number | null>(null);
+  const [createdKey, setCreatedKey] = useState<CreateResponse | null>(null);
+
+  const fetchApiKeys = async () => {
+    setLoading(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE}/api/api-keys`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch API keys");
+      }
+
+      const data = await response.json();
+      setApiKeys(data.apiKeys || []);
+    } catch (error) {
+      message.error("Failed to load API keys");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApiKeys();
+  }, []);
+
+  const handleCreateKey = async () => {
+    if (!newKeyName.trim()) {
+      message.error("Please enter a name for the API key");
+      return;
+    }
+
+    try {
+      const token = getAuthToken();
+      const body: any = { name: newKeyName };
+
+      if (expiryDays && expiryDays > 0) {
+        body.expiresIn = expiryDays * 24 * 60 * 60;
+      }
+
+      const response = await fetch(`${API_BASE}/api/api-keys`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create API key");
+      }
+
+      const data: CreateResponse = await response.json();
+      setCreatedKey(data);
+      setCreateModalVisible(false);
+      setNewKeyName("");
+      setExpiryDays(null);
+      message.success("API key created successfully");
+      fetchApiKeys();
+    } catch (error) {
+      message.error("Failed to create API key");
+    }
+  };
+
+  const handleDeleteKey = async (id: string) => {
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE}/api/api-keys/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete API key");
+      }
+
+      message.success("API key deleted");
+      fetchApiKeys();
+    } catch (error) {
+      message.error("Failed to delete API key");
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    message.success("Copied to clipboard");
+  };
+
+  // Calculate statistics
+  const totalKeys = apiKeys.length;
+  const activeKeys = apiKeys.filter((k) => k.isActive).length;
+  const totalUsage = apiKeys.reduce((sum, k) => sum + k.usageCount, 0);
+
+  // Define table columns
+  const columns = [
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      width: 200,
+      render: (name: string, record: ApiKey) => (
+        <Space direction="vertical" size={0}>
+          <Text strong>{name}</Text>
+          <Text type="secondary" style={{ fontSize: "12px" }}>
+            {record.id.slice(0, 8)}...
+          </Text>
+        </Space>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 100,
+      render: (isActive: boolean) => (
+        <Tag
+          icon={isActive ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
+          color={isActive ? "green" : "red"}
+          style={{ margin: 0 }}
+        >
+          {isActive ? "Active" : "Inactive"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Last Characters",
+      dataIndex: "lastCharacters",
+      key: "lastCharacters",
+      width: 140,
+      render: (lastChars: number) => (
+        <Text code style={{ fontSize: 12 }}>
+          ...{lastChars.toString(16).toUpperCase().padStart(8, "0")}
+        </Text>
+      ),
+    },
+    {
+      title: "Usage",
+      dataIndex: "usageCount",
+      key: "usageCount",
+      width: 140,
+      render: (count: number, record: ApiKey) => (
+        <Space direction="vertical" size={0}>
+          <Text>{count} requests</Text>
+          {record.lastUsedAt && (
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              Last: {dayjs(record.lastUsedAt).fromNow()}
+            </Text>
+          )}
+        </Space>
+      ),
+    },
+    {
+      title: "Expires",
+      dataIndex: "expiresAt",
+      key: "expiresAt",
+      width: 140,
+      render: (date: string | null) => {
+        if (!date) return <Text type="secondary">Never</Text>;
+        const isExpired = dayjs(date).isBefore(dayjs());
+        return (
+          <Text type={isExpired ? "danger" : "secondary"}>
+            {dayjs(date).format("YYYY-MM-DD")}
+          </Text>
+        );
+      },
+    },
+    {
+      title: "Created",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 120,
+      render: (date: string) => (
+        <Text type="secondary">{dayjs(date).format("YYYY-MM-DD")}</Text>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 120,
+      fixed: "right" as const,
+      render: (_: any, record: ApiKey) => (
+        <Space>
+          <Popconfirm
+            title="Delete API key"
+            description="Are you sure you want to delete this API key? This action cannot be undone."
+            onConfirm={() => handleDeleteKey(record.id)}
+            okText="Delete"
+            cancelText="Cancel"
+            okButtonProps={{ danger: true }}
+          >
+            <Button icon={<DeleteOutlined />} danger size="small">
+              Delete
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <PageContainer>
+      <Card>
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <PageHeader
+            title="API Keys"
+            description="Manage your API keys for programmatic access"
+            actions={
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setCreateModalVisible(true)}
+              >
+                Create API Key
+              </Button>
+            }
+          />
+
+          <Alert
+            message="API Keys"
+            description="API keys allow you to authenticate with the IoTDB Enhanced API programmatically. Keep them secure and never share them publicly."
+            type="info"
+            showIcon
+          />
+
+          {/* Statistics Cards */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col xs={24} sm={8}>
+              <StatCard
+                title="Total Keys"
+                value={totalKeys}
+                icon={<KeyOutlined />}
+                variant="primary"
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <StatCard
+                title="Active Keys"
+                value={activeKeys}
+                icon={<CheckCircleOutlined />}
+                variant="success"
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <StatCard
+                title="Total Usage"
+                value={totalUsage.toLocaleString()}
+                icon={<ClockCircleOutlined />}
+                variant="default"
+              />
+            </Col>
+          </Row>
+
+          <DataTable
+            columns={columns}
+            dataSource={apiKeys}
+            loading={loading}
+            rowKey="id"
+            enableZebraStriping={true}
+            stickyHeader={true}
+            pagination={{ pageSize: 10 }}
+          />
+        </Space>
+      </Card>
+
+      {/* Create API Key Modal */}
+      <Modal
+        title="Create New API Key"
+        open={createModalVisible}
+        onOk={handleCreateKey}
+        onCancel={() => {
+          setCreateModalVisible(false);
+          setNewKeyName("");
+          setExpiryDays(null);
+        }}
+        okText="Create"
+      >
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <div>
+            <Space>
+              <Text strong>Name</Text>
+              <Text type="secondary">
+                (Required)
+              </Text>
+            </Space>
+            <Input
+              placeholder="e.g., Production App Key"
+              value={newKeyName}
+              onChange={(e) => setNewKeyName(e.target.value)}
+              style={{ marginTop: 8 }}
+            />
+          </div>
+
+          <div>
+            <Text strong>Expiration</Text>
+            <Input
+              type="number"
+              placeholder="Enter number of days (optional)"
+              value={expiryDays ?? ""}
+              onChange={(e) => setExpiryDays(e.target.value ? parseInt(e.target.value) : null)}
+              style={{ marginTop: 8 }}
+              suffix="days"
+            />
+          </div>
+
+          <Alert
+            message="Important"
+            description="After creating the API key, you will only be able to see it once. Make sure to save it in a secure location."
+            type="warning"
+            showIcon
+          />
+        </Space>
+      </Modal>
+
+      {/* Created Key Display Modal */}
+      <Modal
+        title="API Key Created"
+        open={!!createdKey}
+        onOk={() => setCreatedKey(null)}
+        onCancel={() => setCreatedKey(null)}
+        okText="I've saved my key"
+        width={600}
+        footer={[
+          <Button key="close" type="primary" onClick={() => setCreatedKey(null)}>
+            I've saved my key
+          </Button>,
+        ]}
+      >
+        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+          <Alert
+            message="Save this API key now!"
+            description="You won't be able to see it again once you close this modal."
+            type="warning"
+            showIcon
+          />
+
+          <div>
+            <Text strong>Your API Key:</Text>
+            <Input.Password
+              value={createdKey?.apiKey}
+              readOnly
+              style={{ marginTop: 8, fontFamily: "monospace", fontSize: 13 }}
+              visibilityToggle
+            />
+          </div>
+
+          <div>
+            <Text type="secondary">
+              <strong>Name:</strong> {createdKey?.name}
+            </Text>
+            <br />
+            <Text type="secondary">
+              <strong>Created:</strong>{" "}
+              {createdKey?.createdAt && dayjs(createdKey.createdAt).format("YYYY-MM-DD HH:mm:ss")}
+            </Text>
+            {createdKey?.expiresAt && (
+              <>
+                <br />
+                <Text type="secondary">
+                  <strong>Expires:</strong> {dayjs(createdKey.expiresAt).format("YYYY-MM-DD HH:mm:ss")}
+                </Text>
+              </>
+            )}
+          </div>
+        </Space>
+      </Modal>
+    </PageContainer>
+  );
+}
