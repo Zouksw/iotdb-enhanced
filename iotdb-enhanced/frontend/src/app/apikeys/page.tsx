@@ -29,6 +29,9 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
+import GlassCard from "@/components/ui/GlassCard";
+import { authFetch } from "@/utils/auth";
+import { useIsMobile } from "@/lib/responsive-utils";
 
 const { Text } = Typography;
 
@@ -52,14 +55,7 @@ interface CreateResponse {
   createdAt: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
-
-const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
+const API_BASE = ""; // Use relative paths for Next.js rewrites
 
 export default function ApiKeyList() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -68,16 +64,12 @@ export default function ApiKeyList() {
   const [newKeyName, setNewKeyName] = useState("");
   const [expiryDays, setExpiryDays] = useState<number | null>(null);
   const [createdKey, setCreatedKey] = useState<CreateResponse | null>(null);
+  const isMobile = useIsMobile();
 
   const fetchApiKeys = async () => {
     setLoading(true);
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE}/api/api-keys`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await authFetch(`${API_BASE}/api/api-keys`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch API keys");
@@ -103,19 +95,14 @@ export default function ApiKeyList() {
     }
 
     try {
-      const token = getAuthToken();
       const body: any = { name: newKeyName };
 
       if (expiryDays && expiryDays > 0) {
         body.expiresIn = expiryDays * 24 * 60 * 60;
       }
 
-      const response = await fetch(`${API_BASE}/api/api-keys`, {
+      const response = await authFetch(`${API_BASE}/api/api-keys`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(body),
       });
 
@@ -137,12 +124,8 @@ export default function ApiKeyList() {
 
   const handleDeleteKey = async (id: string) => {
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE}/api/api-keys/${id}`, {
+      const response = await authFetch(`${API_BASE}/api/api-keys/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (!response.ok) {
@@ -173,6 +156,7 @@ export default function ApiKeyList() {
       dataIndex: "name",
       key: "name",
       width: 200,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (name: string, record: ApiKey) => (
         <Space direction="vertical" size={0}>
           <Text strong>{name}</Text>
@@ -187,6 +171,7 @@ export default function ApiKeyList() {
       dataIndex: "isActive",
       key: "isActive",
       width: 100,
+      responsive: ["md", "lg", "xl"],
       render: (isActive: boolean) => (
         <Tag
           icon={isActive ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
@@ -202,6 +187,7 @@ export default function ApiKeyList() {
       dataIndex: "lastCharacters",
       key: "lastCharacters",
       width: 140,
+      responsive: ["lg", "xl"],
       render: (lastChars: number) => (
         <Text code style={{ fontSize: 12 }}>
           ...{lastChars.toString(16).toUpperCase().padStart(8, "0")}
@@ -213,6 +199,7 @@ export default function ApiKeyList() {
       dataIndex: "usageCount",
       key: "usageCount",
       width: 140,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (count: number, record: ApiKey) => (
         <Space direction="vertical" size={0}>
           <Text>{count} requests</Text>
@@ -229,6 +216,7 @@ export default function ApiKeyList() {
       dataIndex: "expiresAt",
       key: "expiresAt",
       width: 140,
+      responsive: ["md", "lg", "xl"],
       render: (date: string | null) => {
         if (!date) return <Text type="secondary">Never</Text>;
         const isExpired = dayjs(date).isBefore(dayjs());
@@ -244,6 +232,7 @@ export default function ApiKeyList() {
       dataIndex: "createdAt",
       key: "createdAt",
       width: 120,
+      responsive: ["lg", "xl"],
       render: (date: string) => (
         <Text type="secondary">{dayjs(date).format("YYYY-MM-DD")}</Text>
       ),
@@ -251,10 +240,10 @@ export default function ApiKeyList() {
     {
       title: "Actions",
       key: "actions",
-      width: 120,
+      width: isMobile ? 80 : 120,
       fixed: "right" as const,
       render: (_: any, record: ApiKey) => (
-        <Space>
+        <Space size="small">
           <Popconfirm
             title="Delete API key"
             description="Are you sure you want to delete this API key? This action cannot be undone."
@@ -264,7 +253,7 @@ export default function ApiKeyList() {
             okButtonProps={{ danger: true }}
           >
             <Button icon={<DeleteOutlined />} danger size="small">
-              Delete
+              {!isMobile && "Delete"}
             </Button>
           </Popconfirm>
         </Space>
@@ -272,20 +261,26 @@ export default function ApiKeyList() {
     },
   ];
 
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "API Keys" },
+  ];
+
   return (
     <PageContainer>
-      <Card>
-        <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <GlassCard intensity="light">
+        <Space direction="vertical" size={isMobile ? "middle" : "large"} style={{ width: "100%" }}>
           <PageHeader
             title="API Keys"
             description="Manage your API keys for programmatic access"
+            breadcrumbs={breadcrumbItems}
             actions={
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => setCreateModalVisible(true)}
               >
-                Create API Key
+                {!isMobile && "Create API Key"}
               </Button>
             }
           />
@@ -298,8 +293,8 @@ export default function ApiKeyList() {
           />
 
           {/* Statistics Cards */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={8}>
+          <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+            <Col xs={12} sm={8}>
               <StatCard
                 title="Total Keys"
                 value={totalKeys}
@@ -307,7 +302,7 @@ export default function ApiKeyList() {
                 variant="primary"
               />
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={12} sm={8}>
               <StatCard
                 title="Active Keys"
                 value={activeKeys}
@@ -332,10 +327,15 @@ export default function ApiKeyList() {
             rowKey="id"
             enableZebraStriping={true}
             stickyHeader={true}
-            pagination={{ pageSize: 10 }}
+            scroll={{ x: isMobile ? "max-content" : undefined }}
+            pagination={{
+              pageSize: isMobile ? 10 : 20,
+              showSizeChanger: !isMobile,
+              simple: isMobile,
+            }}
           />
         </Space>
-      </Card>
+      </GlassCard>
 
       {/* Create API Key Modal */}
       <Modal

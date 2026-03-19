@@ -25,12 +25,17 @@ import {
   ClockCircleOutlined,
   LineChartOutlined,
   ExperimentOutlined,
+  WarningOutlined,
 } from "@ant-design/icons";
 
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentCard } from "@/components/layout/ContentCard";
 import GlassCard from "@/components/ui/GlassCard";
+import { useIsMobile } from "@/lib/responsive-utils";
+
+// Check if AI features are disabled
+const AI_DISABLED = process.env.NEXT_PUBLIC_AI_DISABLED === 'true';
 
 interface PredictionRequest {
   timeseries: string;
@@ -62,6 +67,8 @@ export default function AIPredictPage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PredictionResult | null>(null);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const models = [
     { id: "arima", name: "ARIMA", type: "Classic", description: "Auto-Regressive Integrated Moving Average" },
@@ -72,6 +79,7 @@ export default function AIPredictPage() {
   const handlePredict = async (values: PredictionRequest) => {
     setLoading(true);
     setResult(null);
+    setPermissionError(null);
 
     try {
       const response = await fetch("/api/iotdb/ai/predict", {
@@ -79,26 +87,37 @@ export default function AIPredictPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           timeseries: values.timeseries,
-          model: values.model,
+          algorithm: values.model,
           horizon: values.horizon || 10,
-          startTime: values.startTime,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
+        if (response.status === 403 || response.status === 503) {
+          setPermissionError(error.error || "AI features are restricted to administrators");
+          throw new Error(error.error || "Prediction failed");
+        }
         throw new Error(error.error || "Prediction failed");
       }
 
       const data = await response.json();
       setResult(data);
-      message.success(`Prediction completed! Generated ${data.predicted.length} data points.`);
+      message.success(`Prediction completed! Generated ${data.values?.length || data.predicted?.length || 0} data points.`);
     } catch (error: any) {
-      message.error(`Prediction failed: ${error.message}`);
+      if (!permissionError) {
+        message.error(`Prediction failed: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "AI & Anomaly Detection", href: "/ai" },
+    { title: "AI Prediction" },
+  ];
 
   const formatTimestamp = (ts: number) => {
     return new Date(ts).toLocaleString();
@@ -110,27 +129,61 @@ export default function AIPredictPage() {
 
   return (
     <PageContainer>
+      {/* AI Feature Disabled Warning */}
+      {AI_DISABLED && (
+        <Alert
+          message="AI Features Temporarily Disabled"
+          description="AI prediction features have been temporarily disabled for security reasons. Contact your administrator for more information."
+          type="warning"
+          showIcon
+          icon={<WarningOutlined />}
+          style={{ marginBottom: isMobile ? 16 : 24 }}
+          closable
+        />
+      )}
+
+      {/* Permission Error Alert */}
+      {permissionError && (
+        <Alert
+          message="AI Feature Access Restricted"
+          description={
+            permissionError.includes("disabled")
+              ? "AI features are currently disabled. Please contact your administrator to enable them."
+              : "AI prediction features are only available to administrators. If you are an administrator, please ensure you are logged in with your admin account."
+          }
+          type="error"
+          showIcon
+          icon={<WarningOutlined />}
+          style={{ marginBottom: isMobile ? 16 : 24 }}
+          closable
+          onClose={() => setPermissionError(null)}
+        />
+      )}
+
       <PageHeader
         title="AI Prediction"
         description="Generate single-time predictions using AI models"
+        breadcrumbs={breadcrumbItems}
         actions={
           <Button
             icon={<ExperimentOutlined />}
             onClick={() => {
               window.location.href = "/ai/models";
             }}
+            disabled={AI_DISABLED}
           >
-            View Models
+            {!isMobile && "View Models"}
           </Button>
         }
       />
 
-      <Row gutter={[24, 24]}>
+      <Row gutter={[isMobile ? 16 : 24, isMobile ? 16 : 24]}>
         {/* Left Column - Prediction Form */}
         <Col xs={24} lg={10}>
           <ContentCard
             title="Configuration"
             subtitle={<span style={{ fontSize: 13 }}>Set prediction parameters</span>}
+            style={{ padding: isMobile ? 16 : 24 }}
           >
             <Form
               form={form}
@@ -212,7 +265,7 @@ export default function AIPredictPage() {
                   block
                   icon={<RocketOutlined />}
                   style={{
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                     border: "none",
                     borderRadius: "10px",
                     fontWeight: 600,
@@ -230,10 +283,10 @@ export default function AIPredictPage() {
             intensity="light"
             gradientBorder
             gradient="blue"
-            style={{ marginTop: 24, padding: "20px" }}
+            style={{ marginTop: isMobile ? 16 : 24, padding: isMobile ? "16px" : "20px" }}
           >
             <div style={{ marginBottom: 16 }}>
-              <ThunderboltOutlined style={{ marginRight: 8, color: "#667eea" }} />
+              <ThunderboltOutlined style={{ marginRight: 8, color: "#0066cc" }} />
               <span style={{ fontWeight: 600, fontSize: 14 }}>About AI Prediction</span>
             </div>
             <div style={{ fontSize: 13, color: "#64748b", lineHeight: "1.6" }}>
@@ -279,7 +332,7 @@ export default function AIPredictPage() {
                 type="success"
                 showIcon
                 icon={<CheckCircleOutlined />}
-                style={{ marginBottom: 24 }}
+                style={{ marginBottom: isMobile ? 16 : 24 }}
               />
 
               {/* Metadata Card */}
@@ -288,7 +341,7 @@ export default function AIPredictPage() {
                   intensity="medium"
                   gradientBorder
                   gradient="success"
-                  style={{ marginBottom: 24, padding: "20px" }}
+                  style={{ marginBottom: isMobile ? 16 : 24, padding: isMobile ? "16px" : "20px" }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <div>
@@ -324,9 +377,9 @@ export default function AIPredictPage() {
                 <ContentCard
                   title="Prediction Statistics"
                   subtitle={<span style={{ fontSize: 13 }}>Statistical analysis of predictions</span>}
-                  style={{ marginBottom: 24 }}
+                  style={{ marginBottom: isMobile ? 16 : 24 }}
                 >
-                  <Row gutter={[16, 16]}>
+                  <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
                     <Col xs={12} sm={6}>
                       <div style={{ textAlign: "center" }}>
                         <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>Count</div>

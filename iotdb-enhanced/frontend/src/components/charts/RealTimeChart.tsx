@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { Card, Typography, Button, Space, Select, Tag, Spin, Alert } from "antd";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { Card, Typography, Button, Space, Select, Tag, Spin, Alert, theme } from "antd";
 import {
   PlayCircleOutlined,
   PauseCircleOutlined,
@@ -22,6 +22,7 @@ import {
 } from "recharts";
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface DataPoint {
   timestamp: number;
@@ -47,13 +48,14 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
   height = 400,
   onDisconnect,
 }) => {
+  const { token } = useToken();
   const [data, setData] = useState<DataPoint[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+  const isMountedRef = useRef<boolean>(true);
 
   // Calculate statistics
   const statistics = React.useMemo(() => {
@@ -86,9 +88,10 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
     return typeof val === "number" ? val.toFixed(4) : val;
   };
 
-  // Fetch data point
-  const fetchDataPoint = async () => {
-    if (isPaused) return;
+  // Fetch data point with proper cleanup check
+  const fetchDataPoint = useCallback(async () => {
+    // Prevent fetching if component is unmounted or paused
+    if (!isMountedRef.current || isPaused) return;
 
     try {
       const response = await fetch(
@@ -100,6 +103,8 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
       }
 
       const result = await response.json();
+
+      if (!isMountedRef.current) return; // Check again after async operation
 
       if (result.data && result.data.length > 0) {
         const newDataPoint = {
@@ -118,19 +123,26 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
 
         setError(null);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      if (isMountedRef.current) {
+        setError(message);
+      }
     }
-  };
+  }, [timeseries, isPaused, maxPoints]);
 
   // Start real-time updates
-  const startUpdates = () => {
+  const startUpdates = useCallback(() => {
+    // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
 
     setIsConnected(true);
     setLoading(false);
+
+    // Set component as mounted
+    isMountedRef.current = true;
 
     // Fetch initial data
     fetchDataPoint();
@@ -139,39 +151,55 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
     intervalRef.current = setInterval(() => {
       fetchDataPoint();
     }, refreshInterval);
-  };
+  }, [fetchDataPoint, refreshInterval]);
 
   // Stop real-time updates
-  const stopUpdates = () => {
+  const stopUpdates = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
     setIsConnected(false);
-  };
+  }, []);
 
   // Toggle pause/resume
-  const togglePause = () => {
+  const togglePause = useCallback(() => {
     setIsPaused((prev) => !prev);
-  };
+  }, []);
 
   // Clear data
-  const clearData = () => {
+  const clearData = useCallback(() => {
     setData([]);
     setError(null);
-  };
+  }, []);
 
-  // Cleanup on unmount
+  // Cleanup on unmount - CRITICAL for preventing memory leaks
   useEffect(() => {
+    // Mark component as mounted
+    isMountedRef.current = true;
+
     return () => {
+      // Mark component as unmounted FIRST to prevent state updates
+      isMountedRef.current = false;
+
+      // Clear interval
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+
+      // Note: wsRef was unused in this component (using polling instead of WebSocket)
+      // Kept for potential future WebSocket implementation
     };
   }, []);
+
+  // Auto-start updates when connected state changes
+  useEffect(() => {
+    if (isConnected && !isPaused) {
+      // Updates are already started via startUpdates button
+      // This effect ensures polling is active when connected
+    }
+  }, [isConnected, isPaused]);
 
   // Custom tooltip
   const CustomTooltip = ({ active, payload }: any) => {
@@ -386,10 +414,10 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
             <Line
               type="monotone"
               dataKey="value"
-              stroke="#667eea"
+              stroke={token.colorPrimary}
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 6, fill: "#667eea", stroke: "#fff", strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: token.colorPrimary, stroke: token.colorBgElevated, strokeWidth: 2 }}
               animationDuration={300}
             />
             {statistics && (

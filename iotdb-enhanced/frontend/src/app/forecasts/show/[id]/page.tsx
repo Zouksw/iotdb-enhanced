@@ -1,324 +1,307 @@
+/**
+ * Forecast Detail Page
+ *
+ * Displays detailed information about a specific forecast including:
+ * - Forecast metadata (algorithm, parameters, accuracy)
+ * - Visualization of predicted vs actual values
+ * - Confidence intervals
+ * - Historical runs comparison
+ */
+
 "use client";
 
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
-  Show,
-  DateField,
-  EditButton,
-  DeleteButton,
-} from "@refinedev/antd";
-import { useShow, useGo } from "@refinedev/core";
-import { Typography, Space, Row, Col, Card, Tag, Statistic, Button, Descriptions } from "antd";
+  Row,
+  Col,
+  Statistic,
+  Card,
+  Table,
+  Tag,
+  Button,
+  Space,
+  Tabs,
+  Typography,
+  Alert,
+  Spin,
+} from "antd";
 import {
+  EditOutlined,
+  DeleteOutlined,
   LineChartOutlined,
-  RobotOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
-  EditOutlined,
-  ArrowLeftOutlined,
 } from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
+import type { Forecast } from "@/types/api";
+import { authFetch } from "@/utils/auth";
+import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { useIsMobile } from "@/lib/responsive-utils";
 
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { ContentCard } from "@/components/layout/ContentCard";
+const { Title, Text, Paragraph } = Typography;
 
-const { Text } = Typography;
+interface ForecastDetailParams {
+  id?: string;
+}
 
-export default function ForecastShow() {
-  const { result: showResult } = useShow({});
-  const forecast = showResult?.data;
-  const go = useGo();
+interface ForecastWithDetails extends Forecast {
+  algorithm?: string;
+  horizon?: number;
+  accuracy?: number;
+  mae?: number;
+  rmse?: number;
+  status?: "pending" | "running" | "completed" | "failed";
+}
 
-  if (!forecast) {
+export default function ForecastDetailPage() {
+  const params = useParams() as ForecastDetailParams;
+  const router = useRouter();
+  const [forecast, setForecast] = useState<ForecastWithDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    fetchForecast();
+  }, [params.id]);
+
+  const fetchForecast = async () => {
+    if (!params.id) {
+      setError("Forecast ID is required");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await authFetch(`/api/forecasts/${params.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch forecast");
+      }
+      const data = await response.json();
+      setForecast(data.data || data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    // TODO: Implement delete with confirmation
+    router.push("/forecasts");
+  };
+
+  if (loading) {
     return (
-      <PageContainer>
-        <ContentCard>
-          <Text>Loading...</Text>
-        </ContentCard>
-      </PageContainer>
+      <DetailPageLayout
+        title="Forecast Details"
+        loading={loading}
+      />
     );
   }
 
-  const getDecimalValue = (value: any) => {
-    if (typeof value === "object" && value !== null) {
-      return value.toNumber?.() || Number(value);
+  if (error || !forecast) {
+    return (
+      <DetailPageLayout
+        title="Forecast"
+        error={error || "Forecast not found"}
+      />
+    );
+  }
+
+  const breadcrumb = [
+    { label: "Forecasts", href: "/forecasts" },
+    { label: forecast.id.substring(0, 8) || "Detail" }
+  ];
+
+  const actions = [
+    {
+      icon: <EditOutlined />,
+      label: "Edit",
+      href: `/forecasts/edit/${forecast.id}`
+    },
+    {
+      icon: <DeleteOutlined />,
+      label: "Delete",
+      danger: true,
+      onClick: handleDelete
     }
-    return Number(value || 0);
-  };
-
-  const predictedValue = getDecimalValue(forecast.predictedValue);
-  const confidence = getDecimalValue(forecast.confidence);
-  const anomalyProbability = getDecimalValue(forecast.anomalyProbability);
-  const lowerBound = forecast.lowerBound ? getDecimalValue(forecast.lowerBound) : null;
-  const upperBound = forecast.upperBound ? getDecimalValue(forecast.upperBound) : null;
-  const unit = forecast.timeseries?.unit || "";
-
-  const algorithmColors: Record<string, string> = {
-    ARIMA: "blue",
-    PROPHET: "purple",
-    LSTM: "green",
-    TRANSFORMER: "orange",
-    ENSEMBLE: "red",
-  };
-
-  const algorithmIcons: Record<string, string> = {
-    ARIMA: "📈",
-    PROPHET: "🔮",
-    LSTM: "🧠",
-    TRANSFORMER: "⚡",
-    ENSEMBLE: "🎯",
-  };
+  ];
 
   return (
-    <PageContainer>
-      <Show
-        title={
-          <Space>
-            <LineChartOutlined />
-            <span>Forecast Details</span>
-          </Space>
-        }
-        headerButtons={
-          <Space>
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => go({ to: "/forecasts", type: "push" })}
-            >
-              Back to List
-            </Button>
-            <EditButton recordItemId={forecast.id} />
-            <DeleteButton recordItemId={forecast.id} />
-          </Space>
-        }
-      >
-        {/* Main Statistics Card */}
-        <Card style={{ marginBottom: 24 }}>
-          <Row gutter={[24, 24]}>
-            <Col xs={12} sm={8} md={6}>
-              <Statistic
-                title="Predicted Value"
-                value={predictedValue}
-                precision={2}
-                suffix={unit}
-                valueStyle={{ color: "#1890ff" }}
-                prefix={<LineChartOutlined />}
-              />
-            </Col>
-            <Col xs={12} sm={8} md={6}>
-              <Statistic
-                title="Confidence"
-                value={confidence * 100}
-                precision={1}
-                suffix="%"
-                valueStyle={{ color: confidence >= 0.9 ? "#52c41a" : confidence >= 0.7 ? "#1890ff" : "#faad14" }}
-                prefix={<CheckCircleOutlined />}
-              />
-            </Col>
-            <Col xs={12} sm={8} md={6}>
-              <Statistic
-                title="Anomaly Probability"
-                value={anomalyProbability * 100}
-                precision={1}
-                suffix="%"
-                valueStyle={{
-                  color: forecast.isAnomaly ? "#ff4d4f" : anomalyProbability > 0.5 ? "#faad14" : "#52c41a"
-                }}
-              />
-            </Col>
-            <Col xs={12} sm={8} md={6}>
-              <Space direction="vertical" size={4}>
-                <Text type="secondary">Status</Text>
-                {forecast.isAnomaly ? (
-                  <Tag icon={<CloseCircleOutlined />} color="error" style={{ fontSize: 14, padding: "4px 12px" }}>
-                    Anomaly
-                  </Tag>
-                ) : (
-                  <Tag icon={<CheckCircleOutlined />} color="success" style={{ fontSize: 14, padding: "4px 12px" }}>
-                    Normal
-                  </Tag>
+    <DetailPageLayout
+      title={forecast.timeseries?.name || "Forecast"}
+      subtitle={`Created ${new Date(forecast.createdAt).toLocaleString()}`}
+      breadcrumb={breadcrumb}
+      actions={actions}
+    >
+      {/* Summary Card */}
+      <DetailSection title="Forecast Summary" colSpan={isMobile ? 24 : 8}>
+        <Space direction="vertical" style={{ width: "100%" }} size="large">
+          <Statistic
+            title="Status"
+            value={forecast.status || "completed"}
+            valueStyle={{
+              color: forecast.status === "completed" ? "#22c55e" :
+                     forecast.status === "failed" ? "#ef4444" : "#f59e0b"
+            }}
+            prefix={<CheckCircleOutlined />}
+          />
+
+          <Statistic
+            title="Algorithm"
+            value={forecast.algorithm || "arima"}
+            suffix={<Tag color="blue">AI Model</Tag>}
+          />
+
+          <Statistic
+            title="Forecast Horizon"
+            value={forecast.horizon || forecast.predictedValues?.length || 0}
+            suffix="steps"
+          />
+
+          {forecast.accuracy !== undefined && (
+            <Statistic
+              title="Accuracy"
+              value={forecast.accuracy}
+              precision={2}
+              suffix="%"
+              valueStyle={{ color: forecast.accuracy > 80 ? "#22c55e" : "#f59e0b" }}
+            />
+          )}
+        </Space>
+      </DetailSection>
+
+      {/* Chart Card */}
+      <DetailSection title="Forecast Visualization" colSpan={isMobile ? 24 : 16}>
+        <Alert
+          message="Forecast chart will be displayed here"
+          description="This will show the predicted values with confidence intervals"
+          type="info"
+          showIcon
+          style={{ marginBottom: "16px" }}
+        />
+        <div style={{
+          height: "300px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(0, 102, 204, 0.05)",
+          borderRadius: "8px",
+          border: "1px dashed rgba(0, 102, 204, 0.3)"
+        }}>
+          <LineChartOutlined style={{ fontSize: "48px", color: "#0066cc" }} />
+          <Text type="secondary" style={{ marginLeft: "16px" }}>
+            Chart visualization
+          </Text>
+        </div>
+      </DetailSection>
+
+      {/* Parameters Card */}
+      <DetailSection title="Forecast Parameters" colSpan={24}>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={8}>
+            <Card size="small" title="Time Range">
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Text>
+                  <ClockCircleOutlined /> Start:{" "}
+                  {new Date(forecast.startTime).toLocaleString()}
+                </Text>
+                <Text>
+                  <ClockCircleOutlined /> End:{" "}
+                  {new Date(forecast.endTime).toLocaleString()}
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+
+          <Col xs={24} sm={12} md={8}>
+            <Card size="small" title="Model">
+              <Space direction="vertical" style={{ width: "100%" }}>
+                <Text>Model ID: {forecast.modelId?.substring(0, 8)}...</Text>
+                <Text>Type: {forecast.model?.algorithm || "arima"}</Text>
+              </Space>
+            </Card>
+          </Col>
+
+          <Col xs={24} sm={12} md={8}>
+            <Card size="small" title="Performance Metrics">
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {forecast.mae !== undefined && (
+                  <Text>MAE: {forecast.mae.toFixed(4)}</Text>
+                )}
+                {forecast.rmse !== undefined && (
+                  <Text>RMSE: {forecast.rmse.toFixed(4)}</Text>
                 )}
               </Space>
-            </Col>
-          </Row>
+            </Card>
+          </Col>
+        </Row>
+      </DetailSection>
 
-          {/* Prediction Range */}
-          {lowerBound !== null && upperBound !== null && (
-            <div style={{ marginTop: 24, paddingTop: 24, borderTop: "1px solid #f0f0f0" }}>
-              <Text type="secondary" style={{ marginBottom: 8, display: "block" }}>
-                Prediction Range (Confidence Interval)
-              </Text>
-              <Space size="large">
-                <Space>
-                  <Text type="secondary">Lower:</Text>
-                  <Text code style={{ fontSize: 16 }}>
-                    {lowerBound.toFixed(2)} {unit}
-                  </Text>
-                </Space>
-                <Text type="secondary">→</Text>
-                <Space>
-                  <Text type="secondary">Upper:</Text>
-                  <Text code style={{ fontSize: 16 }}>
-                    {upperBound.toFixed(2)} {unit}
-                  </Text>
-                </Space>
-                <Space>
-                  <Text type="secondary">Range:</Text>
-                  <Text strong style={{ fontSize: 16 }}>
-                    ±{((upperBound - lowerBound) / 2).toFixed(2)} {unit}
-                  </Text>
-                </Space>
-              </Space>
-            </div>
-          )}
-        </Card>
+      {/* Predicted Values Table */}
+      <DetailSection title="Predicted Values" colSpan={24}>
+        <Table
+          columns={predictedValuesColumns}
+          dataSource={forecast.predictedValues.map((value, index) => ({
+            key: index,
+            index: index + 1,
+            value,
+            lower: forecast.confidenceIntervals?.lower?.[index],
+            upper: forecast.confidenceIntervals?.upper?.[index]
+          }))}
+          pagination={{ pageSize: 10 }}
+          scroll={{ x: "max-content" }}
+          size={isMobile ? "small" : "large"}
+        />
+      </DetailSection>
 
-        {/* Model Information */}
-        <ContentCard
-          title="Model Information"
-          subtitle="Details about the AI model that generated this forecast"
-          style={{ marginBottom: 16 }}
-        >
-          <Descriptions column={{ xs: 1, sm: 2, md: 3 }} bordered>
-            <Descriptions.Item label={<Space><RobotOutlined />Algorithm</Space>}>
-              {forecast.model?.algorithm ? (
-                <Tag color={algorithmColors[forecast.model.algorithm] || "default"}>
-                  {algorithmIcons[forecast.model.algorithm] || ""} {forecast.model.algorithm}
-                </Tag>
-              ) : "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label={<Space><LineChartOutlined />Time Series</Space>}>
-              {forecast.timeseries?.name || "-"}
-              {forecast.timeseries?.unit && (
-                <Tag color="blue" style={{ marginLeft: 8 }}>
-                  {forecast.timeseries.unit}
-                </Tag>
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label={<Space><ClockCircleOutlined />Model ID</Space>}>
-              <Text code>{forecast.modelId?.slice(0, 8)}...</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Model Active">
-              {forecast.model?.isActive !== undefined ? (
-                forecast.model.isActive ? (
-                  <Tag color="success">Active</Tag>
-                ) : (
-                  <Tag color="default">Inactive</Tag>
-                )
-              ) : "-"}
-            </Descriptions.Item>
-            {forecast.model?.trainingMetrics?.mae && (
-              <Descriptions.Item label="Training MAE">
-                <Text code>{forecast.model.trainingMetrics.mae.toFixed(4)}</Text>
-              </Descriptions.Item>
-            )}
-            {forecast.model?.trainingMetrics?.rmse && (
-              <Descriptions.Item label="Training RMSE">
-                <Text code>{forecast.model.trainingMetrics.rmse.toFixed(4)}</Text>
-              </Descriptions.Item>
-            )}
-          </Descriptions>
-        </ContentCard>
-
-        {/* Forecast Details */}
-        <ContentCard
-          title="Forecast Values"
-          subtitle="The predicted values and confidence intervals"
-          style={{ marginBottom: 16 }}
-        >
-          <Descriptions column={{ xs: 1, sm: 2, md: 3 }} bordered>
-            <Descriptions.Item label={<Space><LineChartOutlined />Predicted Value</Space>}>
-              <Text strong style={{ fontSize: 16 }}>
-                {predictedValue.toFixed(6)} {unit}
-              </Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Lower Bound">
-              {lowerBound !== null ? (
-                <Text code style={{ fontSize: 14 }}>
-                  {lowerBound.toFixed(6)} {unit}
-                </Text>
-              ) : "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label="Upper Bound">
-              {upperBound !== null ? (
-                <Text code style={{ fontSize: 14 }}>
-                  {upperBound.toFixed(6)} {unit}
-                </Text>
-              ) : "-"}
-            </Descriptions.Item>
-            <Descriptions.Item label={<Space><CheckCircleOutlined />Confidence Level</Space>}>
-              <Tag color={confidence >= 0.9 ? "green" : confidence >= 0.7 ? "blue" : "orange"}>
-                {(confidence * 100).toFixed(1)}%
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label={<Space><CloseCircleOutlined />Anomaly Probability</Space>}>
-              <Tag color={forecast.isAnomaly ? "error" : anomalyProbability > 0.5 ? "warning" : "success"}>
-                {(anomalyProbability * 100).toFixed(1)}%
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Anomaly Flag">
-              {forecast.isAnomaly ? (
-                <Tag color="error" icon={<CloseCircleOutlined />}>
-                  Detected as Anomaly
-                </Tag>
-              ) : (
-                <Tag color="success" icon={<CheckCircleOutlined />}>
-                  Normal
-                </Tag>
-              )}
-            </Descriptions.Item>
-          </Descriptions>
-        </ContentCard>
-
-        {/* Timestamp Information */}
-        <ContentCard
-          title="Timestamp Information"
-          subtitle="Forecast and creation timestamps"
-          style={{ marginBottom: 16 }}
-        >
-          <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered>
-            <Descriptions.Item label={<Space><ClockCircleOutlined />Forecast Timestamp</Space>}>
-              <DateField
-                value={forecast.timestamp}
-                format="YYYY-MM-DD HH:mm:ss"
-              />
-            </Descriptions.Item>
-            <Descriptions.Item label={<Space><ClockCircleOutlined />Created At</Space>}>
-              <DateField
-                value={forecast.createdAt}
-                format="YYYY-MM-DD HH:mm:ss"
-              />
-            </Descriptions.Item>
-            <Descriptions.Item label="Forecast ID" span={2}>
-              <Text code copyable>{forecast.id}</Text>
-            </Descriptions.Item>
-          </Descriptions>
-        </ContentCard>
-
-        {/* Actions */}
-        <Card>
-          <Space>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => go({ to: `/forecasts/edit/${forecast.id}`, type: "push" })}
-            >
-              Edit Forecast
-            </Button>
-            <Button
-              icon={<LineChartOutlined />}
-              onClick={() => go({ to: `/models/show/${forecast.modelId}`, type: "push" })}
-            >
-              View Model
-            </Button>
-            <Button
-              icon={<LineChartOutlined />}
-              onClick={() => go({ to: `/timeseries/show/${forecast.timeseriesId}`, type: "push" })}
-            >
-              View Time Series
-            </Button>
-          </Space>
-        </Card>
-      </Show>
-    </PageContainer>
+      {/* Historical Runs */}
+      <DetailSection title="Historical Runs" colSpan={24} extra={<Button type="link">View All</Button>}>
+        <Alert
+          message="Historical forecast runs will be displayed here"
+          description="Compare different forecast runs for the same time series"
+          type="info"
+          showIcon={false}
+        />
+      </DetailSection>
+    </DetailPageLayout>
   );
 }
+
+// Table columns for predicted values
+const predictedValuesColumns: ColumnsType<{
+  key: number;
+  index: number;
+  value: number;
+  lower?: number;
+  upper?: number;
+}> = [
+  {
+    title: "#",
+    dataIndex: "index",
+    key: "index",
+    width: 80
+  },
+  {
+    title: "Predicted Value",
+    dataIndex: "value",
+    key: "value",
+    render: (value) => value.toFixed(4)
+  },
+  {
+    title: "Lower Bound",
+    dataIndex: "lower",
+    key: "lower",
+    render: (lower) => lower !== undefined ? lower.toFixed(4) : "-"
+  },
+  {
+    title: "Upper Bound",
+    dataIndex: "upper",
+    key: "upper",
+    render: (upper) => upper !== undefined ? upper.toFixed(4) : "-"
+  }
+];

@@ -1,6 +1,6 @@
 "use client";
 
-import { ColorModeContext } from "@contexts/color-mode";
+import { ColorModeContext } from "@/contexts/color-mode";
 import type { RefineThemedLayoutHeaderProps } from "@refinedev/antd";
 import { useGetIdentity } from "@refinedev/core";
 import {

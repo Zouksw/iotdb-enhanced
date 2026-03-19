@@ -74,7 +74,7 @@ export default function FAQ() {
             style={{
               display: "inline-block",
               padding: "8px 20px",
-              background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+              background: "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
               borderRadius: "20px",
               marginBottom: "16px",
             }}
@@ -83,7 +83,7 @@ export default function FAQ() {
               style={{
                 fontSize: "14px",
                 fontWeight: 600,
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -121,7 +121,7 @@ export default function FAQ() {
                   padding: "24px",
                   borderRadius: "16px",
                   background: expandedIndex === index
-                    ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                    ? "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)"
                     : "#fff",
                   boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
                   cursor: "pointer",
@@ -145,7 +145,7 @@ export default function FAQ() {
                       borderRadius: "12px",
                       background: expandedIndex === index
                         ? "rgba(255, 255, 255, 0.2)"
-                        : "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                        : "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -154,7 +154,7 @@ export default function FAQ() {
                   >
                     <span style={{
                       fontSize: "20px",
-                      color: expandedIndex === index ? "#fff" : "#667eea",
+                      color: expandedIndex === index ? "#fff" : "#0066cc",
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",

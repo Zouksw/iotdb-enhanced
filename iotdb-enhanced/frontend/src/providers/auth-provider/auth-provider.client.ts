@@ -3,31 +3,45 @@
 import type { AuthProvider } from "@refinedev/core";
 import Cookies from "js-cookie";
 import axios from "axios";
+import { tokenManager } from "@/lib/tokenManager";
+import { errorHandler } from "@/lib/errorHandler";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Include cookies for HttpOnly auth cookies
 });
 
 // Set up interceptor to include auth token in requests
 axiosInstance.interceptors.request.use((config) => {
-  const auth = Cookies.get("auth");
-  if (auth) {
-    try {
-      const parsedAuth = JSON.parse(auth);
-      if (parsedAuth.token) {
-        config.headers.Authorization = `Bearer ${parsedAuth.token}`;
-      }
-    } catch (e) {
-      // Invalid auth cookie, ignore
-    }
+  // Use tokenManager to get token
+  const token = tokenManager.getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+// Response interceptor for error handling
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const safeError = errorHandler.handleApiError(error);
+
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401) {
+      // Clear invalid token
+      tokenManager.removeToken();
+      Cookies.remove("auth", { path: "/" });
+    }
+
+    return Promise.reject(safeError);
+  }
+);
 
 export const authProviderClient: AuthProvider = {
   login: async ({ email, password, remember }) => {
@@ -39,24 +53,37 @@ export const authProviderClient: AuthProvider = {
 
       const { user, token } = response.data;
 
-      // Store both user info and token in cookie
-      Cookies.set("auth", JSON.stringify({ ...user, token }), {
-        expires: remember ? 30 : 7, // 30 days if remember me, else 7 days
+      // Use tokenManager to store token
+      tokenManager.setToken(token, remember);
+
+      // Store user info in cookie (non-sensitive data only)
+      const userData = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        roles: user.roles || [],
+      };
+
+      Cookies.set("auth", JSON.stringify(userData), {
+        expires: remember ? 30 : 7,
         path: "/",
+        secure: process.env.NODE_ENV === 'production', // Only HTTPS in production
+        sameSite: 'strict', // CSRF protection
       });
 
       return {
         success: true,
         redirectTo: "/",
       };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || "Invalid email or password";
-      console.error("Login error:", error.response?.data);
+    } catch (error) {
+      const safeError = errorHandler.handleApiError(error);
+      console.error("Login error:", safeError);
       return {
         success: false,
         error: {
           name: "LoginError",
-          message: errorMessage,
+          message: safeError.message,
         },
       };
     }
@@ -67,28 +94,42 @@ export const authProviderClient: AuthProvider = {
       const response = await axiosInstance.post("/auth/register", {
         email: params.email,
         password: params.password,
-        name: params.name || "",  // Add name field (optional)
+        name: params.name || "",
       });
 
       const { user, token } = response.data;
 
-      Cookies.set("auth", JSON.stringify({ ...user, token }), {
+      // Use tokenManager to store token
+      tokenManager.setToken(token);
+
+      // Store user info in cookie
+      const userData = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        roles: user.roles || [],
+      };
+
+      Cookies.set("auth", JSON.stringify(userData), {
         expires: 30,
         path: "/",
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
       });
 
       return {
         success: true,
         redirectTo: "/",
       };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || "Registration failed";
-      console.error("Registration error:", error.response?.data);
+    } catch (error) {
+      const safeError = errorHandler.handleApiError(error);
+      console.error("Registration error:", safeError);
       return {
         success: false,
         error: {
           name: "RegisterError",
-          message: errorMessage,
+          message: safeError.message,
         },
       };
     }
@@ -108,13 +149,13 @@ export const authProviderClient: AuthProvider = {
           type: "success",
         },
       };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || "Failed to send reset email";
+    } catch (error) {
+      const safeError = errorHandler.handleApiError(error);
       return {
         success: false,
         error: {
           name: "ForgotPasswordError",
-          message: errorMessage,
+          message: safeError.message,
         },
       };
     }
@@ -134,13 +175,13 @@ export const authProviderClient: AuthProvider = {
           type: "success",
         },
       };
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || "Failed to update password";
+    } catch (error) {
+      const safeError = errorHandler.handleApiError(error);
       return {
         success: false,
         error: {
           name: "UpdatePasswordError",
-          message: errorMessage,
+          message: safeError.message,
         },
       };
     }
@@ -148,12 +189,17 @@ export const authProviderClient: AuthProvider = {
 
   logout: async () => {
     try {
-      // Optional: Call backend logout endpoint
+      // Call backend logout endpoint to invalidate token
       await axiosInstance.post("/auth/logout");
     } catch (error) {
-      // Ignore logout errors
+      // Log but don't block logout
+      console.error("Logout error:", errorHandler.handleApiError(error));
+    } finally {
+      // Always clear local tokens
+      tokenManager.removeToken();
+      Cookies.remove("auth", { path: "/" });
     }
-    Cookies.remove("auth", { path: "/" });
+
     return {
       success: true,
       redirectTo: "/login",
@@ -161,26 +207,56 @@ export const authProviderClient: AuthProvider = {
   },
 
   check: async () => {
+    // Check if user cookie exists
     const auth = Cookies.get("auth");
-    if (auth) {
-      try {
-        const parsedAuth = JSON.parse(auth);
-        if (parsedAuth.token) {
-          // Optionally verify token with backend
-          return {
-            authenticated: true,
-          };
-        }
-      } catch (e) {
-        // Invalid auth cookie
-      }
+    if (!auth) {
+      return {
+        authenticated: false,
+        logout: true,
+        redirectTo: "/login",
+      };
     }
 
-    return {
-      authenticated: false,
-      logout: true,
-      redirectTo: "/login",
-    };
+    // Check if token exists and is valid
+    const token = tokenManager.getToken();
+    if (!token) {
+      return {
+        authenticated: false,
+        logout: true,
+        redirectTo: "/login",
+      };
+    }
+
+    // Validate token expiration
+    if (!tokenManager.isTokenValid(token)) {
+      // Token expired, clear it
+      tokenManager.removeToken();
+      return {
+        authenticated: false,
+        logout: true,
+        redirectTo: "/login",
+      };
+    }
+
+    // Optionally verify token with backend
+    try {
+      await axiosInstance.get("/auth/verify");
+      return {
+        authenticated: true,
+      };
+    } catch (error) {
+      // Backend verification failed
+      const safeError = errorHandler.handleApiError(error);
+      if (safeError.statusCode === 401) {
+        tokenManager.removeToken();
+        Cookies.remove("auth", { path: "/" });
+      }
+      return {
+        authenticated: false,
+        logout: true,
+        redirectTo: "/login",
+      };
+    }
   },
 
   getPermissions: async () => {
@@ -216,12 +292,20 @@ export const authProviderClient: AuthProvider = {
   },
 
   onError: async (error) => {
-    if (error.response?.status === 401) {
+    const safeError = errorHandler.createSafeError(error);
+
+    if (safeError.statusCode === 401 || errorHandler.requiresReauth(safeError)) {
       return {
         logout: true,
       };
     }
 
-    return { error };
+    // Return error in format Refine expects
+    // Create an Error object from our safe error
+    const refineError = new Error(safeError.message);
+    (refineError as any).statusCode = safeError.statusCode;
+    (refineError as any).code = safeError.code;
+
+    return { error: refineError };
   },
 };

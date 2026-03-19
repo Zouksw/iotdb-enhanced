@@ -9,6 +9,14 @@ import { useList } from "@refinedev/core";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentCard } from "@/components/layout/ContentCard";
+import { useIsMobile } from "@/lib/responsive-utils";
+
+// Security imports
+import { validationRules, required } from "@/lib/validation";
+import { sanitizer } from "@/lib/sanitizer";
+import { errorHandler } from "@/lib/errorHandler";
+import { tokenManager } from "@/lib/tokenManager";
+import { csrfProtection } from "@/lib/csrf";
 
 const { Text } = Typography;
 
@@ -31,6 +39,7 @@ export default function AlertCreate() {
   const { open } = useNotification();
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const isMobile = useIsMobile();
 
   // Get timeseries list
   const timeseriesResult = useList({
@@ -41,16 +50,47 @@ export default function AlertCreate() {
 
   const timeseriesList = timeseriesResult?.result?.data ?? [];
 
-  const handleSubmit = async (values: any) => {
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "Alerts & Notifications", href: "/alerts" },
+    { title: "Create Alert" },
+  ];
+
+  const handleSubmit = async (values: Record<string, unknown>) => {
     setLoading(true);
     try {
+      // Type condition object
+      const condition = values.condition as Record<string, unknown> | undefined;
+
+      // Sanitize inputs
+      const sanitizedValues = {
+        name: sanitizer.sanitizeString(values.name as string || "", 100),
+        type: values.type,
+        severity: values.severity,
+        timeseriesId: values.timeseriesId,
+        condition: condition
+          ? {
+              operator: sanitizer.sanitizeString(condition.operator as string || "", 10),
+              value: sanitizer.sanitizeNumber(condition.value, -Infinity, Infinity),
+            }
+          : undefined,
+        cooldownMinutes: sanitizer.sanitizeNumber(values.cooldownMinutes as number, 0, 10080),
+        description: sanitizer.sanitizeString(values.description as string || "", 1000),
+        enabled: values.enabled,
+      };
+
+      const token = tokenManager.getToken();
+      const csrfHeaders = csrfProtection.getHeaders();
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/alerts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...csrfHeaders,
         },
-        body: JSON.stringify(values),
+        credentials: "include",
+        body: JSON.stringify(sanitizedValues),
       });
 
       if (!response.ok) {
@@ -72,11 +112,12 @@ export default function AlertCreate() {
       setTimeout(() => {
         go({ to: "/alerts", type: "push" });
       }, 1000);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const safeError = errorHandler.handleApiError(error);
       open?.({
         type: "error",
         message: "Failed to Create Alert",
-        description: error.message,
+        description: safeError.message,
       });
     } finally {
       setLoading(false);
@@ -89,12 +130,13 @@ export default function AlertCreate() {
         <PageHeader
           title="Create Alert"
           description="Configure a new alert for monitoring your time series data"
+          breadcrumbs={breadcrumbItems}
           actions={
             <Button
               icon={<ArrowLeftOutlined />}
               onClick={() => go({ to: "/alerts", type: "push" })}
             >
-              Back to Alerts
+              {!isMobile && "Back to Alerts"}
             </Button>
           }
         />
@@ -105,10 +147,10 @@ export default function AlertCreate() {
           type="info"
           showIcon
           icon={<BellOutlined />}
-          style={{ marginBottom: 24 }}
+          style={{ marginBottom: isMobile ? 16 : 24 }}
         />
 
-        <ContentCard title="Alert Details" subtitle="Configure alert settings">
+        <ContentCard title="Alert Details" subtitle="Configure alert settings" style={{ padding: isMobile ? 16 : 24 }}>
           <Form
             form={form}
             layout="vertical"
@@ -119,23 +161,29 @@ export default function AlertCreate() {
             }}
           >
             {/* Alert Name */}
-            <Row gutter={[24, 16]}>
+            <Row gutter={[isMobile ? 16 : 24, 16]}>
               <Col xs={24}>
                 <Form.Item
                   label={<span style={{ fontWeight: 500 }}>Alert Name</span>}
                   name="name"
-                  rules={[{ required: true, message: "Please enter an alert name" }]}
+                  rules={[
+                    validationRules.getAntRule(required("Alert name")),
+                    validationRules.getAntRule(validationRules.createMinLengthValidator(3, "Alert name")),
+                    validationRules.getAntRule(validationRules.createMaxLengthValidator(100, "Alert name")),
+                  ]}
+                  normalize={(value) => sanitizer.sanitizeString(value, 100)}
                 >
                   <Input
                     placeholder="e.g., High Temperature Alert"
                     size="large"
+                    maxLength={100}
                   />
                 </Form.Item>
               </Col>
             </Row>
 
             {/* Alert Type and Severity */}
-            <Row gutter={[24, 16]}>
+            <Row gutter={[isMobile ? 16 : 24, 16]}>
               <Col xs={24} md={12}>
                 <Form.Item
                   label={<span style={{ fontWeight: 500 }}>Alert Type</span>}
@@ -210,7 +258,7 @@ export default function AlertCreate() {
             <Form.Item noStyle shouldUpdate={(prev, curr) => prev.type !== curr.type}>
               {({ getFieldValue }) =>
                 getFieldValue("type") === "THRESHOLD" ? (
-                  <Row gutter={[24, 16]}>
+                  <Row gutter={[isMobile ? 16 : 24, 16]}>
                     <Col xs={24} md={8}>
                       <Form.Item
                         label={<span style={{ fontWeight: 500 }}>Operator</span>}
@@ -253,10 +301,16 @@ export default function AlertCreate() {
             <Form.Item
               label={<span style={{ fontWeight: 500 }}>Description</span>}
               name="description"
+              rules={[
+                validationRules.getAntRule(validationRules.createMaxLengthValidator(1000, "Description")),
+              ]}
+              normalize={(value) => sanitizer.sanitizeString(value, 1000)}
             >
               <Input.TextArea
                 rows={3}
                 placeholder="Describe what this alert monitors and when it should trigger..."
+                maxLength={1000}
+                showCount
               />
             </Form.Item>
 

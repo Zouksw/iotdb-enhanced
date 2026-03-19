@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
 import GlassCard from "@/components/ui/GlassCard";
+import { useIsMobile } from "@/lib/responsive-utils";
 
 const { Text } = Typography;
 
@@ -33,6 +34,8 @@ export default function TimeseriesList() {
       initial: [{ field: "createdAt", order: "desc" }],
     },
   });
+
+  const isMobile = useIsMobile();
 
   // Get statistics
   const timeseriesStatsResult = useList({
@@ -62,6 +65,7 @@ export default function TimeseriesList() {
       title: "ID",
       width: 100,
       fixed: "left" as const,
+      responsive: ["lg"],
       render: (id: string) => (
         <code style={{ fontSize: 12, padding: "2px 6px", background: "#f5f5f5", borderRadius: 4 }}>
           {id.slice(0, 8)}...
@@ -96,11 +100,13 @@ export default function TimeseriesList() {
       title: "Slug",
       width: 160,
       ellipsis: true,
+      responsive: ["lg", "xl"],
     },
     {
       dataIndex: "unit",
       title: "Unit",
       width: 80,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (unit: string) => unit || "-",
     },
     {
@@ -108,6 +114,7 @@ export default function TimeseriesList() {
       title: "Dataset",
       width: 180,
       ellipsis: true,
+      responsive: ["md", "lg", "xl"],
       render: (dataset: any) => dataset?.name || "-",
     },
     {
@@ -116,6 +123,7 @@ export default function TimeseriesList() {
       width: 120,
       align: "right" as const,
       sorter: true,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (count: number) => (
         <span style={{ fontFamily: "monospace", fontSize: 13 }}>
           {(count ?? 0).toLocaleString()}
@@ -127,6 +135,7 @@ export default function TimeseriesList() {
       title: "Anomalies",
       width: 100,
       align: "center" as const,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (count: number) => (
         <Tag color={count > 0 ? "red" : "green"} style={{ margin: 0 }}>
           {count ?? 0}
@@ -138,21 +147,27 @@ export default function TimeseriesList() {
       title: "Created",
       width: 140,
       sorter: true,
+      responsive: ["lg", "xl"],
       render: (value: string) => <DateField value={value} format="YYYY-MM-DD" />,
     },
     {
       title: "Actions",
       dataIndex: "actions",
-      width: 140,
+      width: isMobile ? 80 : 140,
       fixed: "right" as const,
       render: (_: any, record: any) => (
         <Space size="small">
-          <ShowButton hideText size="small" recordItemId={record.id} />
-          <EditButton hideText size="small" recordItemId={record.id} />
-          <DeleteButton hideText size="small" recordItemId={record.id} />
+          <ShowButton hideText={!isMobile} size="small" recordItemId={record.id} />
+          <EditButton hideText={!isMobile} size="small" recordItemId={record.id} />
+          <DeleteButton hideText={!isMobile} size="small" recordItemId={record.id} />
         </Space>
       ),
     },
+  ];
+
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "Time Series" },
   ];
 
   return (
@@ -161,10 +176,11 @@ export default function TimeseriesList() {
         <PageHeader
           title="Time Series"
           description="Manage your time series data with real-time analytics"
+          breadcrumbs={breadcrumbItems}
           actions={
             <CreateButton
               style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                 border: "none",
                 height: "40px",
                 borderRadius: "10px",
@@ -172,22 +188,22 @@ export default function TimeseriesList() {
               }}
               icon={<PlusOutlined />}
             >
-              Create Time Series
+              {!isMobile && "Create Time Series"}
             </CreateButton>
           }
         />
 
         {/* Statistics Cards with Glassmorphism */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: "20px" }}>
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
                     borderRadius: "10px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -213,8 +229,8 @@ export default function TimeseriesList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -243,8 +259,8 @@ export default function TimeseriesList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -277,15 +293,15 @@ export default function TimeseriesList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
                     borderRadius: "10px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -313,6 +329,12 @@ export default function TimeseriesList() {
           columns={columns}
           enableZebraStriping={true}
           stickyHeader={true}
+          scroll={{ x: isMobile ? "max-content" : undefined }}
+          pagination={{
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
+            simple: isMobile,
+          }}
         />
       </List>
     </PageContainer>

@@ -2,53 +2,37 @@
 
 import { DataProvider } from "@refinedev/core";
 import axios from "axios";
+import { tokenManager } from "@/lib/tokenManager";
+import { csrfProtection } from "@/lib/csrf";
+import { errorHandler } from "@/lib/errorHandler";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002/api";
-
-/**
- * Get authentication token from localStorage
- */
-const getAuthToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
-
-/**
- * Set authentication token in localStorage
- */
-const setAuthToken = (token: string): void => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("token", token);
-  }
-};
-
-/**
- * Clear authentication token from localStorage
- */
-const clearAuthToken = (): void => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("token");
-  }
-};
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Include cookies for HttpOnly auth cookies
 });
 
 /**
- * Request interceptor to add auth token to all requests
+ * Request interceptor to add auth token and CSRF protection
  */
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = getAuthToken();
+    // Add auth token from tokenManager
+    const token = tokenManager.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add CSRF token for non-GET requests
+    if (config.method && ['post', 'put', 'patch', 'delete'].includes(config.method.toLowerCase())) {
+      const csrfHeaders = csrfProtection.getHeaders();
+      Object.assign(config.headers, csrfHeaders);
+    }
+
     return config;
   },
   (error) => {
@@ -57,7 +41,7 @@ axiosInstance.interceptors.request.use(
 );
 
 /**
- * Response interceptor to handle token refresh and 401 errors
+ * Response interceptor to handle errors and token refresh
  */
 axiosInstance.interceptors.response.use(
   (response) => response,
@@ -68,19 +52,20 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Clear the invalid token
-      clearAuthToken();
+      // Clear invalid token
+      tokenManager.removeToken();
 
       // Redirect to login page if not already there
       if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
-        window.location.href = "/login";
+        window.location.href = "/login?reason=unauthorized";
       }
 
-      return Promise.reject(error);
+      return Promise.reject(errorHandler.handleApiError(error));
     }
 
-    // Handle other errors
-    return Promise.reject(error);
+    // Handle other errors with safe error messages
+    const safeError = errorHandler.handleApiError(error);
+    return Promise.reject(safeError);
   }
 );
 

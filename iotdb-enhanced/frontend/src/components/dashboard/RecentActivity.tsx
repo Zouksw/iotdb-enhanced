@@ -9,12 +9,13 @@ import {
   RightOutlined,
 } from "@ant-design/icons";
 import { useGo } from "@refinedev/core";
+import type { Alert, Forecast } from "@/types/api";
 
 const { Title, Text } = Typography;
 
 interface RecentActivityProps {
-  recentAlerts?: any[];
-  recentForecasts?: any[];
+  recentAlerts?: Alert[];
+  recentForecasts?: Forecast[];
   loading?: boolean;
 }
 
@@ -41,19 +42,19 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
     }
   };
 
-  const alertsItems = recentAlerts.slice(0, 5).map((alert) => ({
+  const alertsItems = recentAlerts.slice(0, 5).map((alert: Alert) => ({
     id: alert.id,
-    title: alert.name || alert.message || "Alert",
-    description: alert.message || alert.description || "",
+    title: alert.message || "Alert",
+    description: alert.message || "",
     severity: alert.severity,
     time: alert.createdAt ? new Date(alert.createdAt).toLocaleString() : "Recently",
   }));
 
-  const forecastsItems = recentForecasts.slice(0, 5).map((forecast) => ({
+  const forecastsItems = recentForecasts.slice(0, 5).map((forecast: Forecast) => ({
     id: forecast.id,
-    title: forecast.name || `Forecast for ${forecast.timeseriesId || "Time Series"}`,
-    description: `Model: ${forecast.model || "N/A"}`,
-    status: forecast.status || "completed",
+    title: `Forecast for ${forecast.timeseriesId || "Time Series"}`,
+    description: `Model: ${forecast.model?.name || "N/A"}`,
+    status: forecast.model?.status || "completed",
     time: forecast.createdAt ? new Date(forecast.createdAt).toLocaleString() : "Recently",
   }));
 
@@ -104,8 +105,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         dataSource={forecastsItems}
         renderItem={(item) => (
           <List.Item
-            style={{ cursor: "pointer" }}
-            onClick={() => go({ to: `/forecasts/show/${item.id}`, type: "push" })}
+            onClick={() => go({ to: "/forecasts", type: "push" })}
           >
             <List.Item.Meta
               avatar={<ThunderboltOutlined style={{ fontSize: 20, color: "#722ed1" }} />}

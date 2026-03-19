@@ -1,112 +1,350 @@
+/**
+ * Dataset Detail Page
+ *
+ * Displays detailed information about a specific dataset including:
+ * - Dataset metadata (name, description, storage format)
+ * - Associated time series
+ * - Import status and statistics
+ * - Related forecasts and analyses
+ */
+
 "use client";
 
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
-  DateField,
-  Show,
-} from "@refinedev/antd";
-import { useShow, useList } from "@refinedev/core";
-import { Card, Descriptions, Tag, Typography, Table, Button } from "antd";
-import { useRouter } from "next/navigation";
+  Row,
+  Col,
+  Statistic,
+  Card,
+  Table,
+  Tag,
+  Button,
+  Space,
+  Tabs,
+  Typography,
+  Descriptions,
+  Progress,
+} from "antd";
+import {
+  EditOutlined,
+  DeleteOutlined,
+  DatabaseOutlined,
+  LineChartOutlined,
+  CloudDownloadOutlined,
+  EyeOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
+import type { Dataset, TimeSeries } from "@/types/api";
+import { authFetch } from "@/utils/auth";
+import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
+import { useIsMobile } from "@/lib/responsive-utils";
 
-const { Title, Paragraph } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
-export default function DatasetShow() {
-  const { result: showResult } = useShow({});
-  const dataset = showResult?.data;
-  const isLoading = showResult === undefined;
+interface DatasetDetailParams {
+  id?: string;
+}
 
-  const timeseriesResult = useList({
-    resource: "timeseries",
-    pagination: { pageSize: 10 },
-    filters: [{ field: "datasetId", operator: "eq", value: dataset?.id }],
-    queryOptions: { enabled: !!dataset },
-  });
-  const timeseriesData = timeseriesResult?.result?.data ?? [];
+interface DatasetWithStats extends Dataset {
+  datapointsCount?: number;
+  sizeMB?: number;
+  lastImport?: string;
+  storageLocation?: string;
+}
 
+export default function DatasetDetailPage() {
+  const params = useParams() as DatasetDetailParams;
   const router = useRouter();
+  const [dataset, setDataset] = useState<DatasetWithStats | null>(null);
+  const [timeseries, setTimeseries] = useState<TimeSeries[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
-  if (isLoading) return <Show><Card loading /></Show>;
+  useEffect(() => {
+    fetchDataset();
+    fetchTimeseries();
+  }, [params.id]);
+
+  const fetchDataset = async () => {
+    if (!params.id) {
+      setError("Dataset ID is required");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await authFetch(`/api/datasets/${params.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch dataset");
+      }
+      const data = await response.json();
+      setDataset(data.data || data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTimeseries = async () => {
+    if (!params.id) return;
+
+    try {
+      const response = await authFetch(`/api/datasets/${params.id}/timeseries`);
+      if (response.ok) {
+        const data = await response.json();
+        setTimeseries(data.data || data.items || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch timeseries:", err);
+    }
+  };
+
+  const handleDelete = async () => {
+    // TODO: Implement delete with confirmation
+    router.push("/datasets");
+  };
+
+  if (loading) {
+    return (
+      <DetailPageLayout
+        title="Dataset Details"
+        loading={loading}
+      />
+    );
+  }
+
+  if (error || !dataset) {
+    return (
+      <DetailPageLayout
+        title="Dataset"
+        error={error || "Dataset not found"}
+      />
+    );
+  }
+
+  const breadcrumb = [
+    { label: "Datasets", href: "/datasets" },
+    { label: dataset.name }
+  ];
+
+  const actions = [
+    {
+      icon: <EditOutlined />,
+      label: "Edit",
+      href: `/datasets/edit/${dataset.id}`
+    },
+    {
+      icon: <CloudDownloadOutlined />,
+      label: "Export",
+      onClick: () => router.push(`/datasets/export/${dataset.id}`)
+    },
+    {
+      icon: <DeleteOutlined />,
+      label: "Delete",
+      danger: true,
+      onClick: handleDelete
+    }
+  ];
+
+  const storageFormatColors: Record<string, string> = {
+    TSFILE: "blue",
+    IoTDB: "green",
+    PARQUET: "purple"
+  };
 
   return (
-    <Show>
-      <Card>
-        <Descriptions bordered column={2}>
-          <Descriptions.Item label="ID">
-            <code>{dataset?.id}</code>
-          </Descriptions.Item>
-          <Descriptions.Item label="Name">
-            {dataset?.name}
-          </Descriptions.Item>
-          <Descriptions.Item label="Slug">
-            <code>{dataset?.slug}</code>
-          </Descriptions.Item>
-          <Descriptions.Item label="Storage Format">
-            <Tag color="blue">{dataset?.storageFormat}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Organization">
-            {dataset?.organization?.name}
-          </Descriptions.Item>
-          <Descriptions.Item label="Owner">
-            {dataset?.owner?.name} ({dataset?.owner?.email})
-          </Descriptions.Item>
-          <Descriptions.Item label="Time Series">
-            <Tag color="green">{dataset?._count?.timeseries || 0}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Public">
-            <Tag color={dataset?.isPublic ? "green" : "default"}>
-              {dataset?.isPublic ? "Yes" : "No"}
-            </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Created At">
-            <DateField value={dataset?.createdAt} />
-          </Descriptions.Item>
-          <Descriptions.Item label="Last Accessed">
-            <DateField value={dataset?.lastAccessedAt} />
-          </Descriptions.Item>
-        </Descriptions>
+    <DetailPageLayout
+      title={dataset.name}
+      subtitle={dataset.description}
+      breadcrumb={breadcrumb}
+      actions={actions}
+    >
+      {/* Summary Card */}
+      <DetailSection title="Dataset Summary" colSpan={isMobile ? 24 : 8}>
+        <Space direction="vertical" style={{ width: "100%" }} size="large">
+          <Descriptions column={1} size="small">
+            <Descriptions.Item label="Storage Format">
+              <Tag color={storageFormatColors[dataset.storageFormat]}>
+                {dataset.storageFormat}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Visibility">
+              <Tag color={dataset.isPublic ? "green" : "orange"}>
+                {dataset.isPublic ? "Public" : "Private"}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="Import Status">
+              <Tag color={dataset.isImported ? "success" : "processing"}>
+                {dataset.isImported ? "Imported" : "Pending"}
+              </Tag>
+            </Descriptions.Item>
+          </Descriptions>
 
-        {dataset?.description && (
-          <>
-            <Title level={5}>Description</Title>
-            <Paragraph>{dataset.description}</Paragraph>
-          </>
-        )}
-      </Card>
+          <Statistic
+            title="Time Series"
+            value={dataset._count?.timeseries || timeseries.length || 0}
+            prefix={<DatabaseOutlined />}
+            suffix="series"
+          />
 
-      <Card
-        title={<Title level={5}>Time Series ({timeseriesData.length || 0})</Title>}
-        style={{ marginTop: 16 }}
+          {dataset.datapointsCount !== undefined && (
+            <Statistic
+              title="Total Data Points"
+              value={dataset.datapointsCount}
+              prefix={<LineChartOutlined />}
+            />
+          )}
+
+          {dataset.sizeMB !== undefined && (
+            <Statistic
+              title="Storage Size"
+              value={dataset.sizeMB}
+              suffix="MB"
+              precision={2}
+            />
+          )}
+        </Space>
+      </DetailSection>
+
+      {/* Description Card */}
+      {dataset.description && (
+        <DetailSection title="Description" colSpan={isMobile ? 24 : 16}>
+          <Paragraph>{dataset.description}</Paragraph>
+          <Space direction="vertical" style={{ width: "100%", marginTop: "16px" }}>
+            <Text type="secondary">
+              Created: {new Date(dataset.createdAt).toLocaleString()}
+            </Text>
+            <Text type="secondary">
+              Updated: {new Date(dataset.updatedAt).toLocaleString()}
+            </Text>
+          </Space>
+        </DetailSection>
+      )}
+
+      {/* Time Series List */}
+      <DetailSection
+        title="Associated Time Series"
+        colSpan={24}
         extra={
           <Button
             type="primary"
-            onClick={() => router.push(`/timeseries/create?datasetId=${dataset?.id}`)}
+            icon={<PlusOutlined />}
+            href={`/timeseries/create?dataset=${dataset.id}`}
           >
-            Add Time Series
+            Add Series
           </Button>
         }
       >
-        <Table
-          dataSource={timeseriesData}
-          rowKey="id"
-          pagination={false}
-        >
-          <Table.Column dataIndex="name" title="Name" />
-          <Table.Column dataIndex="slug" title="Slug" />
-          <Table.Column
-            dataIndex={["_count", "dataPoints"]}
-            title="Data Points"
+        {timeseries.length === 0 ? (
+          <Card>
+            <Text type="secondary">No time series associated with this dataset.</Text>
+          </Card>
+        ) : (
+          <Table
+            columns={timeseriesColumns}
+            dataSource={timeseries}
+            rowKey={(record) => record.id}
+            pagination={isMobile ? { pageSize: 5 } : { pageSize: 10 }}
+            scroll={{ x: "max-content" }}
+            size={isMobile ? "small" : "large"}
+            onRow={(record) => ({
+              onClick: () => router.push(`/timeseries/${record.id}`),
+              style: { cursor: "pointer" }
+            })}
           />
-          <Table.Column
-            dataIndex="isAnomalyDetectionEnabled"
-            title="Anomaly Detection"
-            render={(enabled) => (
-              <Tag color={enabled ? "green" : "default"}>
-                {enabled ? "Enabled" : "Disabled"}
-              </Tag>
-            )}
-          />
-        </Table>
-      </Card>
-    </Show>
+        )}
+      </DetailSection>
+
+      {/* Statistics Card */}
+      {dataset.datapointsCount !== undefined && dataset.datapointsCount > 0 && (
+        <DetailSection title="Statistics" colSpan={24}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} md={6}>
+              <Card>
+                <Statistic
+                  title="Data Points"
+                  value={dataset.datapointsCount}
+                  valueStyle={{ color: "#3f860a" }}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card>
+                <Statistic
+                  title="Time Series"
+                  value={dataset._count?.timeseries || timeseries.length}
+                  suffix="/ 100"
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card>
+                <Statistic
+                  title="Storage Used"
+                  value={dataset.sizeMB || 0}
+                  suffix="MB"
+                  precision={2}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Card>
+                <Statistic
+                  title="Last Import"
+                  value={dataset.lastImport ? "Recently" : "Never"}
+                />
+              </Card>
+            </Col>
+          </Row>
+        </DetailSection>
+      )}
+    </DetailPageLayout>
   );
 }
+
+// Table columns for time series
+const timeseriesColumns: ColumnsType<TimeSeries> = [
+  {
+    title: "Name",
+    dataIndex: "name",
+    key: "name",
+    render: (name, record) => (
+      <Space>
+        <DatabaseOutlined />
+        <Text strong>{name}</Text>
+      </Space>
+    )
+  },
+  {
+    title: "Path",
+    dataIndex: "path",
+    key: "path",
+    responsive: ["lg"]
+  },
+  {
+    title: "Unit",
+    dataIndex: "unit",
+    key: "unit",
+    responsive: ["md"],
+    render: (unit) => unit || "-"
+  },
+  {
+    title: "Data Points",
+    dataIndex: "_count",
+    key: "datapoints",
+    render: (count) => count?.datapoints || 0,
+    responsive: ["lg"]
+  },
+  {
+    title: "Created",
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (date) => new Date(date).toLocaleDateString(),
+    responsive: ["xl"]
+  }
+];

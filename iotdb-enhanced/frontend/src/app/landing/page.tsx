@@ -54,7 +54,7 @@ export default function LandingPage() {
                 width: "36px",
                 height: "36px",
                 borderRadius: "8px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -93,7 +93,7 @@ export default function LandingPage() {
             <Button
               type="primary"
               style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                 border: "none",
                 borderRadius: "8px",
                 height: "40px",
@@ -126,7 +126,7 @@ export default function LandingPage() {
       <section
         style={{
           padding: "100px 24px",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
           textAlign: "center",
         }}
       >
@@ -161,7 +161,7 @@ export default function LandingPage() {
               fontWeight: 600,
               borderRadius: "12px",
               background: "#fff",
-              color: "#6366f1",
+              color: "#0066cc",
               border: "none",
             }}
             href="/register"
@@ -188,7 +188,7 @@ export default function LandingPage() {
                     width: "36px",
                     height: "36px",
                     borderRadius: "8px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -233,69 +233,10 @@ export default function LandingPage() {
                     FAQ
                   </a>
                 </li>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    Documentation
-                  </a>
-                </li>
               </ul>
             </Col>
 
-            <Col xs={24} sm={8} md={4}>
-              <Title level={5} style={{ color: "#fff", marginBottom: "16px" }}>
-                Company
-              </Title>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    About
-                  </a>
-                </li>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    Blog
-                  </a>
-                </li>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    Careers
-                  </a>
-                </li>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </Col>
 
-            <Col xs={24} sm={8} md={8}>
-              <Title level={5} style={{ color: "#fff", marginBottom: "16px" }}>
-                Legal
-              </Title>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    Privacy Policy
-                  </a>
-                </li>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    Terms of Service
-                  </a>
-                </li>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    Security
-                  </a>
-                </li>
-                <li style={{ marginBottom: "8px" }}>
-                  <a href="#" style={{ color: "#94a3b8", textDecoration: "none" }}>
-                    Status
-                  </a>
-                </li>
-              </ul>
-            </Col>
           </Row>
 
           <Divider style={{ borderColor: "#1e293b", margin: "40px 0 24px" }} />

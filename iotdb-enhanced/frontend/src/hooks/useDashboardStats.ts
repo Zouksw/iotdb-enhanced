@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useCustom } from "@refinedev/core";
 import { getAuthToken } from "@/utils/auth";
+import type { Alert, Forecast } from "@/types/api";
 
 export interface DashboardStats {
   datasets: {
@@ -31,8 +32,8 @@ export interface DashboardStats {
     active: number;
     total: number;
   };
-  recentAlerts: any[];
-  recentForecasts: any[];
+  recentAlerts: Alert[];
+  recentForecasts: Forecast[];
 }
 
 export const useDashboardStats = () => {
@@ -50,7 +51,7 @@ export const useDashboardStats = () => {
           throw new Error("Not authenticated");
         }
 
-        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002/api";
+        const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
         // Fetch all data in parallel
         const [
@@ -104,7 +105,7 @@ export const useDashboardStats = () => {
           low: 0,
         };
 
-        alerts?.data?.forEach((alert: any) => {
+        alerts?.data?.forEach((alert: Alert) => {
           const severity = alert.severity?.toLowerCase();
           if (severity in alertsBySeverity) {
             alertsBySeverity[severity as keyof typeof alertsBySeverity]++;

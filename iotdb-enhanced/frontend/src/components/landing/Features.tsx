@@ -94,7 +94,7 @@ const metrics = [
 ];
 
 const gradients = {
-  purple: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  purple: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
   blue: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
   sunset: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
 };
@@ -118,7 +118,7 @@ export const Features: React.FC = () => {
             style={{
               display: "inline-block",
               padding: "8px 20px",
-              background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+              background: "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
               borderRadius: "20px",
               marginBottom: "16px",
             }}
@@ -127,7 +127,7 @@ export const Features: React.FC = () => {
               style={{
                 fontSize: "14px",
                 fontWeight: 600,
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -178,8 +178,8 @@ export const Features: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = "0 8px 30px rgba(102, 126, 234, 0.15)";
-                  e.currentTarget.style.borderColor = "#667eea30";
+                  e.currentTarget.style.boxShadow = "0 8px 30px rgba(0, 102, 204, 0.15)";
+                  e.currentTarget.style.borderColor = "#0066cc30";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
@@ -192,7 +192,7 @@ export const Features: React.FC = () => {
                     width: "48px",
                     height: "48px",
                     borderRadius: "12px",
-                    background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                    background: "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -201,7 +201,7 @@ export const Features: React.FC = () => {
                 >
                   <span style={{
                     fontSize: "22px",
-                    color: "#667eea",
+                    color: "#0066cc",
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -213,7 +213,7 @@ export const Features: React.FC = () => {
                   style={{
                     fontSize: "32px",
                     fontWeight: 700,
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -246,7 +246,7 @@ export const Features: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-4px)";
-                  e.currentTarget.style.boxShadow = `0 12px 40px ${feature.gradient === "purple" ? "rgba(102, 126, 234, 0.2)" : feature.gradient === "blue" ? "rgba(59, 130, 246, 0.2)" : "rgba(79, 172, 254, 0.2)"}`;
+                  e.currentTarget.style.boxShadow = `0 12px 40px ${feature.gradient === "purple" ? "rgba(0, 102, 204, 0.2)" : feature.gradient === "blue" ? "rgba(59, 130, 246, 0.2)" : "rgba(79, 172, 254, 0.2)"}`;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
@@ -282,8 +282,8 @@ export const Features: React.FC = () => {
                         fontSize: "12px",
                         padding: "4px 10px",
                         borderRadius: "6px",
-                        background: "rgba(102, 126, 234, 0.08)",
-                        color: "#667eea",
+                        background: "rgba(0, 102, 204, 0.08)",
+                        color: "#0066cc",
                         fontWeight: 500,
                       }}
                     >

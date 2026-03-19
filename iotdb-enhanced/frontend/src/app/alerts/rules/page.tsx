@@ -32,6 +32,8 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
+import { authFetch } from "@/utils/auth";
+import { useIsMobile } from "@/lib/responsive-utils";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -75,14 +77,7 @@ interface Timeseries {
   };
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
-
-const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
+const API_BASE = ""; // Use relative paths for Next.js rewrites
 
 export default function AlertRules() {
   const [rules, setRules] = useState<AlertRule[]>([]);
@@ -90,6 +85,7 @@ export default function AlertRules() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRule, setEditingRule] = useState<AlertRule | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchRules();
@@ -99,11 +95,8 @@ export default function AlertRules() {
   const fetchRules = async () => {
     setLoading(true);
     try {
-      const token = getAuthToken();
       // Since rules are stored in user preferences, we need to get user data
-      const response = await fetch(`${API_BASE}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await authFetch(`${API_BASE}/api/auth/me`);
 
       if (!response.ok) throw new Error("Failed to fetch alert rules");
 
@@ -121,10 +114,7 @@ export default function AlertRules() {
 
   const fetchTimeseries = async () => {
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE}/api/timeseries`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await authFetch(`${API_BASE}/api/timeseries`);
 
       if (!response.ok) throw new Error("Failed to fetch timeseries");
 
@@ -147,10 +137,8 @@ export default function AlertRules() {
 
   const handleDelete = async (ruleId: string) => {
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE}/api/alerts/rules/${ruleId}`, {
+      const response = await authFetch(`${API_BASE}/api/alerts/rules/${ruleId}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Failed to delete alert rule");
@@ -164,15 +152,10 @@ export default function AlertRules() {
 
   const handleToggleEnabled = async (rule: AlertRule) => {
     try {
-      const token = getAuthToken();
       const updatedRule = { ...rule, enabled: !rule.enabled };
 
-      await fetch(`${API_BASE}/api/alerts/rules/${rule.id}`, {
+      await authFetch(`${API_BASE}/api/alerts/rules/${rule.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ enabled: !rule.enabled }),
       });
 
@@ -189,6 +172,7 @@ export default function AlertRules() {
       dataIndex: "name",
       key: "name",
       width: 180,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (name: string, record: AlertRule) => (
         <Space direction="vertical" size={0}>
           <Text strong style={{ fontSize: 13 }}>{name}</Text>
@@ -203,6 +187,7 @@ export default function AlertRules() {
       dataIndex: "type",
       key: "type",
       width: 140,
+      responsive: ["md", "lg", "xl"],
       render: (type: string) => {
         const colors: Record<string, string> = {
           ANOMALY: "red",
@@ -226,6 +211,7 @@ export default function AlertRules() {
       dataIndex: "condition",
       key: "condition",
       width: 140,
+      responsive: ["md", "lg", "xl"],
       render: (condition: AlertCondition) => {
         if (condition.type === "threshold") {
           return (
@@ -246,6 +232,7 @@ export default function AlertRules() {
       key: "severity",
       width: 100,
       align: "center" as const,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (severity: string) => {
         const colors: Record<string, string> = {
           INFO: "blue",
@@ -264,6 +251,7 @@ export default function AlertRules() {
       dataIndex: "notificationChannels",
       key: "notificationChannels",
       width: 140,
+      responsive: ["lg", "xl"],
       render: (channels: NotificationChannel[]) => (
         <Space size={4} wrap>
           {channels.map((ch, idx) => (
@@ -279,6 +267,7 @@ export default function AlertRules() {
       dataIndex: "cooldownMinutes",
       key: "cooldownMinutes",
       width: 100,
+      responsive: ["lg", "xl"],
       render: (cooldown?: number) => (cooldown ? `${cooldown} min` : "-"),
     },
     {
@@ -287,6 +276,7 @@ export default function AlertRules() {
       key: "enabled",
       width: 100,
       align: "center" as const,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (enabled: boolean) => (
         <Tag color={enabled ? "green" : "default"} style={{ margin: 0 }}>
           {enabled ? "Active" : "Inactive"}
@@ -296,7 +286,7 @@ export default function AlertRules() {
     {
       title: "Actions",
       key: "actions",
-      width: 160,
+      width: isMobile ? 80 : 160,
       fixed: "right" as const,
       render: (_: any, record: AlertRule) => (
         <Space size="small">
@@ -305,26 +295,34 @@ export default function AlertRules() {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            Edit
+            {!isMobile && "Edit"}
           </Button>
           <Switch
             size="small"
             checked={record.enabled}
             onChange={() => handleToggleEnabled(record)}
           />
-          <Popconfirm
-            title="Delete Alert Rule"
-            description="Are you sure you want to delete this alert rule?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Delete"
-            cancelText="Cancel"
-            okButtonProps={{ danger: true }}
-          >
-            <Button size="small" icon={<DeleteOutlined />} danger />
-          </Popconfirm>
+          {!isMobile && (
+            <Popconfirm
+              title="Delete Alert Rule"
+              description="Are you sure you want to delete this alert rule?"
+              onConfirm={() => handleDelete(record.id)}
+              okText="Delete"
+              cancelText="Cancel"
+              okButtonProps={{ danger: true }}
+            >
+              <Button size="small" icon={<DeleteOutlined />} danger />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
+  ];
+
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "Alerts & Notifications", href: "/alerts" },
+    { title: "Alert Rules" },
   ];
 
   // Statistics
@@ -337,16 +335,17 @@ export default function AlertRules() {
       <PageHeader
         title="Alert Rules"
         description="Configure automated alert rules for monitoring your time series data"
+        breadcrumbs={breadcrumbItems}
         actions={
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Create Rule
+            {!isMobile && "Create Rule"}
           </Button>
         }
       />
 
       {/* Statistics Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={8}>
+      <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+        <Col xs={12} sm={12} md={8}>
           <StatCard
             title="Total Rules"
             value={totalRules}
@@ -354,7 +353,7 @@ export default function AlertRules() {
             variant="primary"
           />
         </Col>
-        <Col xs={24} sm={12} lg={8}>
+        <Col xs={12} sm={12} md={8}>
           <StatCard
             title="Active Rules"
             value={activeRules}
@@ -362,7 +361,7 @@ export default function AlertRules() {
             variant="success"
           />
         </Col>
-        <Col xs={24} sm={12} lg={8}>
+        <Col xs={12} sm={12} md={8}>
           <StatCard
             title="Error Severity"
             value={errorSeverityRules}
@@ -378,7 +377,7 @@ export default function AlertRules() {
         description="Alert rules automatically monitor your timeseries data and send notifications when specific conditions are met. You can set up rules based on thresholds, anomalies, or forecast availability."
         type="info"
         showIcon
-        style={{ marginBottom: 24 }}
+        style={{ marginBottom: isMobile ? 16 : 24 }}
       />
 
       {/* Rules Table */}
@@ -389,7 +388,12 @@ export default function AlertRules() {
         rowKey="id"
         enableZebraStriping={true}
         stickyHeader={true}
-        pagination={{ pageSize: 10 }}
+        scroll={{ x: isMobile ? "max-content" : undefined }}
+        pagination={{
+          pageSize: isMobile ? 10 : 20,
+          showSizeChanger: !isMobile,
+          simple: isMobile,
+        }}
       />
 
       {/* Create/Edit Modal */}
@@ -423,6 +427,7 @@ function AlertRuleModal({ visible, editingRule, timeseries, onClose, onSave }: A
   const [notificationChannels, setNotificationChannels] = useState<NotificationChannel[]>([
     { type: "email", config: {} },
   ]);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (visible && editingRule) {
@@ -439,7 +444,6 @@ function AlertRuleModal({ visible, editingRule, timeseries, onClose, onSave }: A
   const handleSubmit = async (values: any) => {
     setLoading(true);
     try {
-      const token = getAuthToken();
       const payload = {
         ...values,
         condition: {
@@ -453,12 +457,8 @@ function AlertRuleModal({ visible, editingRule, timeseries, onClose, onSave }: A
         ? `${API_BASE}/api/alerts/rules/${editingRule.id}`
         : `${API_BASE}/api/alerts/rules`;
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: editingRule ? "PATCH" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(payload),
       });
 
@@ -480,7 +480,7 @@ function AlertRuleModal({ visible, editingRule, timeseries, onClose, onSave }: A
       onCancel={onClose}
       onOk={() => form.submit()}
       confirmLoading={loading}
-      width={700}
+      width={isMobile ? "95%" : 700}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item

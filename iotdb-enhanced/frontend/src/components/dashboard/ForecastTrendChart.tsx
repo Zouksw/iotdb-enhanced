@@ -11,9 +11,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Card, Typography } from "antd";
+import { Card, Typography, theme } from "antd";
 
 const { Title } = Typography;
+const { useToken } = theme;
 
 interface ForecastTrendChartProps {
   data?: Array<{ date: string; count: number }>;
@@ -35,6 +36,8 @@ export const ForecastTrendChart: React.FC<ForecastTrendChartProps> = ({
   data = mockData,
   loading = false,
 }) => {
+  const { token } = useToken();
+
   return (
     <Card
       loading={loading}
@@ -73,9 +76,9 @@ export const ForecastTrendChart: React.FC<ForecastTrendChartProps> = ({
             type="monotone"
             dataKey="count"
             name="Forecasts"
-            stroke="#667eea"
+            stroke={token.colorPrimary}
             strokeWidth={2}
-            dot={{ fill: "#667eea", strokeWidth: 2, r: 4 }}
+            dot={{ fill: token.colorPrimary, strokeWidth: 2, r: 4 }}
             activeDot={{ r: 6 }}
           />
         </LineChart>

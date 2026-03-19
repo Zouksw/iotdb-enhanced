@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
 import GlassCard from "@/components/ui/GlassCard";
+import { useIsMobile } from "@/lib/responsive-utils";
 
 const { Text } = Typography;
 
@@ -33,6 +34,8 @@ export default function AnomalyList() {
       initial: [{ field: "detectedAt", order: "desc" }],
     },
   });
+
+  const isMobile = useIsMobile();
 
   // Get statistics
   const anomaliesStatsResult = useList({
@@ -52,6 +55,7 @@ export default function AnomalyList() {
       title: "ID",
       width: 100,
       fixed: "left" as const,
+      responsive: ["lg"],
       render: (id: string) => (
         <code style={{ fontSize: 12, padding: "2px 6px", background: "#f5f5f5", borderRadius: 4 }}>
           {id.slice(0, 8)}...
@@ -63,6 +67,7 @@ export default function AnomalyList() {
       title: "Severity",
       width: 120,
       sorter: true,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (severity: string) => {
         const colors: Record<string, string> = {
           LOW: "green",
@@ -92,6 +97,7 @@ export default function AnomalyList() {
       title: "Time Series",
       width: 180,
       ellipsis: true,
+      responsive: ["md", "lg", "xl"],
       render: (ts: any) => ts?.name || "-",
     },
     {
@@ -99,6 +105,7 @@ export default function AnomalyList() {
       title: "Value",
       width: 120,
       align: "right" as const,
+      responsive: ["md", "lg", "xl"],
       render: (val: number) => (
         <NumberField value={Number(val) || 0} options={{ notation: "standard" }} />
       ),
@@ -107,6 +114,7 @@ export default function AnomalyList() {
       dataIndex: "expectedRange",
       title: "Expected Range",
       width: 160,
+      responsive: ["lg", "xl"],
       render: (_: any, record: any) => (
         <span style={{ fontSize: 13, color: "#6B7280" }}>
           {record.minExpected} - {record.maxExpected}
@@ -117,6 +125,7 @@ export default function AnomalyList() {
       dataIndex: "detectionMethod",
       title: "Detection Method",
       width: 140,
+      responsive: ["md", "lg", "xl"],
       render: (method: string) => <Tag>{method}</Tag>,
     },
     {
@@ -124,20 +133,27 @@ export default function AnomalyList() {
       title: "Detected At",
       width: 140,
       sorter: true,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (value: string) => <DateField value={value} format="YYYY-MM-DD HH:mm" />,
     },
     {
       title: "Actions",
       dataIndex: "actions",
-      width: 120,
+      width: isMobile ? 80 : 120,
       fixed: "right" as const,
       render: (_: any, record: any) => (
         <Space size="small">
-          <ShowButton hideText size="small" recordItemId={record.id} />
-          <DeleteButton hideText size="small" recordItemId={record.id} />
+          <ShowButton hideText={!isMobile} size="small" recordItemId={record.id} />
+          <DeleteButton hideText={!isMobile} size="small" recordItemId={record.id} />
         </Space>
       ),
     },
+  ];
+
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "AI & Anomaly Detection", href: "/ai/anomalies" },
+    { title: "Detected Anomalies" },
   ];
 
   return (
@@ -146,12 +162,13 @@ export default function AnomalyList() {
         <PageHeader
           title="Detected Anomalies"
           description="AI-powered anomaly detection for your time series data"
+          breadcrumbs={breadcrumbItems}
         />
 
         {/* Statistics Cards with Glassmorphism */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: "20px" }}>
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -180,8 +197,8 @@ export default function AnomalyList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -213,8 +230,8 @@ export default function AnomalyList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -246,15 +263,15 @@ export default function AnomalyList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
                     borderRadius: "10px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -284,6 +301,12 @@ export default function AnomalyList() {
           columns={columns}
           enableZebraStriping={true}
           stickyHeader={true}
+          scroll={{ x: isMobile ? "max-content" : undefined }}
+          pagination={{
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
+            simple: isMobile,
+          }}
         />
       </List>
     </PageContainer>

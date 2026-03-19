@@ -1,200 +1,436 @@
+/**
+ * API Key Detail Page
+ *
+ * Displays detailed information about a specific API key including:
+ * - API key metadata (name, permissions, scopes)
+ * - Usage statistics and rate limits
+ * - Activity log
+ * - Security settings (IP whitelist, expiration)
+ */
+
 "use client";
 
-import { Row, Col, Typography, Tag, Button, Space, Alert, Descriptions, Badge } from "antd";
-import { ArrowLeftOutlined, KeyOutlined, CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
-import { useGo } from "@refinedev/core";
-import { useOne } from "@refinedev/core";
-import dayjs from "dayjs";
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  Row,
+  Col,
+  Statistic,
+  Card,
+  Table,
+  Tag,
+  Button,
+  Space,
+  Typography,
+  Descriptions,
+  Alert,
+  Input,
+  message,
+  Popconfirm,
+  Progress,
+} from "antd";
+import {
+  KeyOutlined,
+  CopyOutlined,
+  ReloadOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  ClockCircleOutlined,
+  SecurityScanOutlined,
+} from "@ant-design/icons";
+import type { ColumnsType } from "antd/es/table";
+import type { ApiKey } from "@/types/api";
+import { authFetch } from "@/utils/auth";
+import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
+import { useIsMobile } from "@/lib/responsive-utils";
 
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { ContentCard } from "@/components/layout/ContentCard";
+const { Title, Text, Paragraph } = Typography;
 
-const { Text, Paragraph } = Typography;
-
-interface ApiKeyShowPageProps {
-  params: { id: string };
+interface ApiKeyDetailParams {
+  id?: string;
 }
 
-export default function ApiKeyShowPage({ params }: ApiKeyShowPageProps) {
-  const go = useGo();
+interface ApiKeyWithDetails extends Omit<ApiKey, 'permissions' | 'lastUsed' | 'expiresAt'> {
+  lastUsed?: string;
+  usageCount?: number;
+  rateLimit?: {
+    limit: number;
+    remaining: number;
+    window: string;
+  };
+  permissions?: string[];
+  ipWhitelist?: string[];
+  expiresAt?: string;
+  keyPreview?: string; // Only show first 8 and last 4 characters
+}
 
-  const apiKeyResult = useOne({
-    resource: "apikeys",
-    id: params.id,
-  });
+interface ApiUsageLog {
+  id: string;
+  timestamp: string;
+  endpoint: string;
+  method: string;
+  statusCode: number;
+  responseTime: number;
+  ip: string;
+}
 
-  const apiKey = apiKeyResult?.result?.data;
-  const isLoading = apiKeyResult?.query?.isLoading ?? false;
+export default function ApiKeyDetailPage() {
+  const params = useParams() as ApiKeyDetailParams;
+  const router = useRouter();
+  const [apiKey, setApiKey] = useState<ApiKeyWithDetails | null>(null);
+  const [usageLogs, setUsageLogs] = useState<ApiUsageLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
-  if (isLoading) {
+  useEffect(() => {
+    fetchApiKey();
+    fetchUsageLogs();
+  }, [params.id]);
+
+  const fetchApiKey = async () => {
+    if (!params.id) {
+      setError("API Key ID is required");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await authFetch(`/api/apikeys/${params.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch API key");
+      }
+      const data = await response.json();
+      setApiKey({
+        ...(data.data || data),
+        // Create key preview (first 8 and last 4 characters)
+        keyPreview: `${(data.data || data).key?.substring(0, 8)}${(data.data || data).key?.slice(-4)}`
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchUsageLogs = async () => {
+    if (!params.id) return;
+
+    try {
+      const response = await authFetch(`/api/apikeys/${params.id}/usage`);
+      if (response.ok) {
+        const data = await response.json();
+        setUsageLogs(data.data || data.items || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch usage logs:", err);
+    }
+  };
+
+  const handleCopyKey = () => {
+    if (apiKey?.key) {
+      navigator.clipboard.writeText(apiKey.key);
+      message.success("API key copied to clipboard");
+    }
+  };
+
+  const handleRegenerate = async () => {
+    // TODO: Implement regenerate functionality
+    message.info("Key regeneration will be implemented");
+  };
+
+  const handleRevoke = async () => {
+    if (!params.id) {
+      message.error("API Key ID is required");
+      return;
+    }
+
+    try {
+      const response = await authFetch(`/api/apikeys/${params.id}`, {
+        method: "DELETE"
+      });
+      if (response.ok) {
+        message.success("API key revoked successfully");
+        router.push("/apikeys");
+      }
+    } catch (err) {
+      message.error("Failed to revoke API key");
+    }
+  };
+
+  if (loading) {
     return (
-      <PageContainer>
-        <ContentCard>
-          <Alert message="Loading API key details..." type="info" />
-        </ContentCard>
-      </PageContainer>
+      <DetailPageLayout
+        title="API Key Details"
+        loading={loading}
+      />
     );
   }
 
-  if (!apiKey) {
+  if (error || !apiKey) {
     return (
-      <PageContainer>
-        <ContentCard>
-          <Alert message="API key not found" type="error" />
-        </ContentCard>
-      </PageContainer>
+      <DetailPageLayout
+        title="API Key"
+        error={error || "API key not found"}
+      />
     );
   }
 
-  const isExpired = apiKey.expiresAt ? dayjs(apiKey.expiresAt).isBefore(dayjs()) : false;
+  const breadcrumb = [
+    { label: "API Keys", href: "/apikeys" },
+    { label: apiKey.name || "API Key" }
+  ];
+
+  const actions = [
+    {
+      icon: <CopyOutlined />,
+      label: "Copy Key",
+      onClick: handleCopyKey
+    },
+    {
+      icon: <ReloadOutlined />,
+      label: "Regenerate",
+      onClick: handleRegenerate
+    },
+    {
+      icon: <EditOutlined />,
+      label: "Edit",
+      href: `/apikeys/edit/${apiKey.id}`
+    },
+    {
+      icon: <DeleteOutlined />,
+      label: "Revoke",
+      danger: true,
+      onClick: () => {
+        // Show confirmation for revoke action
+      }
+    }
+  ];
+
+  const isExpired = apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date();
 
   return (
-    <PageContainer>
-      <PageHeader
-        title="API Key Details"
-        description="View detailed information about this API key"
-        actions={
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => go({ to: "/apikeys", type: "push" })}
-          >
-            Back to API Keys
-          </Button>
-        }
-      />
+    <DetailPageLayout
+      title={apiKey.name}
+      subtitle={`Created ${new Date(apiKey.createdAt).toLocaleString()}`}
+      breadcrumb={breadcrumb}
+      actions={actions}
+    >
+      {isExpired && (
+        <Alert
+          message="This API key has expired"
+          description="Please regenerate or create a new API key to continue using the API"
+          type="error"
+          showIcon
+          closable
+          style={{ marginBottom: "24px" }}
+        />
+      )}
 
-      <Row gutter={[24, 24]}>
-        {/* Main Details */}
-        <Col xs={24} lg={16}>
-          <ContentCard title="API Key Information" subtitle="Details about this API key">
-            <Descriptions bordered column={{ xs: 1, sm: 2 }} size="middle">
-              <Descriptions.Item label="API Key ID" span={2}>
-                <Text code>{apiKey.id}</Text>
-              </Descriptions.Item>
-
-              <Descriptions.Item label="Name" span={2}>
-                <Text strong style={{ fontSize: 16 }}>{apiKey.name}</Text>
-              </Descriptions.Item>
-
-              <Descriptions.Item label="Status">
-                <Tag
-                  icon={apiKey.isActive ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
-                  color={apiKey.isActive ? "green" : "red"}
-                  style={{ margin: 0, fontSize: 13, padding: "4px 12px" }}
+      {/* Key Information Card */}
+      <DetailSection title="API Key Information" colSpan={isMobile ? 24 : 12}>
+        <Space direction="vertical" style={{ width: "100%" }} size="large">
+          <Descriptions column={1} size="small">
+            <Descriptions.Item label="Key Name">
+              <Text strong>{apiKey.name}</Text>
+            </Descriptions.Item>
+            <Descriptions.Item label="Key Preview">
+              <Space>
+                <Text code copyable>{apiKey.keyPreview}</Text>
+                <Button
+                  size="small"
+                  icon={<CopyOutlined />}
+                  onClick={handleCopyKey}
                 >
-                  {apiKey.isActive ? "Active" : "Inactive"}
-                </Tag>
-              </Descriptions.Item>
+                  Copy
+                </Button>
+              </Space>
+            </Descriptions.Item>
+            <Descriptions.Item label="Status">
+              <Tag color={isExpired ? "error" : "success"}>
+                {isExpired ? "Expired" : "Active"}
+              </Tag>
+            </Descriptions.Item>
+          </Descriptions>
 
-              <Descriptions.Item label="Expiration">
-                {apiKey.expiresAt ? (
-                  <Text type={isExpired ? "danger" : "secondary"}>
-                    {dayjs(apiKey.expiresAt).format("YYYY-MM-DD HH:mm")}
-                    {isExpired && " (Expired)"}
-                  </Text>
-                ) : (
-                  <Text type="secondary">Never</Text>
-                )}
-              </Descriptions.Item>
+          <Statistic
+            title="Total Usage"
+            value={apiKey.usageCount || 0}
+            prefix={<KeyOutlined />}
+            suffix="requests"
+          />
 
-              <Descriptions.Item label="Last Characters">
-                <Text code style={{ fontSize: 13 }}>
-                  ...{apiKey.lastCharacters?.toString(16).toUpperCase().padStart(8, "0") || "N/A"}
-                </Text>
-              </Descriptions.Item>
-
-              <Descriptions.Item label="Usage Count">
-                <Text strong>{apiKey.usageCount || 0}</Text> {apiKey.usageCount === 1 ? "request" : "requests"}
-              </Descriptions.Item>
-
-              <Descriptions.Item label="Created At" span={2}>
-                {apiKey.createdAt ? dayjs(apiKey.createdAt).format("YYYY-MM-DD HH:mm:ss") : "N/A"}
-              </Descriptions.Item>
-
-              {apiKey.lastUsedAt && (
-                <Descriptions.Item label="Last Used At" span={2}>
-                  {dayjs(apiKey.lastUsedAt).format("YYYY-MM-DD HH:mm:ss")}
-                  <Text type="secondary" style={{ marginLeft: 8 }}>
-                    ({dayjs(apiKey.lastUsedAt).fromNow()})
-                  </Text>
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-          </ContentCard>
-        </Col>
-
-        {/* Side Panel */}
-        <Col xs={24} lg={8}>
-          {/* Security Info */}
-          <ContentCard title="Security Information" subtitle="Key security details">
-            <Space direction="vertical" style={{ width: "100%" }} size="middle">
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>Security Status</Text>
-                <div style={{ marginTop: 4 }}>
-                  <Badge
-                    status={apiKey.isActive && !isExpired ? "success" : "error"}
-                    text={apiKey.isActive && !isExpired ? "Secure" : "Check Required"}
-                  />
-                </div>
-              </div>
-
-              {!apiKey.isActive && (
-                <Alert
-                  message="Key Inactive"
-                  description="This API key is currently inactive and cannot be used for authentication."
-                  type="warning"
-                  showIcon
-                />
-              )}
-
-              {isExpired && (
-                <Alert
-                  message="Key Expired"
-                  description="This API key has expired. Please generate a new key for continued access."
-                  type="error"
-                  showIcon
-                />
-              )}
-
-              {apiKey.isActive && !isExpired && (
-                <Alert
-                  message="Key Active"
-                  description="This API key is active and can be used for authentication."
-                  type="success"
-                  showIcon
-                />
-              )}
-            </Space>
-          </ContentCard>
-
-          {/* Usage Statistics */}
-          {apiKey.usageCount !== undefined && (
-            <ContentCard title="Usage Statistics" subtitle="API key usage" style={{ marginTop: 16 }}>
-              <Descriptions column={1} size="small">
-                <Descriptions.Item label="Total Requests">
-                  <Text strong style={{ fontSize: 18 }}>{apiKey.usageCount}</Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Last Used">
-                  {apiKey.lastUsedAt ? dayjs(apiKey.lastUsedAt).fromNow() : "Never"}
-                </Descriptions.Item>
-              </Descriptions>
-            </ContentCard>
+          {apiKey.lastUsed && (
+            <div>
+              <Text type="secondary">Last used: </Text>
+              <Text>{new Date(apiKey.lastUsed).toLocaleString()}</Text>
+            </div>
           )}
+        </Space>
+      </DetailSection>
 
-          {/* Quick Actions */}
-          <ContentCard title="Quick Actions" subtitle="Available actions" style={{ marginTop: 16 }}>
-            <Space direction="vertical" style={{ width: "100%" }}>
-              <Button block icon={<KeyOutlined />}>
-                Edit API Key
-              </Button>
-              <Button block danger>
-                Revoke Key
-              </Button>
-            </Space>
-          </ContentCard>
-        </Col>
-      </Row>
-    </PageContainer>
+      {/* Rate Limit Card */}
+      {apiKey.rateLimit && (
+        <DetailSection title="Rate Limit" colSpan={isMobile ? 24 : 12}>
+          <Space direction="vertical" style={{ width: "100%" }} size="middle">
+            <Progress
+              percent={(apiKey.rateLimit.remaining / apiKey.rateLimit.limit) * 100}
+              status={apiKey.rateLimit.remaining < apiKey.rateLimit.limit * 0.2 ? "exception" : "active"}
+            />
+            <Text type="secondary">
+              {apiKey.rateLimit.remaining} / {apiKey.rateLimit.limit} requests remaining
+              ({apiKey.rateLimit.window})
+            </Text>
+          </Space>
+        </DetailSection>
+      )}
+
+      {/* Permissions Card */}
+      <DetailSection
+        title="Permissions"
+        colSpan={isMobile ? 24 : 12}
+        extra={<Button type="link" href={`/apikeys/edit/${apiKey.id}`}>Edit</Button>}
+      >
+        {apiKey.permissions && apiKey.permissions.length > 0 ? (
+          <Space direction="vertical" style={{ width: "100%" }}>
+            {apiKey.permissions.map((permission) => (
+              <Tag key={permission} color="blue">
+                {permission}
+              </Tag>
+            ))}
+          </Space>
+        ) : (
+          <Text type="secondary">Full permissions</Text>
+        )}
+      </DetailSection>
+
+      {/* Security Settings Card */}
+      <DetailSection
+        title="Security Settings"
+        colSpan={isMobile ? 24 : 12}
+        extra={<SecurityScanOutlined />}
+      >
+        <Descriptions column={1} size="small">
+          {apiKey.ipWhitelist && apiKey.ipWhitelist.length > 0 && (
+            <Descriptions.Item label="IP Whitelist">
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {apiKey.ipWhitelist.map((ip, index) => (
+                  <Tag key={index} color="green">{ip}</Tag>
+                ))}
+              </Space>
+            </Descriptions.Item>
+          )}
+          {apiKey.expiresAt && (
+            <Descriptions.Item label="Expires">
+              <Text type={isExpired ? "danger" : "secondary"}>
+                {new Date(apiKey.expiresAt).toLocaleString()}
+              </Text>
+            </Descriptions.Item>
+          )}
+        </Descriptions>
+      </DetailSection>
+
+      {/* Usage Log Table */}
+      <DetailSection
+        title="Recent Usage"
+        colSpan={24}
+        extra={<Button type="link" onClick={fetchUsageLogs}>Refresh</Button>}
+      >
+        {usageLogs.length === 0 ? (
+          <Card>
+            <Text type="secondary">No usage logs available for this API key.</Text>
+          </Card>
+        ) : (
+          <Table
+            columns={usageLogColumns}
+            dataSource={usageLogs}
+            rowKey={(record) => record.id}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: "max-content" }}
+            size={isMobile ? "small" : "large"}
+          />
+        )}
+      </DetailSection>
+
+      {/* Quick Actions */}
+      <DetailSection title="Quick Actions" colSpan={24}>
+        <Space wrap>
+          <Button
+            icon={<CopyOutlined />}
+            onClick={handleCopyKey}
+          >
+            Copy API Key
+          </Button>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={handleRegenerate}
+          >
+            Regenerate Key
+          </Button>
+          <Button
+            icon={<EyeOutlined />}
+            onClick={() => router.push("/docs/api")}
+          >
+            View API Docs
+          </Button>
+        </Space>
+      </DetailSection>
+    </DetailPageLayout>
   );
 }
+
+// Table columns for usage logs
+const usageLogColumns: ColumnsType<ApiUsageLog> = [
+  {
+    title: "Timestamp",
+    dataIndex: "timestamp",
+    key: "timestamp",
+    render: (timestamp) => new Date(timestamp).toLocaleString(),
+    sorter: true,
+    defaultSortOrder: "descend"
+  },
+  {
+    title: "Endpoint",
+    dataIndex: "endpoint",
+    key: "endpoint",
+    responsive: ["lg"]
+  },
+  {
+    title: "Method",
+    dataIndex: "method",
+    key: "method",
+    width: 80,
+    render: (method) => (
+      <Tag color={method === "GET" ? "green" : method === "POST" ? "blue" : "orange"}>
+        {method}
+      </Tag>
+    )
+  },
+  {
+    title: "Status",
+    dataIndex: "statusCode",
+    key: "statusCode",
+    width: 100,
+    render: (status) => {
+      const color = status >= 200 && status < 300 ? "success" :
+                     status >= 300 && status < 400 ? "warning" : "error";
+      return <Tag color={color}>{status}</Tag>;
+    }
+  },
+  {
+    title: "Response Time",
+    dataIndex: "responseTime",
+    key: "responseTime",
+    width: 120,
+    render: (time) => `${time}ms`,
+    sorter: true
+  },
+  {
+    title: "IP Address",
+    dataIndex: "ip",
+    key: "ip",
+    responsive: ["xl"]
+  }
+];

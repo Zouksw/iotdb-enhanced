@@ -29,9 +29,9 @@ export const Hero: React.FC = () => {
         overflow: "hidden",
         padding: "60px 24px",
         background: `
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.3), transparent),
-          radial-gradient(ellipse 60% 40% at 80% 50%, rgba(59, 130, 246, 0.15), transparent),
-          radial-gradient(ellipse 60% 40% at 20% 80%, rgba(139, 92, 246, 0.15), transparent)
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 102, 204, 0.25), transparent),
+          radial-gradient(ellipse 60% 40% at 80% 50%, rgba(0, 168, 232, 0.15), transparent),
+          radial-gradient(ellipse 60% 40% at 20% 80%, rgba(0, 136, 255, 0.15), transparent)
         `,
       }}
     >
@@ -42,7 +42,7 @@ export const Hero: React.FC = () => {
           width: "600px",
           height: "600px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(0, 102, 204, 0.15) 0%, transparent 70%)",
           top: "-200px",
           left: "-200px",
           filter: "blur(60px)",
@@ -55,7 +55,7 @@ export const Hero: React.FC = () => {
           width: "500px",
           height: "500px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(0, 168, 232, 0.15) 0%, transparent 70%)",
           bottom: "-150px",
           right: "-150px",
           filter: "blur(60px)",
@@ -79,13 +79,13 @@ export const Hero: React.FC = () => {
             alignItems: "center",
             padding: "6px 16px",
             borderRadius: "20px",
-            background: "rgba(99, 102, 241, 0.1)",
-            border: "1px solid rgba(99, 102, 241, 0.2)",
+            background: "rgba(0, 102, 204, 0.08)",
+            border: "1px solid rgba(0, 102, 204, 0.2)",
             marginBottom: "24px",
           }}
         >
-          <ThunderboltOutlined style={{ color: "#6366f1", marginRight: "8px" }} />
-          <Text style={{ color: "#6366f1", fontWeight: 500 }}>
+          <ThunderboltOutlined style={{ color: "#0066cc", marginRight: "8px" }} />
+          <Text style={{ color: "#0066cc", fontWeight: 500 }}>
             Enterprise-Grade Time Series Database
           </Text>
         </div>
@@ -98,7 +98,7 @@ export const Hero: React.FC = () => {
             fontWeight: 800,
             lineHeight: 1.1,
             marginBottom: "24px",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+            background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #00a8e8 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
@@ -119,7 +119,7 @@ export const Hero: React.FC = () => {
           }}
         >
           Real-Time Analytics at
-          <span style={{ color: "#6366f1" }}> Any Scale</span>
+          <span style={{ color: "#0066cc" }}> Any Scale</span>
         </Title>
 
         <Paragraph
@@ -147,9 +147,9 @@ export const Hero: React.FC = () => {
               fontSize: "16px",
               fontWeight: 600,
               borderRadius: "12px",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
               border: "none",
-              boxShadow: "0 4px 20px rgba(102, 126, 234, 0.4)",
+              boxShadow: "0 4px 20px rgba(0, 102, 204, 0.35)",
             }}
             href="/register"
           >
@@ -187,7 +187,7 @@ export const Hero: React.FC = () => {
                 width: "48px",
                 height: "48px",
                 borderRadius: "12px",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

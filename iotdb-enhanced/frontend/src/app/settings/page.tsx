@@ -33,9 +33,9 @@ interface SettingsItem {
 interface UserProfile {
   id: string;
   email: string;
-  name: string;
-  role: string;
-  avatarUrl?: string;
+  name: string | null;
+  roles?: string[];
+  avatar?: string;
 }
 
 export default function SettingsPage() {
@@ -129,7 +129,7 @@ export default function SettingsPage() {
             <Space direction="vertical" style={{ width: "100%" }} align="center" size="large">
               <Avatar
                 size={80}
-                src={user?.avatarUrl}
+                src={user?.avatar}
                 icon={<UserOutlined />}
                 style={{ border: "3px solid #1890ff" }}
               />
@@ -139,7 +139,7 @@ export default function SettingsPage() {
                 </Title>
                 <Text type="secondary">{user?.email || "user@example.com"}</Text>
                 <div style={{ marginTop: 8 }}>
-                  <Tag color="blue">{user?.role || "User"}</Tag>
+                  <Tag color="blue">{user?.roles?.[0] || "User"}</Tag>
                 </div>
               </div>
               <Button

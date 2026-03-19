@@ -19,12 +19,14 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { authFetch, getCachedUser } from "@/utils/auth";
+import { useIsMobile } from "@/lib/responsive-utils";
 
 const { Title, Text } = Typography;
 
 export default function DashboardPage() {
   const { stats, loading } = useDashboardStats();
   const user = getCachedUser();
+  const isMobile = useIsMobile();
 
   const statCards = [
     {
@@ -71,29 +73,29 @@ export default function DashboardPage() {
       <div style={{
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 24,
-        flexDirection: "row",
+        alignItems: isMobile ? "flex-start" : "center",
+        marginBottom: isMobile ? 16 : 24,
+        flexDirection: isMobile ? "column" : "row",
         gap: 16,
       }}>
         <div>
-          <Title level={2} style={{ marginBottom: 4 }}>
+          <Title level={isMobile ? 3 : 2} style={{ marginBottom: 4 }}>
             Welcome back, {user?.name || "User"}!
           </Title>
-          <Text type="secondary" style={{ fontSize: 14 }}>
+          <Text type="secondary" style={{ fontSize: isMobile ? 13 : 14 }}>
             Here's what's happening with your IoTDB Platform.
           </Text>
         </div>
         <Avatar
-          size={48}
-          src={user?.avatarUrl}
+          size={isMobile ? 40 : 48}
+          src={user?.avatar}
           icon={<UserOutlined />}
           style={{ border: "2px solid #1890ff" }}
         />
       </div>
 
       {/* Stats Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
         {statCards.map((stat, index) => (
           <Col xs={12} sm={12} md={6} key={index}>
             <StatCard {...stat} loading={loading} />
@@ -102,7 +104,7 @@ export default function DashboardPage() {
       </Row>
 
       {/* Charts Row */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
         <Col xs={24} lg={16}>
           <ForecastTrendChart loading={loading} />
         </Col>
@@ -115,7 +117,7 @@ export default function DashboardPage() {
       </Row>
 
       {/* Activity and Actions Row */}
-      <Row gutter={[16, 16]}>
+      <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
         <Col xs={24} lg={16}>
           <RecentActivity
             recentAlerts={stats?.recentAlerts}
@@ -130,13 +132,13 @@ export default function DashboardPage() {
 
       {/* AI Model Status (Optional) */}
       {stats?.aiModels && (
-        <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginTop: isMobile ? 16 : 24 }}>
           <Col xs={24}>
             <div
               style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #00a8e8 100%)",
                 borderRadius: 12,
-                padding: "20px 24px",
+                padding: isMobile ? "16px 20px" : "20px 24px",
                 color: "white",
               }}
             >

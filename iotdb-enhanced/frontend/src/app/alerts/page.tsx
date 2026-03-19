@@ -39,6 +39,8 @@ import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
 import { ContentCard } from "@/components/layout/ContentCard";
 import GlassCard from "@/components/ui/GlassCard";
+import { authFetch } from "@/utils/auth";
+import { useIsMobile } from "@/lib/responsive-utils";
 
 dayjs.extend(relativeTime);
 dayjs.locale("zh-cn");
@@ -68,14 +70,8 @@ interface AlertStats {
   byType: Record<string, number>;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
+const API_BASE = ""; // Use relative paths for Next.js rewrites
 
-const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
-};
 
 export default function AlertList() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -87,6 +83,7 @@ export default function AlertList() {
     severity: undefined as string | undefined,
     unreadOnly: false,
   });
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchAlerts();
@@ -96,16 +93,13 @@ export default function AlertList() {
   const fetchAlerts = async () => {
     setLoading(true);
     try {
-      const token = getAuthToken();
       const params = new URLSearchParams();
 
       if (filters.unreadOnly) params.append("unreadOnly", "true");
       if (filters.type) params.append("type", filters.type);
       if (filters.severity) params.append("severity", filters.severity);
 
-      const response = await fetch(`${API_BASE}/api/alerts?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await authFetch(`${API_BASE}/api/alerts?${params}`);
 
       if (!response.ok) throw new Error("Failed to fetch alerts");
 
@@ -120,10 +114,7 @@ export default function AlertList() {
 
   const fetchStats = async () => {
     try {
-      const token = getAuthToken();
-      const response = await fetch(`${API_BASE}/api/alerts/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await authFetch(`${API_BASE}/api/alerts/stats`);
 
       if (!response.ok) throw new Error("Failed to fetch stats");
 
@@ -136,10 +127,8 @@ export default function AlertList() {
 
   const handleMarkAsRead = async (alertId: string) => {
     try {
-      const token = getAuthToken();
-      await fetch(`${API_BASE}/api/alerts/${alertId}/read`, {
+      await authFetch(`${API_BASE}/api/alerts/${alertId}/read`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
       });
 
       fetchAlerts();
@@ -152,10 +141,8 @@ export default function AlertList() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      const token = getAuthToken();
-      await fetch(`${API_BASE}/api/alerts/read-all`, {
+      await authFetch(`${API_BASE}/api/alerts/read-all`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
       });
 
       fetchAlerts();
@@ -168,7 +155,7 @@ export default function AlertList() {
 
   const handleDeleteAlert = async (alertId: string) => {
     try {
-      const token = getAuthToken();
+      const token = null;
       await fetch(`${API_BASE}/api/alerts/${alertId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
@@ -213,6 +200,7 @@ export default function AlertList() {
       key: "isRead",
       width: 80,
       align: "center" as const,
+      responsive: ["lg"],
       render: (isRead: boolean) => (
         <Tooltip title={isRead ? "Read" : "New"}>
           <Badge status={isRead ? "default" : "processing"} />
@@ -224,6 +212,7 @@ export default function AlertList() {
       dataIndex: "type",
       key: "type",
       width: 140,
+      responsive: ["md", "lg", "xl"],
       render: (type: string) => {
         const icons: Record<string, string> = {
           ANOMALY: "🚨",
@@ -243,6 +232,7 @@ export default function AlertList() {
       key: "severity",
       width: 100,
       align: "center" as const,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (severity: string) => {
         const icons: Record<string, React.ReactNode> = {
           INFO: <InfoCircleOutlined />,
@@ -278,6 +268,7 @@ export default function AlertList() {
       key: "timeseries",
       width: 180,
       ellipsis: true,
+      responsive: ["lg", "xl"],
       render: (timeseries?: { name: string; dataset: { name: string } }) =>
         timeseries ? (
           <Space direction="vertical" size={0}>
@@ -295,6 +286,7 @@ export default function AlertList() {
       dataIndex: "createdAt",
       key: "createdAt",
       width: 140,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (date: string) => (
         <Tooltip title={dayjs(date).format("YYYY-MM-DD HH:mm:ss")}>
           <Text type="secondary" style={{ fontSize: 13 }}>
@@ -306,11 +298,11 @@ export default function AlertList() {
     {
       title: "Actions",
       key: "actions",
-      width: 160,
+      width: isMobile ? 80 : 160,
       fixed: "right" as const,
       render: (_: any, record: Alert) => (
         <Space size="small">
-          {!record.isRead && (
+          {!record.isRead && !isMobile && (
             <Button
               size="small"
               icon={<CheckCircleOutlined />}
@@ -318,6 +310,13 @@ export default function AlertList() {
             >
               Mark Read
             </Button>
+          )}
+          {!record.isRead && isMobile && (
+            <Button
+              size="small"
+              icon={<CheckCircleOutlined />}
+              onClick={() => handleMarkAsRead(record.id)}
+            />
           )}
           <Popconfirm
             title="Delete Alert"
@@ -328,7 +327,7 @@ export default function AlertList() {
             okButtonProps={{ danger: true }}
           >
             <Button size="small" icon={<DeleteOutlined />} danger>
-              Delete
+              {!isMobile && "Delete"}
             </Button>
           </Popconfirm>
         </Space>
@@ -352,15 +351,24 @@ export default function AlertList() {
     { key: "system", label: "System" },
   ];
 
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "Alerts & Notifications" },
+  ];
+
   return (
     <PageContainer>
       <PageHeader
         title="Alerts & Notifications"
         description="View and manage system alerts, anomalies, and notifications"
+        breadcrumbs={breadcrumbItems}
         actions={
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => { fetchAlerts(); fetchStats(); }}>
-              Refresh
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => { fetchAlerts(); fetchStats(); }}
+            >
+              {!isMobile && "Refresh"}
             </Button>
             {stats && stats.unread > 0 && (
               <Button
@@ -368,13 +376,13 @@ export default function AlertList() {
                 onClick={handleMarkAllAsRead}
                 type="primary"
                 style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                   border: "none",
                   borderRadius: "10px",
                   fontWeight: 600,
                 }}
               >
-                Mark All Read
+                {!isMobile && "Mark All Read"}
               </Button>
             )}
           </Space>
@@ -383,16 +391,16 @@ export default function AlertList() {
 
       {/* Statistics Cards with Glassmorphism */}
       {stats && (
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: "20px" }}>
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
                     borderRadius: "10px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -414,8 +422,8 @@ export default function AlertList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -449,8 +457,8 @@ export default function AlertList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -479,8 +487,8 @@ export default function AlertList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -595,11 +603,13 @@ export default function AlertList() {
               rowKey="id"
               enableZebraStriping={true}
               stickyHeader={true}
+              scroll={{ x: isMobile ? "max-content" : undefined }}
               pagination={{
-                pageSize: 20,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} alerts`,
+                pageSize: isMobile ? 10 : 20,
+                showSizeChanger: !isMobile,
+                showTotal: (total) => `Total ${total} alert${total !== 1 ? "s" : ""}`,
                 position: ["bottomRight"] as ["bottomRight"],
+                simple: isMobile,
               }}
             />
           )}

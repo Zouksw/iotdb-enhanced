@@ -80,7 +80,7 @@ const plans: PricingPlan[] = [
 ];
 
 const gradients = {
-  purple: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  purple: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
   blue: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
   sunset: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
 };
@@ -105,7 +105,7 @@ export const Pricing: React.FC = () => {
               fontWeight: 600,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
-              color: "#6366f1",
+              color: "#0066cc",
             }}
           >
             Pricing
@@ -146,7 +146,7 @@ export const Pricing: React.FC = () => {
                   padding: plan.popular ? "40px 32px" : "32px",
                   position: "relative",
                   border: plan.popular ? "2px solid" : undefined,
-                  borderColor: plan.popular ? "#6366f1" : undefined,
+                  borderColor: plan.popular ? "#0066cc" : undefined,
                 }}
               >
                 {plan.popular && (
@@ -204,7 +204,7 @@ export const Pricing: React.FC = () => {
                     <div key={idx} style={{ display: "flex", alignItems: "flex-start" }}>
                       <CheckOutlined
                         style={{
-                          color: "#6366f1",
+                          color: "#0066cc",
                           marginRight: "12px",
                           marginTop: "4px",
                         }}

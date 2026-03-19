@@ -27,7 +27,7 @@ const steps: Step[] = [
     title: "Create Your Account",
     description: "Sign up for a free account and set up your organization. No credit card required for the trial period.",
     icon: <RocketOutlined />,
-    color: "#667eea",
+    color: "#0066cc",
   },
   {
     number: 2,
@@ -80,7 +80,7 @@ export default function GettingStarted() {
           width: "600px",
           height: "600px",
           borderRadius: "50%",
-          background: "linear-gradient(135deg, #667eea10 0%, #764ba210 100%)",
+          background: "linear-gradient(135deg, #0066cc10 0%, #0077e610 100%)",
           filter: "blur(80px)",
           pointerEvents: "none",
         }}
@@ -93,7 +93,7 @@ export default function GettingStarted() {
             style={{
               display: "inline-block",
               padding: "8px 20px",
-              background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+              background: "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
               borderRadius: "20px",
               marginBottom: "16px",
             }}
@@ -102,7 +102,7 @@ export default function GettingStarted() {
               style={{
                 fontSize: "14px",
                 fontWeight: 600,
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
@@ -278,9 +278,9 @@ export default function GettingStarted() {
               fontSize: "16px",
               fontWeight: 600,
               borderRadius: "12px",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
               border: "none",
-              boxShadow: "0 4px 20px rgba(102, 126, 234, 0.4)",
+              boxShadow: "0 4px 20px rgba(0, 102, 204, 0.35)",
             }}
             href="/register"
           >

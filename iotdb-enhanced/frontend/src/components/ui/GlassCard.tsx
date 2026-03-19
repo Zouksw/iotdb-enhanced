@@ -24,7 +24,7 @@ interface GlassCardProps extends CardProps {
 }
 
 const gradients = {
-  purple: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  purple: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
   blue: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
   sunset: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
   success: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",

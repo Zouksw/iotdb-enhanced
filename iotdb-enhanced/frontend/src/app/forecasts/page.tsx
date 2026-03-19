@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
 import GlassCard from "@/components/ui/GlassCard";
+import { useIsMobile } from "@/lib/responsive-utils";
 
 const { Text } = Typography;
 
@@ -33,6 +34,8 @@ export default function ForecastList() {
       initial: [{ field: "timestamp", order: "desc" }],
     },
   });
+
+  const isMobile = useIsMobile();
 
   // Get statistics
   const forecastStatsResult = useList({
@@ -57,6 +60,7 @@ export default function ForecastList() {
       title: "ID",
       width: 100,
       fixed: "left" as const,
+      responsive: ["lg"],
       render: (id: string) => (
         <Text code style={{ fontSize: 12 }}>
           {id.slice(0, 8)}...
@@ -68,6 +72,7 @@ export default function ForecastList() {
       title: "Forecast Time",
       width: 160,
       sorter: true,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (value: string) => (
         <Space direction="vertical" size={0}>
           <DateField value={value} format="YYYY-MM-DD HH:mm" />
@@ -79,6 +84,7 @@ export default function ForecastList() {
       title: "Time Series",
       width: 180,
       ellipsis: true,
+      responsive: ["md", "lg", "xl"],
       render: (ts: any) => (
         <Space>
           <Text strong>{ts?.name || "-"}</Text>
@@ -89,6 +95,7 @@ export default function ForecastList() {
       dataIndex: "model",
       title: "Model",
       width: 140,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (model: any) => {
         const algo = model?.algorithm;
         const colors: Record<string, string> = {
@@ -108,6 +115,7 @@ export default function ForecastList() {
       title: "Predicted Value",
       width: 140,
       align: "right" as const,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (value: any, record: any) => {
         const numValue = typeof value === "object" ? value.toNumber?.() : Number(value);
         const unit = record.timeseries?.unit || "";
@@ -123,6 +131,7 @@ export default function ForecastList() {
       title: "Confidence",
       width: 110,
       align: "center" as const,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (value: any) => {
         const numValue = typeof value === "object" ? value.toNumber?.() : Number(value);
         const percentage = (numValue * 100).toFixed(0);
@@ -135,6 +144,7 @@ export default function ForecastList() {
       title: "Range",
       width: 160,
       align: "right" as const,
+      responsive: ["lg", "xl"],
       render: (_: any, record: any) => {
         const lower = typeof record.lowerBound === "object"
           ? record.lowerBound.toNumber?.()
@@ -160,6 +170,7 @@ export default function ForecastList() {
       title: "Anomaly",
       width: 100,
       align: "center" as const,
+      responsive: ["sm", "md", "lg", "xl"],
       render: (isAnomaly: boolean, record: any) => {
         const probability = typeof record.anomalyProbability === "object"
           ? record.anomalyProbability.toNumber?.()
@@ -185,20 +196,27 @@ export default function ForecastList() {
       title: "Created At",
       width: 140,
       sorter: true,
+      responsive: ["lg", "xl"],
       render: (value: string) => <DateField value={value} format="YYYY-MM-DD" />,
     },
     {
       title: "Actions",
       dataIndex: "actions",
-      width: 120,
+      width: isMobile ? 80 : 120,
       fixed: "right" as const,
       render: (_: any, record: any) => (
         <Space size="small">
-          <ShowButton hideText size="small" recordItemId={record.id} />
-          <DeleteButton hideText size="small" recordItemId={record.id} confirmTitle="Delete this forecast?" />
+          <ShowButton hideText={!isMobile} size="small" recordItemId={record.id} />
+          <DeleteButton hideText={!isMobile} size="small" recordItemId={record.id} confirmTitle="Delete this forecast?" />
         </Space>
       ),
     },
+  ];
+
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "AI & Anomaly Detection", href: "/ai" },
+    { title: "Forecasts" },
   ];
 
   // Handle export to CSV
@@ -286,38 +304,39 @@ export default function ForecastList() {
         <PageHeader
           title="Forecasts"
           description="AI-powered time series forecasting and predictions"
+          breadcrumbs={breadcrumbItems}
           actions={
             <Space>
               <Button icon={<DownloadOutlined />} onClick={handleExport}>
-                Export
+                {!isMobile && "Export"}
               </Button>
               <CreateButton
                 icon={<PlusOutlined />}
                 style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                   border: "none",
                   height: "40px",
                   borderRadius: "10px",
                   fontWeight: 600,
                 }}
               >
-                Generate Forecast
+                {!isMobile && "Generate Forecast"}
               </CreateButton>
             </Space>
           }
         />
 
         {/* Statistics Cards with Glassmorphism */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: "20px" }}>
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
                     borderRadius: "10px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -339,8 +358,8 @@ export default function ForecastList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -369,8 +388,8 @@ export default function ForecastList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -399,8 +418,8 @@ export default function ForecastList() {
             </GlassCard>
           </Col>
 
-          <Col xs={24} sm={12} lg={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: "20px" }}>
+          <Col xs={12} sm={12} md={6}>
+            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
@@ -437,6 +456,12 @@ export default function ForecastList() {
           columns={columns}
           enableZebraStriping={true}
           stickyHeader={true}
+          scroll={{ x: isMobile ? "max-content" : undefined }}
+          pagination={{
+            pageSize: isMobile ? 10 : 20,
+            showSizeChanger: !isMobile,
+            simple: isMobile,
+          }}
         />
       </List>
     </PageContainer>
