@@ -36,6 +36,7 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import type { Breakpoint } from "antd";
 import type { Dataset, TimeSeries } from "@/types/api";
 import { authFetch } from "@/utils/auth";
 import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
@@ -324,13 +325,13 @@ const timeseriesColumns: ColumnsType<TimeSeries> = [
     title: "Path",
     dataIndex: "path",
     key: "path",
-    responsive: ["lg"]
+    responsive: ["lg"] as Breakpoint[]
   },
   {
     title: "Unit",
     dataIndex: "unit",
     key: "unit",
-    responsive: ["md"],
+    responsive: ["md"] as Breakpoint[],
     render: (unit) => unit || "-"
   },
   {
@@ -338,13 +339,13 @@ const timeseriesColumns: ColumnsType<TimeSeries> = [
     dataIndex: "_count",
     key: "datapoints",
     render: (count) => count?.datapoints || 0,
-    responsive: ["lg"]
+    responsive: ["lg"] as Breakpoint[]
   },
   {
     title: "Created",
     dataIndex: "createdAt",
     key: "createdAt",
     render: (date) => new Date(date).toLocaleDateString(),
-    responsive: ["xl"]
+    responsive: ["xl"] as Breakpoint[]
   }
 ];

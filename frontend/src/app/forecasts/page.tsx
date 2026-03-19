@@ -9,6 +9,7 @@ import {
   CreateButton,
 } from "@refinedev/antd";
 import { Space, Table, Tag, Badge, Row, Col, Typography, Button } from "antd";
+import type { Breakpoint } from "antd";
 import { useList } from "@refinedev/core";
 import {
   LineChartOutlined,
@@ -60,7 +61,7 @@ export default function ForecastList() {
       title: "ID",
       width: 100,
       fixed: "left" as const,
-      responsive: ["lg"],
+      responsive: ["lg"] as Breakpoint[],
       render: (id: string) => (
         <Text code style={{ fontSize: 12 }}>
           {id.slice(0, 8)}...
@@ -72,7 +73,7 @@ export default function ForecastList() {
       title: "Forecast Time",
       width: 160,
       sorter: true,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (value: string) => (
         <Space direction="vertical" size={0}>
           <DateField value={value} format="YYYY-MM-DD HH:mm" />
@@ -84,7 +85,7 @@ export default function ForecastList() {
       title: "Time Series",
       width: 180,
       ellipsis: true,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (ts: any) => (
         <Space>
           <Text strong>{ts?.name || "-"}</Text>
@@ -95,7 +96,7 @@ export default function ForecastList() {
       dataIndex: "model",
       title: "Model",
       width: 140,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (model: any) => {
         const algo = model?.algorithm;
         const colors: Record<string, string> = {
@@ -115,7 +116,7 @@ export default function ForecastList() {
       title: "Predicted Value",
       width: 140,
       align: "right" as const,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (value: any, record: any) => {
         const numValue = typeof value === "object" ? value.toNumber?.() : Number(value);
         const unit = record.timeseries?.unit || "";
@@ -131,7 +132,7 @@ export default function ForecastList() {
       title: "Confidence",
       width: 110,
       align: "center" as const,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (value: any) => {
         const numValue = typeof value === "object" ? value.toNumber?.() : Number(value);
         const percentage = (numValue * 100).toFixed(0);
@@ -144,7 +145,7 @@ export default function ForecastList() {
       title: "Range",
       width: 160,
       align: "right" as const,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (_: any, record: any) => {
         const lower = typeof record.lowerBound === "object"
           ? record.lowerBound.toNumber?.()
@@ -170,7 +171,7 @@ export default function ForecastList() {
       title: "Anomaly",
       width: 100,
       align: "center" as const,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (isAnomaly: boolean, record: any) => {
         const probability = typeof record.anomalyProbability === "object"
           ? record.anomalyProbability.toNumber?.()
@@ -196,7 +197,7 @@ export default function ForecastList() {
       title: "Created At",
       width: 140,
       sorter: true,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (value: string) => <DateField value={value} format="YYYY-MM-DD" />,
     },
     {

@@ -7,6 +7,7 @@ import {
   useTable,
 } from "@refinedev/antd";
 import { Space, Table, Tag, Badge, Row, Col, Typography, Progress } from "antd";
+import type { Breakpoint } from "antd";
 import { DateField, NumberField } from "@refinedev/antd";
 import { useList } from "@refinedev/core";
 import {
@@ -55,7 +56,7 @@ export default function AnomalyList() {
       title: "ID",
       width: 100,
       fixed: "left" as const,
-      responsive: ["lg"],
+      responsive: ["lg"] as Breakpoint[],
       render: (id: string) => (
         <code style={{ fontSize: 12, padding: "2px 6px", background: "#f5f5f5", borderRadius: 4 }}>
           {id.slice(0, 8)}...
@@ -67,7 +68,7 @@ export default function AnomalyList() {
       title: "Severity",
       width: 120,
       sorter: true,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (severity: string) => {
         const colors: Record<string, string> = {
           LOW: "green",
@@ -97,7 +98,7 @@ export default function AnomalyList() {
       title: "Time Series",
       width: 180,
       ellipsis: true,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (ts: any) => ts?.name || "-",
     },
     {
@@ -105,7 +106,7 @@ export default function AnomalyList() {
       title: "Value",
       width: 120,
       align: "right" as const,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (val: number) => (
         <NumberField value={Number(val) || 0} options={{ notation: "standard" }} />
       ),
@@ -114,7 +115,7 @@ export default function AnomalyList() {
       dataIndex: "expectedRange",
       title: "Expected Range",
       width: 160,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (_: any, record: any) => (
         <span style={{ fontSize: 13, color: "#6B7280" }}>
           {record.minExpected} - {record.maxExpected}
@@ -125,7 +126,7 @@ export default function AnomalyList() {
       dataIndex: "detectionMethod",
       title: "Detection Method",
       width: 140,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (method: string) => <Tag>{method}</Tag>,
     },
     {
@@ -133,7 +134,7 @@ export default function AnomalyList() {
       title: "Detected At",
       width: 140,
       sorter: true,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (value: string) => <DateField value={value} format="YYYY-MM-DD HH:mm" />,
     },
     {

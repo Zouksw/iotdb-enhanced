@@ -40,6 +40,7 @@ import {
   SecurityScanOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
+import type { Breakpoint } from "antd";
 import type { ApiKey } from "@/types/api";
 import { authFetch } from "@/utils/auth";
 import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
@@ -395,7 +396,7 @@ const usageLogColumns: ColumnsType<ApiUsageLog> = [
     title: "Endpoint",
     dataIndex: "endpoint",
     key: "endpoint",
-    responsive: ["lg"]
+    responsive: ["lg"] as Breakpoint[]
   },
   {
     title: "Method",
@@ -431,6 +432,6 @@ const usageLogColumns: ColumnsType<ApiUsageLog> = [
     title: "IP Address",
     dataIndex: "ip",
     key: "ip",
-    responsive: ["xl"]
+    responsive: ["xl"] as Breakpoint[]
   }
 ];

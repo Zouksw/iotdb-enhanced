@@ -16,6 +16,7 @@ import {
   Row,
   Col,
 } from "antd";
+import type { Breakpoint } from "antd";
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -156,7 +157,7 @@ export default function ApiKeyList() {
       dataIndex: "name",
       key: "name",
       width: 200,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (name: string, record: ApiKey) => (
         <Space direction="vertical" size={0}>
           <Text strong>{name}</Text>
@@ -171,7 +172,7 @@ export default function ApiKeyList() {
       dataIndex: "isActive",
       key: "isActive",
       width: 100,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (isActive: boolean) => (
         <Tag
           icon={isActive ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
@@ -187,7 +188,7 @@ export default function ApiKeyList() {
       dataIndex: "lastCharacters",
       key: "lastCharacters",
       width: 140,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (lastChars: number) => (
         <Text code style={{ fontSize: 12 }}>
           ...{lastChars.toString(16).toUpperCase().padStart(8, "0")}
@@ -199,7 +200,7 @@ export default function ApiKeyList() {
       dataIndex: "usageCount",
       key: "usageCount",
       width: 140,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (count: number, record: ApiKey) => (
         <Space direction="vertical" size={0}>
           <Text>{count} requests</Text>
@@ -216,7 +217,7 @@ export default function ApiKeyList() {
       dataIndex: "expiresAt",
       key: "expiresAt",
       width: 140,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (date: string | null) => {
         if (!date) return <Text type="secondary">Never</Text>;
         const isExpired = dayjs(date).isBefore(dayjs());
@@ -232,7 +233,7 @@ export default function ApiKeyList() {
       dataIndex: "createdAt",
       key: "createdAt",
       width: 120,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (date: string) => (
         <Text type="secondary">{dayjs(date).format("YYYY-MM-DD")}</Text>
       ),

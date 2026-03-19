@@ -10,6 +10,7 @@ import {
   CreateButton,
 } from "@refinedev/antd";
 import { Space, Table, Tag, Row, Col, Typography, Progress } from "antd";
+import type { Breakpoint } from "antd";
 import { useList } from "@refinedev/core";
 import {
   LineChartOutlined,
@@ -65,7 +66,7 @@ export default function TimeseriesList() {
       title: "ID",
       width: 100,
       fixed: "left" as const,
-      responsive: ["lg"],
+      responsive: ["lg"] as Breakpoint[],
       render: (id: string) => (
         <code style={{ fontSize: 12, padding: "2px 6px", background: "#f5f5f5", borderRadius: 4 }}>
           {id.slice(0, 8)}...
@@ -100,13 +101,13 @@ export default function TimeseriesList() {
       title: "Slug",
       width: 160,
       ellipsis: true,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
     },
     {
       dataIndex: "unit",
       title: "Unit",
       width: 80,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (unit: string) => unit || "-",
     },
     {
@@ -114,7 +115,7 @@ export default function TimeseriesList() {
       title: "Dataset",
       width: 180,
       ellipsis: true,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (dataset: any) => dataset?.name || "-",
     },
     {
@@ -123,7 +124,7 @@ export default function TimeseriesList() {
       width: 120,
       align: "right" as const,
       sorter: true,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (count: number) => (
         <span style={{ fontFamily: "monospace", fontSize: 13 }}>
           {(count ?? 0).toLocaleString()}
@@ -135,7 +136,7 @@ export default function TimeseriesList() {
       title: "Anomalies",
       width: 100,
       align: "center" as const,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (count: number) => (
         <Tag color={count > 0 ? "red" : "green"} style={{ margin: 0 }}>
           {count ?? 0}
@@ -147,7 +148,7 @@ export default function TimeseriesList() {
       title: "Created",
       width: 140,
       sorter: true,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (value: string) => <DateField value={value} format="YYYY-MM-DD" />,
     },
     {

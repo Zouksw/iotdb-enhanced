@@ -17,6 +17,7 @@ import {
   Row,
   Col,
 } from "antd";
+import type { Breakpoint } from "antd";
 import {
   DeleteOutlined,
   CheckCircleOutlined,
@@ -200,7 +201,7 @@ export default function AlertList() {
       key: "isRead",
       width: 80,
       align: "center" as const,
-      responsive: ["lg"],
+      responsive: ["lg"] as Breakpoint[],
       render: (isRead: boolean) => (
         <Tooltip title={isRead ? "Read" : "New"}>
           <Badge status={isRead ? "default" : "processing"} />
@@ -212,7 +213,7 @@ export default function AlertList() {
       dataIndex: "type",
       key: "type",
       width: 140,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (type: string) => {
         const icons: Record<string, string> = {
           ANOMALY: "🚨",
@@ -232,7 +233,7 @@ export default function AlertList() {
       key: "severity",
       width: 100,
       align: "center" as const,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (severity: string) => {
         const icons: Record<string, React.ReactNode> = {
           INFO: <InfoCircleOutlined />,
@@ -268,7 +269,7 @@ export default function AlertList() {
       key: "timeseries",
       width: 180,
       ellipsis: true,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (timeseries?: { name: string; dataset: { name: string } }) =>
         timeseries ? (
           <Space direction="vertical" size={0}>
@@ -286,7 +287,7 @@ export default function AlertList() {
       dataIndex: "createdAt",
       key: "createdAt",
       width: 140,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (date: string) => (
         <Tooltip title={dayjs(date).format("YYYY-MM-DD HH:mm:ss")}>
           <Text type="secondary" style={{ fontSize: 13 }}>

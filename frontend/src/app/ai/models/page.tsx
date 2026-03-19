@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Table, Tag, Button, message, Card, Row, Col, Descriptions, Typography, Alert } from "antd";
+import type { Breakpoint } from "antd";
 import {
   ThunderboltOutlined,
   RocketOutlined,
@@ -71,7 +72,7 @@ export default function AIModelsPage() {
       dataIndex: "id",
       key: "id",
       width: 150,
-      responsive: ["lg"],
+      responsive: ["lg"] as Breakpoint[],
       render: (id: string) => (
         <code style={{ fontSize: 12, padding: "2px 6px", background: "#f5f5f5", borderRadius: 4 }}>
           {id}
@@ -99,7 +100,7 @@ export default function AIModelsPage() {
       dataIndex: "type",
       key: "type",
       width: 100,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (type: string) => {
         const color = type === "prediction" ? "green" : "blue";
         return <Tag color={color}>{type}</Tag>;

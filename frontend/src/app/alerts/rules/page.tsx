@@ -19,6 +19,7 @@ import {
   Col,
   Card,
 } from "antd";
+import type { Breakpoint } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
@@ -172,7 +173,7 @@ export default function AlertRules() {
       dataIndex: "name",
       key: "name",
       width: 180,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (name: string, record: AlertRule) => (
         <Space direction="vertical" size={0}>
           <Text strong style={{ fontSize: 13 }}>{name}</Text>
@@ -187,7 +188,7 @@ export default function AlertRules() {
       dataIndex: "type",
       key: "type",
       width: 140,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (type: string) => {
         const colors: Record<string, string> = {
           ANOMALY: "red",
@@ -211,7 +212,7 @@ export default function AlertRules() {
       dataIndex: "condition",
       key: "condition",
       width: 140,
-      responsive: ["md", "lg", "xl"],
+      responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (condition: AlertCondition) => {
         if (condition.type === "threshold") {
           return (
@@ -232,7 +233,7 @@ export default function AlertRules() {
       key: "severity",
       width: 100,
       align: "center" as const,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (severity: string) => {
         const colors: Record<string, string> = {
           INFO: "blue",
@@ -251,7 +252,7 @@ export default function AlertRules() {
       dataIndex: "notificationChannels",
       key: "notificationChannels",
       width: 140,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (channels: NotificationChannel[]) => (
         <Space size={4} wrap>
           {channels.map((ch, idx) => (
@@ -267,7 +268,7 @@ export default function AlertRules() {
       dataIndex: "cooldownMinutes",
       key: "cooldownMinutes",
       width: 100,
-      responsive: ["lg", "xl"],
+      responsive: ["lg", "xl"] as Breakpoint[],
       render: (cooldown?: number) => (cooldown ? `${cooldown} min` : "-"),
     },
     {
@@ -276,7 +277,7 @@ export default function AlertRules() {
       key: "enabled",
       width: 100,
       align: "center" as const,
-      responsive: ["sm", "md", "lg", "xl"],
+      responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (enabled: boolean) => (
         <Tag color={enabled ? "green" : "default"} style={{ margin: 0 }}>
           {enabled ? "Active" : "Inactive"}
