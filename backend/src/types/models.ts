@@ -132,8 +132,9 @@ export interface TimeseriesUpdateInput {
 
 /**
  * Datapoint value type
+ * @internal Import from './api' instead
  */
-export type DatapointValue = string | number | boolean | null;
+type DatapointValue = string | number | boolean | null;
 
 /**
  * Datapoint create input
@@ -331,17 +332,17 @@ export type OrderBy<T> = {
 /**
  * User order by
  */
-export type UserOrderBy = OrderBy<Pick<UserCreateInput, 'email' | 'name' | 'createdAt'>>;
+export type UserOrderBy = OrderBy<Pick<UserCreateInput, 'email' | 'name'> & { createdAt?: 'asc' | 'desc' }>;
 
 /**
  * Dataset order by
  */
-export type DatasetOrderBy = OrderBy<Pick<DatasetCreateInput, 'name' | 'createdAt' | 'updatedAt'>>;
+export type DatasetOrderBy = OrderBy<Pick<DatasetCreateInput, 'name'> & { createdAt?: 'asc' | 'desc'; updatedAt?: 'asc' | 'desc' }>;
 
 /**
  * Timeseries order by
  */
-export type TimeseriesOrderBy = OrderBy<Pick<TimeseriesCreateInput, 'name' | 'createdAt'>>;
+export type TimeseriesOrderBy = OrderBy<Pick<TimeseriesCreateInput, 'name'> & { createdAt?: 'asc' | 'desc' }>;
 
 /**
  * Alert order by

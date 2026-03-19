@@ -90,3 +90,4 @@ node_modules/
 
 # Claude Code
 .claude/
+.gstack/

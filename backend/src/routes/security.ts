@@ -153,13 +153,10 @@ router.get('/audit', asyncHandler(async (req: AuthRequest, res: Response) => {
   }
 
   if (startDate || endDate) {
-    query.timestamp = {} as any;
-    if (startDate) {
-      query.timestamp.gte = new Date(startDate as string);
-    }
-    if (endDate) {
-      query.timestamp.lte = new Date(endDate as string);
-    }
+    query.timestamp = {
+      gte: startDate ? new Date(startDate as string) : undefined,
+      lte: endDate ? new Date(endDate as string) : undefined,
+    } as any;
   }
 
   // Parse pagination parameters

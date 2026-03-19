@@ -63,7 +63,7 @@ export async function generateCsrfToken(
   // Store token in Redis for validation
   if (userId) {
     const key = `csrf:user:${userId}`;
-    await redis.setEx(key, CSRF_CONFIG.TOKEN_TTL, token);
+    await (await redis()).setEx(key, CSRF_CONFIG.TOKEN_TTL, token);
   }
 
   return token;
@@ -83,7 +83,7 @@ async function validateCsrfToken(
   // If user is authenticated, validate against their stored token
   if (userId) {
     const key = `csrf:user:${userId}`;
-    const storedToken = await redis.get(key);
+    const storedToken = await (await redis()).get(key);
 
     if (!storedToken || storedToken !== token) {
       logger.warn(`CSRF token validation failed for user ${userId}`);
@@ -205,7 +205,7 @@ export function refreshCsrfToken(
  */
 export async function revokeCsrfToken(userId: string): Promise<void> {
   const key = `csrf:user:${userId}`;
-  await redis.del(key);
+  await (await redis()).del(key);
 }
 
 /**

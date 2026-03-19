@@ -38,6 +38,7 @@ export interface ErrorDetail {
   field?: string;
   issue?: string;
   context?: Record<string, unknown>;
+  checks?: Record<string, boolean | string>;
 }
 
 /**

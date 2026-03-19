@@ -46,15 +46,15 @@ export async function blacklistToken(
     const tokenId = extractTokenId(token);
 
     // Add to blacklist with TTL matching token expiration
-    await redis.setEx(`${BLACKLIST_PREFIX}${tokenId}`, ttl, JSON.stringify({
+    await (await redis()).setEx(`${BLACKLIST_PREFIX}${tokenId}`, ttl, JSON.stringify({
       reason,
       blacklistedAt: new Date().toISOString(),
       expiresAt: new Date((decoded?.exp || 0) * 1000).toISOString(),
     }));
 
     // Also add to a set for O(1) lookup
-    await redis.sAdd(BLACKLIST_SET, tokenId);
-    await redis.expireAt(BLACKLIST_SET, decoded?.exp || Math.floor(Date.now() / 1000) + 86400);
+    await (await redis()).sAdd(BLACKLIST_SET, tokenId);
+    await (await redis()).expireAt(BLACKLIST_SET, decoded?.exp || Math.floor(Date.now() / 1000) + 86400);
 
     logger.info(`Token ${tokenId.slice(0, 20)}... added to blacklist (${reason}, ${ttl}s TTL)`);
 
@@ -82,7 +82,7 @@ export async function isTokenBlacklisted(token: string): Promise<boolean> {
     const tokenId = extractTokenId(token);
 
     // Check Redis set for O(1) lookup
-    const exists = await redis.sIsMember(BLACKLIST_SET, tokenId);
+    const exists = await (await redis()).sIsMember(BLACKLIST_SET, tokenId);
     return exists;
   } catch (error) {
     logger.error(`[SECURITY] Failed to check token blacklist: ${error}`);
@@ -141,8 +141,8 @@ export async function blacklistUserTokens(
 export async function removeFromBlacklist(token: string): Promise<boolean> {
   try {
     const tokenId = extractTokenId(token);
-    await redis.del(`${BLACKLIST_PREFIX}${tokenId}`);
-    await redis.sRem(BLACKLIST_SET, tokenId);
+    await (await redis()).del(`${BLACKLIST_PREFIX}${tokenId}`);
+    await (await redis()).sRem(BLACKLIST_SET, tokenId);
 
     logger.info(`Token ${tokenId.slice(0, 20)}... removed from blacklist`);
     return true;
@@ -161,7 +161,7 @@ export async function getBlacklistStats(): Promise<{
   newestToken: Date | null;
 }> {
   try {
-    const totalBlacklisted = await redis.sCard(BLACKLIST_SET);
+    const totalBlacklisted = await (await redis()).sCard(BLACKLIST_SET);
 
     if (totalBlacklisted === 0) {
       return { totalBlacklisted, oldestToken: null, newestToken: null };
@@ -182,10 +182,11 @@ export async function getBlacklistStats(): Promise<{
 export async function clearBlacklist(): Promise<boolean> {
   try {
     // Get all blacklisted tokens
-    const tokens = await redis.sMembers(BLACKLIST_SET);
+    const tokens = await (await redis()).sMembers(BLACKLIST_SET);
 
     // Remove each token using multi for atomicity
-    const multi = redis.multi();
+    const client = await redis();
+    const multi = client.multi();
     for (const tokenId of tokens) {
       multi.del(`${BLACKLIST_PREFIX}${tokenId}`);
     }
