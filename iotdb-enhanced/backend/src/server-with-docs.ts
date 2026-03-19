@@ -14,9 +14,17 @@ import { iotdbRouter } from './routes/iotdb';
 import apiKeysRouter from './routes/apiKeys';
 import alertsRouter from './routes/alerts';
 import healthRouter from './routes/health';
+import securityRouter from './routes/security';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import { securityHeaders } from './middleware/security';
+import { csrfProtection, generateCsrfToken } from './middleware/csrf';
+import {
+  authRateLimiter,
+  apiRateLimiter,
+  apiKeyCreationLimiter,
+} from './middleware/rateLimiter';
+import { optionalAuth } from './middleware/auth';
 import { config } from './lib';
 
 dotenv.config();
@@ -55,7 +63,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Request logging
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.info(`${req.method} ${req.path}`);
   next();
 });
@@ -211,31 +219,57 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 // Health check routes
 app.use('/health', healthRouter);
 
-// API Documentation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use('/api-docs', ...([swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  swaggerOptions: {
-    persistAuthorization: true,
-  },
-})] as any));
-
-// API JSON spec
-app.get('/api-docs.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
+// CSRF token endpoint
+app.get('/api/csrf-token', optionalAuth, async (req, res) => {
+  const token = await generateCsrfToken(req.userId);
+  res.cookie('csrf_token', token, {
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'strict',
+    maxAge: 86400000, // 24 hours
+  });
+  res.setHeader('X-CSRF-Token', token);
+  res.json({ csrfToken: token });
 });
 
-// Routes
-app.use('/api/auth', authRouter);
-app.use('/api/datasets', datasetsRouter);
-app.use('/api/timeseries', timeseriesRouter);
-app.use('/api/models', modelsRouter);
-app.use('/api/anomalies', anomaliesRouter);
-app.use('/api/iotdb', iotdbRouter);
-app.use('/api/api-keys', apiKeysRouter);
-app.use('/api/alerts', alertsRouter);
+// Security routes (with optional auth - logs can be submitted without auth)
+app.use('/api/security', securityRouter);
+
+// API Documentation - Only in non-production environments
+if (config.server.swaggerEnabled) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  app.use('/api-docs', ...([swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  })] as any));
+
+  // API JSON spec
+  app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
+
+  logger.info('📖 API Documentation enabled at /api-docs');
+} else {
+  logger.info('📖 API Documentation disabled in production');
+}
+
+// Routes with security middleware
+// Authentication routes with rate limiting
+app.use('/api/auth', authRateLimiter, authRouter);
+
+// API routes with CSRF protection and rate limiting
+// CSRF protection is applied to state-changing operations (POST/PUT/PATCH/DELETE)
+app.use('/api/datasets', csrfProtection(), apiRateLimiter, datasetsRouter);
+app.use('/api/timeseries', csrfProtection(), apiRateLimiter, timeseriesRouter);
+app.use('/api/models', csrfProtection(), apiRateLimiter, modelsRouter);
+app.use('/api/anomalies', csrfProtection(), apiRateLimiter, anomaliesRouter);
+app.use('/api/iotdb', csrfProtection(), apiRateLimiter, iotdbRouter);
+app.use('/api/api-keys', csrfProtection(), apiKeyCreationLimiter, apiKeysRouter);
+app.use('/api/alerts', csrfProtection(), apiRateLimiter, alertsRouter);
 
 // Error handling
 app.use(errorHandler);
@@ -264,6 +298,8 @@ app.set('io', io);
 
 httpServer.listen(PORT, () => {
   logger.info(`🚀 Server running on http://localhost:${PORT}`);
-  logger.info(`📖 API Documentation: http://localhost:${PORT}/api-docs`);
+  if (config.server.swaggerEnabled) {
+    logger.info(`📖 API Documentation: http://localhost:${PORT}/api-docs`);
+  }
   logger.info(`📡 WebSocket server ready`);
 });

@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: iotdb-postgres
     environment:
-      POSTGRES_DB: iotdb_enhanced
-      POSTGRES_USER: iotdb_user
-      POSTGRES_PASSWORD: iotdb_password_change_me
+      POSTGRES_DB: ${POSTGRES_DB:-iotdb_enhanced}
+      POSTGRES_USER: ${POSTGRES_USER:-iotdb_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -46,16 +44,18 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://iotdb_user:iotdb_password_change_me@postgres:5432/iotdb_enhanced?schema=public
+      - DATABASE_URL=postgresql://iotdb_user:${POSTGRES_PASSWORD}@postgres:5432/iotdb_enhanced?schema=public
       - REDIS_URL=redis://redis:6379
       - PORT=8000
       - NODE_ENV=production
-      - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
-      - SESSION_SECRET=${SESSION_SECRET:-change-this-secret-in-production}
+      # SECURITY: JWT_SECRET and SESSION_SECRET must be set in .env file
+      # The application will fail to start if these are not set
+      - JWT_SECRET=${JWT_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
       - IOTDB_HOST=${IOTDB_HOST:-host.docker.internal}
       - IOTDB_PORT=${IOTDB_PORT:-6667}
-      - IOTDB_USERNAME=${IOTDB_USERNAME:-root}
-      - IOTDB_PASSWORD=${IOTDB_PASSWORD:-root}
+      - IOTDB_USERNAME=${IOTDB_USERNAME}
+      - IOTDB_PASSWORD=${IOTDB_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy

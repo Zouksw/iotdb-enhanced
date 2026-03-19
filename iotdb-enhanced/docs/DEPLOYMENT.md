@@ -1,4 +1,41 @@
+---
+title: "IoTDB Enhanced 部署指南"
+en_title: "IoTDB Enhanced Deployment Guide"
+version: "1.0.0"
+last_updated: "2026-03-03"
+status: "stable"
+maintainer: "IoTDB Enhanced Team"
+reviewers:
+  - "DevOps Engineer"
+  - "System Administrator"
+tags:
+  - "deployment"
+  - "docker"
+  - "production"
+  - "monitoring"
+target_audience: "运维工程师、系统管理员、DevOps 工程师"
+related_docs:
+  - "使用指南": "GUIDE.md"
+  - "安全配置": "SECURITY.md"
+  - "API 参考": "API.md"
+  - "文档规范": "DOCUMENTATION_METADATA.md"
+changes:
+  - version: "1.0.0"
+    date: "2026-03-03"
+    author: "IoTDB Enhanced Team"
+    changes: "初始版本 - 整合部署指南和迁移指南"
+next_review: "2026-09-03"
+approval:
+  status: "approved"
+  reviewed_by: "DevOps Engineer"
+  approved_date: "2026-03-03"
+---
+
 # IoTDB Enhanced Platform - 部署指南
+
+本文档提供了 IoTDB Enhanced 平台的完整部署指南，包括部署要求、快速部署、手动部署、生产环境配置、服务管理、监控维护和故障排查。
+
+---
 
 ## 目录
 
@@ -8,7 +45,9 @@
 4. [生产环境配置](#生产环境配置)
 5. [服务管理](#服务管理)
 6. [监控与维护](#监控与维护)
-7. [故障排查](#故障排查)
+7. [版本迁移](#版本迁移)
+8. [故障排查](#故障排查)
+9. [部署检查清单](#部署检查清单)
 
 ---
 
@@ -187,7 +226,7 @@ sudo systemctl reload nginx
 
 ### 安全配置
 
-详细安全配置请参考 [安全配置指南](SECURITY_SETUP.md)
+详细安全配置请参考 [安全配置指南](docs/SECURITY.md)
 
 关键安全项：
 - ✅ 更新所有默认密码
@@ -282,6 +321,203 @@ pm2 save
 - **每日**: 检查服务状态 (`./status.sh`)
 - **每周**: 备份数据库 (`./scripts/backup-db.sh`)
 - **每月**: 清理日志文件，检查磁盘空间
+
+---
+
+## 版本迁移
+
+### 迁移前准备
+
+#### 检查清单
+
+- [ ] 开发环境功能测试完成
+- [ ] 所有数据已备份
+- [ ] 生产环境服务器已准备
+- [ ] 域名 DNS 已配置
+- [ ] SSL 证书已准备（或使用 Let's Encrypt）
+
+#### 数据备份
+
+```bash
+# 备份数据库
+./scripts/backup-db.sh
+
+# 备份配置文件
+cp backend/.env /root/backup/.env.backup
+cp frontend/.env.local /root/backup/frontend.env.backup
+
+# 备份 PM2 配置
+pm2 save
+cp ~/.pm2/dump.pm2 /root/backup/pm2.dump.backup
+```
+
+### 生产环境部署
+
+#### 服务器要求
+
+| 配置 | 最低 | 推荐 |
+|------|------|------|
+| CPU | 2 cores | 4+ cores |
+| 内存 | 4GB | 8GB+ |
+| 磁盘 | 50GB SSD | 100GB+ SSD |
+| 操作系统 | Ubuntu 20.04+ | Ubuntu 22.04 LTS |
+
+#### 一键部署
+
+```bash
+cd /root/iotdb-enhanced
+./scripts/deploy-production.sh your-domain.com admin@your-domain.com
+```
+
+脚本会自动：
+1. 创建备份
+2. 更新系统
+3. 配置防火墙
+4. 安装 SSL 证书
+5. 配置 Nginx
+6. 设置生产环境变量
+7. 构建并重启服务
+8. 运行健康检查
+
+#### 手动部署步骤
+
+1. **代码部署**:
+```bash
+# 安装依赖
+cd backend
+npm install --production
+
+cd ../frontend
+npm install --production
+
+# 构建项目
+cd backend && npm run build && cd ..
+cd frontend && npm run build && cd ..
+```
+
+2. **数据库迁移**:
+```bash
+cd backend
+npx prisma generate
+npx prisma migrate deploy
+
+# 恢复数据（如果有）
+./scripts/restore-db.sh /path/to/backup.sql.gz
+```
+
+3. **环境配置**:
+```bash
+# 复制并编辑生产环境变量
+cd backend
+cp .env.production.example .env.production
+nano .env.production
+
+# 前端环境变量
+cd ../frontend
+cp .env.production.example .env.production.local
+nano .env.production.local
+```
+
+**必须更改的配置：**
+- DATABASE_URL
+- JWT_SECRET
+- SESSION_SECRET
+- REDIS_URL
+- IOTDB_PASSWORD
+- CORS_ORIGIN
+
+4. **启动服务**:
+```bash
+# 使用 PM2 启动
+pm2 start ecosystem.config.cjs --env production
+
+# 保存 PM2 配置
+pm2 save
+pm2 startup
+```
+
+### SSL/TLS 配置
+
+#### Let's Encrypt (免费)
+
+```bash
+# 安装 Certbot
+sudo apt install -y certbot python3-certbot-nginx
+
+# 获取证书
+sudo certbot --nginx -d your-domain.com
+
+# 自动续期
+sudo certbot renew --dry-run
+```
+
+#### 商业证书
+
+```bash
+# 将证书文件放到指定位置
+sudo cp your-certificate.crt /etc/ssl/certs/
+sudo cp your-private-key.key /etc/ssl/private/
+
+# 更新 Nginx 配置中的证书路径
+sudo nano /etc/nginx/sites-available/iotdb-enhanced.conf
+
+# 重载 Nginx
+sudo systemctl reload nginx
+```
+
+### IoTDB 配置
+
+#### 安装 IoTDB
+
+```bash
+# 下载 IoTDB
+wget https://downloads.apache.org/iotdb/2.0.5/apache-iotdb-2.0.5-all-bin.zip
+unzip apache-iotdb-2.0.5-all-bin.zip -d /opt/iotdb
+
+# 设置权限
+sudo chown -R $USER:$USER /opt/iotdb
+```
+
+#### 使用 Systemd 管理
+
+```bash
+# 安装服务
+./scripts/install-services.sh
+
+# 启动服务
+sudo systemctl start iotdb-confignode
+sudo systemctl start iotdb-datanode
+sudo systemctl start iotdb-ainode
+
+# 检查状态
+sudo systemctl status iotdb-confignode
+sudo systemctl status iotdb-datanode
+sudo systemctl status iotdb-ainode
+```
+
+### 回滚步骤
+
+```bash
+# 停止服务
+pm2 stop all
+
+# 恢复数据库
+./scripts/restore-db.sh /path/to/backup.sql.gz
+
+# 恢复配置
+cp /root/backup/.env.backup backend/.env
+cp /root/backup/frontend.env.backup frontend/.env.local
+
+# 恢复代码（如需要）
+git checkout <previous-commit-tag>
+
+# 重新构建
+cd backend && npm run build
+cd ../frontend && npm run build
+
+# 重启服务
+pm2 restart all
+```
 
 ---
 

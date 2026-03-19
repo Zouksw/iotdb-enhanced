@@ -49,7 +49,23 @@ case "$COMMAND" in
 
         echo -e "${YELLOW}Creating admin user...${NC}"
 
+        # Validate email format (basic check)
+        if [[ ! "$EMAIL" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+            echo -e "${RED}Error: Invalid email format${NC}"
+            exit 1
+        fi
+
+        # Validate password length
+        if [ ${#PASSWORD} -lt 8 ]; then
+            echo -e "${RED}Error: Password must be at least 8 characters${NC}"
+            exit 1
+        fi
+
         cd "$BACKEND_DIR"
+        # Use environment variables instead of string interpolation to prevent injection
+        export CREATE_ADMIN_EMAIL="$EMAIL"
+        export CREATE_ADMIN_PASSWORD="$PASSWORD"
+
         node -e "
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
@@ -57,19 +73,27 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function createAdmin() {
-    const hashedPassword = await bcrypt.hash('$PASSWORD', 10);
+    const email = process.env.CREATE_ADMIN_EMAIL;
+    const password = process.env.CREATE_ADMIN_PASSWORD;
+
+    if (!email || !password) {
+        console.error('Missing email or password');
+        process.exit(1);
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.upsert({
-        where: { email: '$EMAIL' },
+        where: { email: email },
         update: {
-            password: hashedPassword,
-            isAdmin: true,
+            passwordHash: hashedPassword,
+            role: 'ADMIN',
         },
         create: {
-            email: '$EMAIL',
-            password: hashedPassword,
+            email: email,
+            passwordHash: hashedPassword,
             name: 'Administrator',
-            isAdmin: true,
+            role: 'ADMIN',
         },
     });
 
@@ -79,6 +103,9 @@ async function createAdmin() {
 
 createAdmin().catch(console.error);
 "
+
+        unset CREATE_ADMIN_EMAIL
+        unset CREATE_ADMIN_PASSWORD
 
         echo -e "${GREEN}✓ Admin user created: $EMAIL${NC}"
         ;;
@@ -92,9 +119,19 @@ createAdmin().catch(console.error);
         EMAIL="$2"
         NEW_PASSWORD="$3"
 
+        # Validate password length
+        if [ ${#NEW_PASSWORD} -lt 8 ]; then
+            echo -e "${RED}Error: Password must be at least 8 characters${NC}"
+            exit 1
+        fi
+
         echo -e "${YELLOW}Changing password for: $EMAIL${NC}"
 
         cd "$BACKEND_DIR"
+        # Use environment variables instead of string interpolation to prevent injection
+        export CHANGE_PASSWORD_EMAIL="$EMAIL"
+        export CHANGE_PASSWORD_NEW="$NEW_PASSWORD"
+
         node -e "
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
@@ -102,20 +139,28 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function changePassword() {
-    const user = await prisma.user.findUnique({
-        where: { email: '$EMAIL' },
-    });
+    const email = process.env.CHANGE_PASSWORD_EMAIL;
+    const newPassword = process.env.CHANGE_PASSWORD_NEW;
 
-    if (!user) {
-        console.error('User not found: $EMAIL');
+    if (!email || !newPassword) {
+        console.error('Missing email or password');
         process.exit(1);
     }
 
-    const hashedPassword = await bcrypt.hash('$NEW_PASSWORD', 10);
+    const user = await prisma.user.findUnique({
+        where: { email: email },
+    });
+
+    if (!user) {
+        console.error('User not found:', email);
+        process.exit(1);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     await prisma.user.update({
-        where: { email: '$EMAIL' },
-        data: { password: hashedPassword },
+        where: { email: email },
+        data: { passwordHash: hashedPassword },
     });
 
     console.log('Password changed for:', user.email);

@@ -17,6 +17,7 @@ import {
   alertSchemas,
 } from '../services/alerts';
 import { validate } from '../middleware/security';
+import { success } from '../lib/response';
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res: Respons
     offset: 0,
   });
 
-  res.json(result);
+  return success(res, result);
 }));
 
 /**
@@ -54,7 +55,7 @@ router.get('/stats', authenticate, asyncHandler(async (req: AuthRequest, res: Re
 
   const stats = await getAlertStats(req.userId);
 
-  res.json(stats);
+  return success(res, stats);
 }));
 
 /**
@@ -83,7 +84,7 @@ router.post(
       cooldownMinutes,
     });
 
-    res.status(201).json(rule);
+    return success(res, rule, 201);
   })
 );
 
@@ -100,7 +101,7 @@ router.patch('/:id/read', authenticate, asyncHandler(async (req: AuthRequest, re
 
   const result = await markAlertAsRead(req.userId, id);
 
-  res.json(result);
+  return success(res, result);
 }));
 
 /**
@@ -114,7 +115,7 @@ router.patch('/read-all', authenticate, asyncHandler(async (req: AuthRequest, re
 
   const result = await markAllAlertsAsRead(req.userId);
 
-  res.json(result);
+  return success(res, result);
 }));
 
 /**
@@ -130,7 +131,7 @@ router.delete('/:id', authenticate, asyncHandler(async (req: AuthRequest, res: R
 
   const result = await deleteAlert(req.userId, id);
 
-  res.json(result);
+  return success(res, result);
 }));
 
 export default router;

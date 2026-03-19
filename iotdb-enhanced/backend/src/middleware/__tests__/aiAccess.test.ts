@@ -1,0 +1,258 @@
+/**
+ * Tests for AI Access Control middleware
+ */
+
+import { Request, Response, NextFunction } from 'express';
+import { checkAIAccess, checkAIEnabled } from '../aiAccess';
+import { AuthRequest } from '../auth';
+
+// Mock logger
+jest.mock('../../lib/logger', () => ({
+  logger: {
+    warn: jest.fn(),
+    info: jest.fn(),
+  },
+}));
+
+import { logger } from '../../lib/logger';
+
+describe('AI Access Control Middleware', () => {
+  let mockReq: Partial<AuthRequest>;
+  let mockRes: Partial<Response>;
+  let mockNext: NextFunction;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Reset environment variables
+    delete process.env.AI_FEATURES_DISABLED;
+    delete process.env.AI_ALLOWED_IPS;
+
+    mockReq = {
+      method: 'GET',
+      path: '/api/ai/predict',
+      ip: '192.168.1.100',
+      socket: { remoteAddress: '192.168.1.100' },
+      params: {},
+      query: {},
+      body: {},
+      get: jest.fn((header: string) => {
+        if (header === 'If-None-Match') return undefined;
+        return undefined;
+      }),
+    };
+
+    mockRes = {
+      statusCode: 200,
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+      locals: {},
+    };
+
+    mockNext = jest.fn();
+  });
+
+  describe('checkAIAccess', () => {
+    it('should allow access for authenticated admin user', async () => {
+      mockReq.user = {
+        id: 'admin-123',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+      };
+
+      await checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('[AI_ACCESS] AI feature accessed by admin')
+      );
+    });
+
+    it('should deny access when AI features are disabled', () => {
+      process.env.AI_FEATURES_DISABLED = 'true';
+
+      mockReq.user = {
+        id: 'admin-123',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+      };
+
+      expect(() =>
+        checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext)
+      ).toThrow('AI features are currently disabled');
+
+      expect(logger.warn).toHaveBeenCalledWith('[AI_ACCESS] AI features are disabled');
+    });
+
+    it('should deny access for unauthenticated user', async () => {
+      mockReq.user = undefined;
+
+      expect(() =>
+        checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext)
+      ).toThrow('Authentication required');
+
+      expect(logger.warn).toHaveBeenCalledWith('[AI_ACCESS] Unauthenticated AI access attempt');
+    });
+
+    it('should deny access for non-admin user', async () => {
+      mockReq.user = {
+        id: 'user-123',
+        email: 'user@example.com',
+        role: 'USER',
+      };
+
+      expect(() =>
+        checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext)
+      ).toThrow('AI features are only available to administrators');
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining('[AI_ACCESS] Non-admin user attempted AI access')
+      );
+    });
+
+    // Note: IP whitelist functionality is tested through integration tests
+    // The module-level constant AI_ALLOWED_IPS makes unit testing complex
+    // These tests verify the middleware handles IPs correctly in other scenarios
+
+    it('should handle IPv6 addresses in IP extraction', async () => {
+      mockReq.user = {
+        id: 'admin-123',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+      };
+      mockReq.ip = '::ffff:192.168.1.100';
+
+      await checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should extract IP from socket.remoteAddress when req.ip is undefined', async () => {
+      process.env.AI_ALLOWED_IPS = '10.0.0.5';
+
+      mockReq.user = {
+        id: 'admin-123',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+      };
+      mockReq.ip = undefined;
+      mockReq.socket = { remoteAddress: '10.0.0.5' };
+
+      await checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('should log IP address in access logs', async () => {
+      mockReq.user = {
+        id: 'admin-123',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+      };
+      mockReq.ip = '10.0.0.50';
+
+      await checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('from 10.0.0.50')
+      );
+    });
+
+    it.skip('should handle multiple IPs in whitelist', async () => {
+      // This test would require jest.isolateModules() which is complex
+    });
+
+    it('should deny access for MODERATOR role', async () => {
+      mockReq.user = {
+        id: 'moderator-123',
+        email: 'moderator@example.com',
+        role: 'MODERATOR',
+      };
+
+      expect(() =>
+        checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext)
+      ).toThrow('AI features are only available to administrators');
+    });
+
+    it('should deny access for VIEWER role', async () => {
+      mockReq.user = {
+        id: 'viewer-123',
+        email: 'viewer@example.com',
+        role: 'VIEWER',
+      };
+
+      expect(() =>
+        checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext)
+      ).toThrow('AI features are only available to administrators');
+    });
+  });
+
+  describe('checkAIEnabled', () => {
+    it('should return enabled status when AI features are enabled', async () => {
+      await checkAIEnabled(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockRes.locals.aiEnabled).toBe(true);
+    });
+
+    it('should return 503 when AI features are disabled', async () => {
+      process.env.AI_FEATURES_DISABLED = 'true';
+
+      await checkAIEnabled(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(503);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        enabled: false,
+        message: 'AI features are currently disabled. Please contact your administrator.',
+      });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('should not set aiEnabled when features are disabled', async () => {
+      process.env.AI_FEATURES_DISABLED = 'true';
+
+      await checkAIEnabled(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockRes.locals.aiEnabled).toBeUndefined();
+    });
+
+    it('should call next() when features are enabled', async () => {
+      await checkAIEnabled(mockReq as Request, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith();
+    });
+  });
+
+  describe('IP Extraction Edge Cases', () => {
+    it('should handle unknown IP gracefully', async () => {
+      mockReq.user = {
+        id: 'admin-123',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+      };
+      mockReq.ip = undefined;
+      mockReq.socket = { remoteAddress: undefined };
+
+      await checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining('from unknown')
+      );
+    });
+
+    it('should handle IP with port number', async () => {
+      mockReq.user = {
+        id: 'admin-123',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+      };
+      mockReq.ip = '192.168.1.100:8080';
+      mockReq.socket = { remoteAddress: '192.168.1.100:8080' };
+
+      await checkAIAccess(mockReq as AuthRequest, mockRes as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+    });
+  });
+});

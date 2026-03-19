@@ -23,8 +23,12 @@ export function errorHandler(
   // Handle Zod validation errors
   if (err instanceof ZodError) {
     return res.status(400).json({
-      error: 'Validation error',
-      details: err.errors,
+      success: false,
+      error: {
+        message: 'Validation error',
+        code: 'VALIDATION_ERROR',
+        details: err.errors,
+      },
     });
   }
 
@@ -35,23 +39,35 @@ export function errorHandler(
     // Unique constraint violation
     if (prismaError.code === 'P2002') {
       return res.status(409).json({
-        error: 'Resource already exists',
-        details: prismaError.meta?.target || 'Unique constraint violated',
+        success: false,
+        error: {
+          message: 'Resource already exists',
+          code: 'CONFLICT',
+          details: prismaError.meta?.target || 'Unique constraint violated',
+        },
       });
     }
 
     // Record not found
     if (prismaError.code === 'P2025') {
       return res.status(404).json({
-        error: 'Resource not found',
+        success: false,
+        error: {
+          message: 'Resource not found',
+          code: 'NOT_FOUND',
+        },
       });
     }
 
     // Foreign key constraint
     if (prismaError.code === 'P2003') {
       return res.status(400).json({
-        error: 'Invalid reference',
-        details: 'Related resource not found',
+        success: false,
+        error: {
+          message: 'Invalid reference',
+          code: 'BAD_REQUEST',
+          details: 'Related resource not found',
+        },
       });
     }
   }
@@ -59,13 +75,21 @@ export function errorHandler(
   // Handle JWT errors
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
-      error: 'Invalid token',
+      success: false,
+      error: {
+        message: 'Invalid token',
+        code: 'UNAUTHORIZED',
+      },
     });
   }
 
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({
-      error: 'Token expired',
+      success: false,
+      error: {
+        message: 'Token expired',
+        code: 'UNAUTHORIZED',
+      },
     });
   }
 
@@ -78,8 +102,24 @@ export function errorHandler(
       ? 'Internal server error'
       : appError.message;
 
+  // Map status codes to error codes
+  const errorCodes: Record<number, string> = {
+    400: 'BAD_REQUEST',
+    401: 'UNAUTHORIZED',
+    403: 'FORBIDDEN',
+    404: 'NOT_FOUND',
+    409: 'CONFLICT',
+    429: 'RATE_LIMIT_EXCEEDED',
+    500: 'SERVER_ERROR',
+    503: 'SERVICE_UNAVAILABLE',
+  };
+
   res.status(statusCode).json({
-    error: message,
+    success: false,
+    error: {
+      message,
+      code: errorCodes[statusCode] || 'UNKNOWN_ERROR',
+    },
   });
 }
 
@@ -149,4 +189,10 @@ export class ValidationError extends ApiError {
   }
 
   details?: any;
+}
+
+export class ServiceUnavailableError extends ApiError {
+  constructor(message: string = 'Service temporarily unavailable') {
+    super(503, message);
+  }
 }

@@ -1,0 +1,262 @@
+/**
+ * Security Routes
+ *
+ * Handles security-related endpoints including audit logs
+ */
+
+import { Router, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { logger } from '../lib/logger';
+import { AuthRequest } from '../middleware/auth';
+import { asyncHandler } from '../middleware/errorHandler';
+import { error, success, successWithMessage, unauthorized, forbidden } from '../lib/response';
+
+const router = Router();
+const prisma = new PrismaClient();
+
+/**
+ * Incoming audit log from frontend
+ */
+interface IncomingAuditLog {
+  event: string;
+  timestamp?: string;
+  sessionId: string;
+  details?: Record<string, unknown>;
+  severity: string;
+  userAgent?: string;
+  url?: string;
+}
+
+/**
+ * Prisma where condition for SecurityAuditLog
+ */
+interface SecurityAuditLogWhere {
+  userId?: string;
+  event?: string;
+  severity?: string;
+  timestamp?: {
+    gte?: Date;
+    lte?: Date;
+  };
+}
+
+/**
+ * POST /api/security/audit
+ * Receives audit logs from the frontend
+ */
+router.post('/audit', asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { logs } = req.body;
+
+  // Validate request
+  if (!Array.isArray(logs) || logs.length === 0) {
+    return error(res, 'Invalid logs format', 400, 'VALIDATION_ERROR');
+  }
+
+  // Validate each log entry
+  const validEvents = [
+    'LOGIN_SUCCESS',
+    'LOGIN_FAILURE',
+    'LOGOUT',
+    'TOKEN_EXPIRED',
+    'TOKEN_REFRESHED',
+    'CSRF_VIOLATION',
+    'XSS_ATTEMPT',
+    'RATE_LIMIT_EXCEEDED',
+    'PERMISSION_DENIED',
+    'SUSPICIOUS_ACTIVITY',
+    'INVALID_INPUT',
+    'API_ERROR',
+    'NETWORK_ERROR',
+  ];
+
+  const validSeverities = ['low', 'medium', 'high', 'critical'];
+
+  for (const log of logs) {
+    if (!log.event || !validEvents.includes(log.event)) {
+      logger.warn('Invalid audit log event:', log.event);
+      return error(res, `Invalid event: ${log.event}`, 400, 'VALIDATION_ERROR');
+    }
+
+    if (!log.sessionId) {
+      return error(res, 'sessionId is required', 400, 'VALIDATION_ERROR');
+    }
+
+    if (!log.severity || !validSeverities.includes(log.severity)) {
+      return error(res, `Invalid severity: ${log.severity}`, 400, 'VALIDATION_ERROR');
+    }
+
+    // Validate details is an object
+    if (log.details && typeof log.details !== 'object') {
+      return error(res, 'details must be an object', 400, 'VALIDATION_ERROR');
+    }
+  }
+
+  // Get userId from authenticated user (if available)
+  const userId = req.user?.id || null;
+
+  // Prepare logs for database
+  const processedLogs = logs.map((log: IncomingAuditLog) => ({
+    event: log.event,
+    timestamp: log.timestamp ? new Date(log.timestamp) : new Date(),
+    userId,
+    sessionId: log.sessionId,
+    details: log.details || {},
+    severity: log.severity,
+    userAgent: log.userAgent || null,
+    url: log.url || null,
+  }));
+
+  // Batch insert logs
+  await prisma.securityAuditLog.createMany({
+    data: processedLogs,
+    skipDuplicates: true,
+  });
+
+  logger.info(`Received ${logs.length} audit logs`);
+
+  return success(res, { count: logs.length });
+}));
+
+/**
+ * GET /api/security/audit
+ * Retrieves audit logs (admin only)
+ */
+router.get('/audit', asyncHandler(async (req: AuthRequest, res: Response) => {
+  const {
+    userId,
+    event,
+    severity,
+    startDate,
+    endDate,
+    page = '1',
+    limit = '50',
+  } = req.query;
+
+  // Check if user is admin
+  if (req.user?.role !== 'ADMIN') {
+    return forbidden(res, 'Admin access required');
+  }
+
+  // Build query conditions
+  const query: SecurityAuditLogWhere = {};
+
+  if (userId) {
+    query.userId = userId as string;
+  }
+
+  if (event) {
+    query.event = event as string;
+  }
+
+  if (severity) {
+    query.severity = severity as string;
+  }
+
+  if (startDate || endDate) {
+    query.timestamp = {} as any;
+    if (startDate) {
+      query.timestamp.gte = new Date(startDate as string);
+    }
+    if (endDate) {
+      query.timestamp.lte = new Date(endDate as string);
+    }
+  }
+
+  // Parse pagination parameters
+  const pageNum = parseInt(page as string);
+  const limitNum = parseInt(limit as string);
+  const skip = (pageNum - 1) * limitNum;
+
+  // Fetch logs with pagination
+  const logs = await prisma.securityAuditLog.findMany({
+    where: query,
+    orderBy: { timestamp: 'desc' },
+    take: limitNum,
+    skip,
+  });
+
+  // Get total count for pagination
+  const total = await prisma.securityAuditLog.count({ where: query });
+
+  return success(res, {
+    logs,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      pages: Math.ceil(total / limitNum),
+    },
+  });
+}));
+
+/**
+ * GET /api/security/audit/stats
+ * Get audit log statistics
+ */
+router.get('/audit/stats', asyncHandler(async (req: AuthRequest, res: Response) => {
+  // Check if user is admin
+  if (req.user?.role !== 'ADMIN') {
+    return forbidden(res, 'Admin access required');
+  }
+
+  const { startDate, endDate } = req.query;
+
+  // Build date filter
+  const dateFilter: SecurityAuditLogWhere = {};
+  if (startDate || endDate) {
+    dateFilter.timestamp = {};
+    if (startDate) {
+      dateFilter.timestamp.gte = new Date(startDate as string);
+    }
+    if (endDate) {
+      dateFilter.timestamp.lte = new Date(endDate as string);
+    }
+  }
+
+  // Get total count
+  const totalEvents = await prisma.securityAuditLog.count({
+    where: dateFilter,
+  });
+
+  // Get all logs for aggregation
+  const allLogs = await prisma.securityAuditLog.findMany({
+    where: dateFilter,
+    select: {
+      event: true,
+      severity: true,
+      timestamp: true,
+      details: true,
+    },
+  });
+
+  // Aggregate by event type
+  const byEvent: Record<string, number> = {};
+  allLogs.forEach((log) => {
+    byEvent[log.event] = (byEvent[log.event] || 0) + 1;
+  });
+
+  // Aggregate by severity
+  const bySeverity: Record<string, number> = {};
+  allLogs.forEach((log) => {
+    bySeverity[log.severity] = (bySeverity[log.severity] || 0) + 1;
+  });
+
+  // Get recent critical events
+  const criticalEvents = await prisma.securityAuditLog.findMany({
+    where: {
+      ...dateFilter,
+      severity: 'critical',
+    },
+    orderBy: { timestamp: 'desc' },
+    take: 10,
+  });
+
+  return success(res, {
+    total: totalEvents,
+    byEvent,
+    bySeverity,
+    recentCritical: criticalEvents,
+  });
+}));
+
+export default router;

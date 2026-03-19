@@ -3,34 +3,40 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Install pnpm
+RUN npm install -g pnpm@8
+
 # Install dependencies
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package*.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN pnpm prisma generate
 
 # Build TypeScript
-RUN npm run build
+RUN pnpm run build
 
 # Production stage
 FROM node:18-alpine
 
 WORKDIR /app
 
+# Install pnpm for production
+RUN npm install -g pnpm@8
+
 # Copy package files
-COPY package*.json ./
+COPY package*.json pnpm-lock.yaml ./
 
 # Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
+RUN pnpm install --prod --frozen-lockfile && pnpm store prune
 
 # Copy built files from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \

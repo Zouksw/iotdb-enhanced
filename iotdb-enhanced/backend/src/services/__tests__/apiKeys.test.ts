@@ -1,0 +1,457 @@
+/**
+ * Tests for API Keys service
+ * Security-critical service that handles API key generation, validation, and management
+ */
+
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import {
+  generateApiKey,
+  createApiKey,
+  validateApiKey,
+  listApiKeys,
+  revokeApiKey,
+  deleteApiKey,
+  updateApiKeyExpiration,
+} from '../apiKeys';
+import { prisma } from '../../lib';
+
+// Mock Prisma
+jest.mock('../../lib', () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
+    apiKey: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    auditLog: {
+      create: jest.fn(),
+    },
+  },
+}));
+
+const mockPrisma = prisma as any;
+
+// Helper to create mock User
+const createMockUser = (overrides: any = {}) => ({
+  id: 'user-123',
+  email: 'test@example.com',
+  name: 'Test User',
+  role: 'USER',
+  createdAt: new Date(),
+  passwordHash: 'hash',
+  avatarUrl: null,
+  preferences: {},
+  lastLoginAt: null,
+  failedLoginAttempts: 0,
+  lockedUntil: null,
+  updatedAt: new Date(),
+  ...overrides,
+});
+
+// Helper to create mock ApiKey
+const createMockApiKey = (overrides: any = {}) => ({
+  id: 'key-123',
+  name: 'Test Key',
+  keyHash: '$2a$12$hash',
+  lastCharacters: 12345678,
+  isActive: true,
+  usageCount: 0,
+  expiresAt: null,
+  lastUsedAt: null,
+  createdAt: new Date(),
+  userId: 'user-123',
+  ...overrides,
+});
+
+describe('API Keys Service', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe('generateApiKey', () => {
+    it('should generate a key with correct prefix', () => {
+      const key = generateApiKey();
+      expect(key).toMatch(/^iotd_/);
+    });
+
+    it('should generate a key with correct format', () => {
+      const key = generateApiKey();
+      const parts = key.split('_');
+      expect(parts).toHaveLength(3);
+      expect(parts[0]).toBe('iotd');
+      expect(parts[1]).toHaveLength(16); // 8 bytes = 16 hex chars
+      expect(parts[2].length).toBeGreaterThan(0);
+    });
+
+    it('should generate unique keys', () => {
+      const key1 = generateApiKey();
+      const key2 = generateApiKey();
+      expect(key1).not.toBe(key2);
+    });
+
+    it('should generate keys of reasonable length', () => {
+      const key = generateApiKey();
+      expect(key.length).toBeGreaterThan(40);
+      expect(key.length).toBeLessThan(100);
+    });
+  });
+
+  describe('createApiKey', () => {
+    const mockUser = createMockUser();
+    const mockApiKey = createMockApiKey();
+
+    it('should create an API key successfully', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.apiKey.create.mockResolvedValue(mockApiKey);
+      mockPrisma.auditLog.create.mockResolvedValue({} as any);
+
+      const result = await createApiKey({
+        userId: 'user-123',
+        name: 'Test Key',
+      });
+
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('apiKey');
+      expect(result).toHaveProperty('name', 'Test Key');
+      expect(result).toHaveProperty('lastCharacters');
+      expect(result.apiKey).toMatch(/^iotd_/);
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-123' },
+      });
+      expect(mockPrisma.apiKey.create).toHaveBeenCalled();
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: 'user-123',
+          resourceType: 'API_KEY',
+          action: 'CREATE',
+          success: true,
+        }),
+      });
+    });
+
+    it('should create an API key with expiration', async () => {
+      const expiresAt = new Date();
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.apiKey.create.mockResolvedValue({
+        ...mockApiKey,
+        expiresAt,
+      });
+      mockPrisma.auditLog.create.mockResolvedValue({} as any);
+
+      const result = await createApiKey({
+        userId: 'user-123',
+        name: 'Test Key',
+        expiresIn: 3600, // 1 hour
+      });
+
+      expect(result.expiresAt).toBeInstanceOf(Date);
+      expect(mockPrisma.apiKey.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          expiresAt: expect.any(Date),
+        }),
+      });
+    });
+
+    it('should throw error when user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        createApiKey({
+          userId: 'nonexistent',
+          name: 'Test Key',
+        })
+      ).rejects.toThrow('User not found');
+    });
+
+    it('should handle database errors gracefully', async () => {
+      mockPrisma.user.findUnique.mockRejectedValue(new Error('Database error'));
+
+      await expect(
+        createApiKey({
+          userId: 'user-123',
+          name: 'Test Key',
+        })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('validateApiKey', () => {
+    it('should return null for empty key', async () => {
+      const result = await validateApiKey('');
+      expect(result).toBeNull();
+    });
+
+    it('should return null for key without correct prefix', async () => {
+      const result = await validateApiKey('invalid_key');
+      expect(result).toBeNull();
+    });
+
+    it('should return null when no keys match', async () => {
+      mockPrisma.apiKey.findMany.mockResolvedValue([]);
+
+      const result = await validateApiKey('iotd_invalid_key');
+      expect(result).toBeNull();
+    });
+
+    it('should query active non-expired keys', async () => {
+      mockPrisma.apiKey.findMany.mockResolvedValue([]);
+
+      await validateApiKey('iotd_test_key');
+
+      expect(mockPrisma.apiKey.findMany).toHaveBeenCalledWith({
+        where: {
+          isActive: true,
+          OR: [
+            { expiresAt: null },
+            { expiresAt: { gte: expect.any(Date) } },
+          ],
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('should return null when bcrypt comparison fails', async () => {
+      const mockUser = createMockUser();
+
+      const mockApiKey = createMockApiKey({
+        user: mockUser,
+      });
+
+      mockPrisma.apiKey.findMany.mockResolvedValue([mockApiKey]);
+
+      const result = await validateApiKey('iotd_invalid_key');
+      expect(result).toBeNull();
+    });
+
+    it('should update usage count and last used when validation succeeds', async () => {
+      const mockUser = createMockUser();
+
+      // Create a real bcrypt hash for a test API key
+      const bcrypt = require('bcryptjs');
+      const testApiKey = 'iotd_test_key_valid';
+      const keyHash = await bcrypt.hash(testApiKey, 12);
+
+      const mockApiKey = createMockApiKey({
+        user: mockUser,
+        lastCharacters: 12345678,
+        keyHash, // Use real hash
+      });
+
+      mockPrisma.apiKey.findMany.mockResolvedValue([mockApiKey]);
+      mockPrisma.apiKey.update.mockResolvedValue({
+        ...mockApiKey,
+        usageCount: 1,
+        lastUsedAt: new Date(),
+      });
+
+      const result = await validateApiKey(testApiKey);
+
+      expect(result).not.toBeNull();
+      expect(result).toHaveProperty('user');
+      expect(result).toHaveProperty('apiKey');
+      expect(mockPrisma.apiKey.update).toHaveBeenCalledWith({
+        where: { id: 'key-123' },
+        data: {
+          usageCount: { increment: 1 },
+          lastUsedAt: expect.any(Date),
+        },
+      });
+    });
+  });
+
+  describe('listApiKeys', () => {
+    const mockKeys = [
+      createMockApiKey({
+        id: 'key-1',
+        name: 'Key 1',
+        lastCharacters: 12345678,
+        usageCount: 10,
+        lastUsedAt: new Date(),
+      }),
+      createMockApiKey({
+        id: 'key-2',
+        name: 'Key 2',
+        lastCharacters: 87654321,
+        isActive: false,
+        usageCount: 5,
+        lastUsedAt: null,
+        expiresAt: new Date(),
+      }),
+    ];
+
+    it('should list all API keys for a user', async () => {
+      mockPrisma.apiKey.findMany.mockResolvedValue(mockKeys);
+
+      const result = await listApiKeys('user-123');
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toHaveProperty('id', 'key-1');
+      expect(result[1]).toHaveProperty('id', 'key-2');
+      expect(mockPrisma.apiKey.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-123' },
+        orderBy: { createdAt: 'desc' },
+        select: expect.any(Object),
+      });
+    });
+
+    it('should return empty array when user has no keys', async () => {
+      mockPrisma.apiKey.findMany.mockResolvedValue([]);
+
+      const result = await listApiKeys('user-123');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('revokeApiKey', () => {
+    const mockApiKey = createMockApiKey();
+
+    it('should revoke an API key successfully', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(mockApiKey);
+      mockPrisma.apiKey.update.mockResolvedValue({} as any);
+      mockPrisma.auditLog.create.mockResolvedValue({} as any);
+
+      const result = await revokeApiKey('user-123', 'key-123');
+
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('message', 'API key revoked');
+      expect(mockPrisma.apiKey.update).toHaveBeenCalledWith({
+        where: { id: 'key-123' },
+        data: { isActive: false },
+      });
+    });
+
+    it('should throw error when key not found', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(null);
+
+      await expect(
+        revokeApiKey('user-123', 'nonexistent-key')
+      ).rejects.toThrow('API key not found or access denied');
+    });
+
+    it('should throw error when user does not own the key', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(null);
+
+      await expect(
+        revokeApiKey('different-user', 'key-123')
+      ).rejects.toThrow('API key not found or access denied');
+    });
+
+    it('should create audit log on revoke', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(mockApiKey);
+      mockPrisma.apiKey.update.mockResolvedValue({} as any);
+      mockPrisma.auditLog.create.mockResolvedValue({} as any);
+
+      await revokeApiKey('user-123', 'key-123');
+
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: 'user-123',
+          resourceType: 'API_KEY',
+          resourceId: 'key-123',
+          action: 'DELETE',
+          success: true,
+        }),
+      });
+    });
+  });
+
+  describe('deleteApiKey', () => {
+    const mockApiKey = createMockApiKey();
+
+    it('should delete an API key successfully', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(mockApiKey);
+      mockPrisma.apiKey.delete.mockResolvedValue({} as any);
+      mockPrisma.auditLog.create.mockResolvedValue({} as any);
+
+      const result = await deleteApiKey('user-123', 'key-123');
+
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('message', 'API key deleted');
+      expect(mockPrisma.apiKey.delete).toHaveBeenCalledWith({
+        where: { id: 'key-123' },
+      });
+    });
+
+    it('should throw error when key not found', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(null);
+
+      await expect(
+        deleteApiKey('user-123', 'nonexistent-key')
+      ).rejects.toThrow('API key not found or access denied');
+    });
+
+    it('should create audit log on delete', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(mockApiKey);
+      mockPrisma.apiKey.delete.mockResolvedValue({} as any);
+      mockPrisma.auditLog.create.mockResolvedValue({} as any);
+
+      await deleteApiKey('user-123', 'key-123');
+
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          userId: 'user-123',
+          resourceType: 'API_KEY',
+          resourceId: 'key-123',
+          action: 'DELETE',
+          success: true,
+        }),
+      });
+    });
+  });
+
+  describe('updateApiKeyExpiration', () => {
+    const mockApiKey = createMockApiKey();
+
+    it('should update API key expiration successfully', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(mockApiKey);
+      mockPrisma.apiKey.update.mockResolvedValue({} as any);
+
+      const result = await updateApiKeyExpiration('user-123', 'key-123', 3600);
+
+      expect(result).toHaveProperty('success', true);
+      expect(result).toHaveProperty('expiresAt');
+      expect(result.expiresAt).toBeInstanceOf(Date);
+      expect(mockPrisma.apiKey.update).toHaveBeenCalledWith({
+        where: { id: 'key-123' },
+        data: { expiresAt: expect.any(Date) },
+      });
+    });
+
+    it('should remove expiration when expiresIn is undefined', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(mockApiKey);
+      mockPrisma.apiKey.update.mockResolvedValue({} as any);
+
+      const result = await updateApiKeyExpiration('user-123', 'key-123', undefined);
+
+      expect(result).toHaveProperty('success', true);
+      expect(result.expiresAt).toBeNull();
+    });
+
+    it('should throw error when key not found', async () => {
+      mockPrisma.apiKey.findFirst.mockResolvedValue(null);
+
+      await expect(
+        updateApiKeyExpiration('user-123', 'nonexistent-key', 3600)
+      ).rejects.toThrow('API key not found or access denied');
+    });
+  });
+});

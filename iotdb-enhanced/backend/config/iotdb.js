@@ -72,7 +72,8 @@ class IoTDBRESTClient {
         }
         // metadata query (show timeseries, show devices, etc.)
         if (data.column_names && data.values) {
-            for (let i = 0; i < data.timestamps || 0; i++) {
+            const numColumns = data.values.length > 0 ? data.values[0].length : 0;
+            for (let i = 0; i < numColumns; i++) {
                 const row = {
                     expressions: null,
                     column_names: data.column_names,

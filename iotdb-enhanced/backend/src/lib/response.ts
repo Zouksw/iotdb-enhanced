@@ -5,10 +5,13 @@
 
 import { Response } from 'express';
 import { ApiError } from '../middleware/errorHandler';
+import type { ErrorDetail } from '../types/api';
 
 /**
- * Standard success response structure */
-export interface SuccessResponse<T = any> {
+ * Standard success response structure
+ * Using proper generic type instead of `any`
+ */
+export interface SuccessResponse<T = unknown> {
   success: true;
   data: T;
   message?: string;
@@ -16,13 +19,14 @@ export interface SuccessResponse<T = any> {
 
 /**
  * Standard error response structure
+ * Using proper type instead of `any` for details
  */
 export interface ErrorResponse {
   success: false;
   error: {
     message: string;
     code?: string;
-    details?: any;
+    details?: ErrorDetail;
   };
 }
 
@@ -54,13 +58,18 @@ export function successWithMessage<T>(
 
 /**
  * Send an error response
+ * @param res - Express response object
+ * @param message - Error message
+ * @param status - HTTP status code (default: 500)
+ * @param code - Error code for client handling
+ * @param details - Additional error details (properly typed)
  */
 export function error(
   res: Response,
   message: string,
   status: number = 500,
   code?: string,
-  details?: any
+  details?: ErrorDetail
 ): void {
   res.status(status).json({
     success: false,
@@ -74,8 +83,10 @@ export function error(
 
 /**
  * Send a validation error response
+ * @param res - Express response object
+ * @param details - Validation error details (properly typed)
  */
-export function validationError(res: Response, details: any): void {
+export function validationError(res: Response, details: ErrorDetail): void {
   res.status(400).json({
     success: false,
     error: {

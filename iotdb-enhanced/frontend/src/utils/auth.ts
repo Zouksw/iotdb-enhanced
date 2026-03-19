@@ -1,76 +1,66 @@
 /**
  * Authentication utility functions
  * Provides helper functions for managing authentication tokens and user data
+ * Now uses the centralized tokenManager for secure token management
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
+import { tokenManager } from "@/lib/tokenManager";
+import { csrfProtection } from "@/lib/csrf";
 
 /**
- * Get the authentication token from localStorage
+ * Cached user data
+ */
+interface CachedUser {
+  id: string;
+  email: string;
+  name: string | null;
+  avatar?: string;
+  roles?: string[];
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || (
+  process.env.NODE_ENV === 'production'
+    ? undefined  // Force error in production if not set
+    : "http://localhost:8000"
+);
+
+if (!API_BASE) {
+  throw new Error(
+    "NEXT_PUBLIC_API_URL environment variable is not set. " +
+    "Please create a .env.local file with NEXT_PUBLIC_API_URL=http://your-api-url"
+  );
+}
+
+/**
+ * Get the authentication token
  * @returns The JWT token or null
  */
 export const getAuthToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token");
-  }
-  return null;
+  return tokenManager.getToken();
 };
 
 /**
- * Set the authentication token in localStorage
+ * Set the authentication token
  * @param token - The JWT token to store
+ * @param rememberMe - Whether to persist the session
  */
-export const setAuthToken = (token: string): void => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("token", token);
-  }
+export const setAuthToken = (token: string, rememberMe?: boolean): void => {
+  tokenManager.setToken(token, rememberMe);
 };
 
 /**
- * Remove the authentication token from localStorage
+ * Remove the authentication token
  */
 export const removeAuthToken = (): void => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("token");
-  }
-};
-
-/**
- * Get the refresh token from localStorage
- * @returns The refresh token or null
- */
-export const getRefreshToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("refreshToken");
-  }
-  return null;
-};
-
-/**
- * Set the refresh token in localStorage
- * @param token - The refresh token to store
- */
-export const setRefreshToken = (token: string): void => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("refreshToken", token);
-  }
-};
-
-/**
- * Remove the refresh token from localStorage
- */
-export const removeRefreshToken = (): void => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("refreshToken");
-  }
+  tokenManager.removeToken();
 };
 
 /**
  * Clear all authentication tokens
  */
 export const clearAuthTokens = (): void => {
-  removeAuthToken();
-  removeRefreshToken();
+  tokenManager.removeToken();
+  // Note: HttpOnly cookie is cleared by backend logout endpoint
 };
 
 /**
@@ -78,7 +68,7 @@ export const clearAuthTokens = (): void => {
  * @returns The Authorization header value or undefined
  */
 export const getAuthHeader = (): { Authorization: string } | undefined => {
-  const token = getAuthToken();
+  const token = tokenManager.getToken();
   if (token) {
     return { Authorization: `Bearer ${token}` };
   }
@@ -86,7 +76,7 @@ export const getAuthHeader = (): { Authorization: string } | undefined => {
 };
 
 /**
- * Fetch with authentication headers
+ * Fetch with authentication headers and CSRF protection
  * @param url - The URL to fetch
  * @param options - Fetch options
  * @returns The fetch response
@@ -95,30 +85,69 @@ export const authFetch = async (
   url: string,
   options: RequestInit = {}
 ): Promise<Response> => {
-  const headers = {
+  const token = tokenManager.getToken();
+  const csrfHeaders = csrfProtection.getHeaders();
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
     ...options.headers,
-    ...getAuthHeader(),
   };
+
+  // Add auth header if token exists
+  if (token) {
+    (headers as any)['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Add CSRF token for non-GET requests
+  if (options.method && options.method !== 'GET') {
+    Object.assign(headers, csrfHeaders);
+  }
 
   return fetch(`${API_BASE}${url}`, {
     ...options,
+    credentials: 'include', // Include cookies
     headers,
   });
 };
 
 /**
- * Check if user is authenticated
- * @returns True if user has a valid token
+ * Check if user is authenticated (DEPRECATED - may return false after page refresh)
+ * @deprecated Use verifyAuthentication() instead - this only checks memory token
+ * @returns True if user has a valid token in memory (may be false even if logged in)
  */
 export const isAuthenticated = (): boolean => {
-  return getAuthToken() !== null;
+  const token = tokenManager.getToken();
+  const valid = token !== null && tokenManager.isTokenValid(token);
+
+  // Warn in development that this function is deprecated
+  if (process.env.NODE_ENV === 'development' && !valid) {
+    console.warn('[DEPRECATED] isAuthenticated() only checks memory. Use verifyAuthentication() instead.');
+  }
+
+  return valid;
 };
+
+/**
+ * Verify authentication status with server
+ * This checks the HttpOnly cookie which persists across page refreshes
+ * @returns Promise<boolean> - true if user is authenticated via server session
+ */
+export async function verifyAuthentication(): Promise<boolean> {
+  try {
+    const response = await authFetch('/auth/verify', {
+      method: 'GET',
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
 
 /**
  * Get the current user info from localStorage cache
  * @returns The cached user object or null
  */
-export const getCachedUser = (): any | null => {
+export const getCachedUser = (): CachedUser | null => {
   if (typeof window !== "undefined") {
     const userStr = localStorage.getItem("user");
     if (userStr) {
@@ -136,9 +165,17 @@ export const getCachedUser = (): any | null => {
  * Cache the current user info in localStorage
  * @param user - The user object to cache
  */
-export const setCachedUser = (user: any): void => {
+export const setCachedUser = (user: CachedUser): void => {
   if (typeof window !== "undefined") {
-    localStorage.setItem("user", JSON.stringify(user));
+    // Only store non-sensitive data
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      roles: user.roles || [],
+    };
+    localStorage.setItem("user", JSON.stringify(safeUser));
   }
 };
 
@@ -149,4 +186,28 @@ export const clearCachedUser = (): void => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("user");
   }
+};
+
+/**
+ * Check if the current token is expiring soon (within 5 minutes)
+ * @returns True if token will expire within 5 minutes
+ */
+export const isTokenExpiringSoon = (): boolean => {
+  return tokenManager.isTokenExpiringSoon();
+};
+
+/**
+ * Get user ID from current token
+ * @returns User ID or null
+ */
+export const getUserId = (): string | null => {
+  return tokenManager.getUserId();
+};
+
+/**
+ * Get user role from current token
+ * @returns User role or null
+ */
+export const getUserRole = (): string | null => {
+  return tokenManager.getUserRole();
 };

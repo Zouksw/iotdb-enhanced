@@ -3,33 +3,21 @@
 // Documentation: https://iotdb.apache.org/UserGuide/latest/API/RestServiceV2.html
 
 import fetch from 'node-fetch';
-
-// IoTDB 连接配置
-interface IoTDBConfig {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  database: string;
-}
-
-// IoTDB 查询结果接口
-interface IoTDBQueryResult {
-  expressions?: string[] | null;
-  column_names?: string[] | null;
-  timestamps?: number[] | null;
-  values: any[][];
-}
-
-// IoTDB REST API 响应接口
-interface IoTDBResponse {
-  code: number;
-  message: string;
-  expressions?: string[] | null;
-  column_names?: string[] | null;
-  timestamps?: number[] | null;
-  values?: any[][] | null;
-}
+import type {
+  IoTDBConfig,
+  IoTDBQueryResult,
+  IoTDBResponse,
+  IoTDBValue,
+  IoTDBQueryRequest,
+  IoTDBTrainModelResponse,
+  IoTDBPredictResponse,
+  IoTDBListModelsResponse,
+  IoTDBOperationResult,
+  IoTDBForecast,
+  IoTDBModel,
+  IoTDBTrainingHyperparameters,
+  IoTDBQueryRow,
+} from '../src/types/iotdb';
 
 const iotdbConfig: IoTDBConfig = {
   host: process.env.IOTDB_HOST || 'localhost',
@@ -38,6 +26,29 @@ const iotdbConfig: IoTDBConfig = {
   password: process.env.IOTDB_PASSWORD || 'root',
   database: process.env.IOTDB_DATABASE || 'root',
 };
+
+/**
+ * Validate IoTDB credentials for security
+ * Throws an error if default credentials are detected in production
+ */
+export function validateIoTDBCredentials(): void {
+  if (process.env.NODE_ENV === 'production') {
+    const defaultUsernames = ['root', 'admin', 'change_this_username'];
+    const defaultPasswords = ['root', 'admin', 'password', 'change_this_secure_password', '123456'];
+
+    const isDefaultUsername = defaultUsernames.includes(iotdbConfig.username.toLowerCase());
+    const isDefaultPassword = defaultPasswords.some(pwd =>
+      iotdbConfig.password.toLowerCase().includes(pwd.toLowerCase())
+    );
+
+    if (isDefaultUsername || isDefaultPassword) {
+      throw new Error(
+        'SECURITY: Default IoTDB credentials detected in production environment. ' +
+        'Please update IOTDB_USERNAME and IOTDB_PASSWORD environment variables with secure credentials.'
+      );
+    }
+  }
+}
 
 // 连接状态
 let connectionStatus: 'not_connected' | 'connected' | 'error' = 'not_connected';
@@ -74,9 +85,9 @@ class IoTDBRESTClient {
   }
 
   // 执行查询
-  async queryData(sql: string, rowLimit?: number): Promise<IoTDBQueryResult[]> {
+  async queryData(sql: string, rowLimit?: number): Promise<IoTDBQueryRow[]> {
     try {
-      const body: any = { sql };
+      const body: IoTDBQueryRequest = { sql };
       if (rowLimit !== undefined) {
         body.row_limit = rowLimit;
       }
@@ -106,8 +117,8 @@ class IoTDBRESTClient {
   }
 
   // 解析查询结果
-  private parseQueryResult(data: IoTDBResponse): IoTDBQueryResult[] {
-    const results: IoTDBQueryResult[] = [];
+  private parseQueryResult(data: IoTDBResponse): IoTDBQueryRow[] {
+    const results: IoTDBQueryRow[] = [];
 
     if (!data.timestamps || data.timestamps.length === 0) {
       return results;
@@ -117,11 +128,9 @@ class IoTDBRESTClient {
     if (data.column_names && data.values) {
       const numColumns = data.values.length > 0 ? data.values[0].length : 0;
       for (let i = 0; i < numColumns; i++) {
-        const row: IoTDBQueryResult = {
-          expressions: null,
+        const row: IoTDBQueryRow = {
           column_names: data.column_names,
-          timestamps: null,
-          values: data.values.map(col => col[i]),
+          values: data.values.map((col) => col[i] as IoTDBValue),
         };
         results.push(row);
       }
@@ -131,14 +140,14 @@ class IoTDBRESTClient {
     // data query (select * from ...)
     if (data.expressions && data.timestamps && data.values) {
       for (let i = 0; i < data.timestamps.length; i++) {
-        const row: any = {
+        const row: IoTDBQueryRow = {
           timestamp: data.timestamps[i],
         };
 
         for (let j = 0; j < data.expressions.length; j++) {
           const path = data.expressions[j];
           const value = data.values[j]?.[i];
-          row[path] = value;
+          row[path] = value as IoTDBValue;
         }
 
         results.push(row);
@@ -149,7 +158,7 @@ class IoTDBRESTClient {
   }
 
   // 执行非查询操作 (INSERT, DELETE, CREATE, etc.)
-  async executeNonQueries(sql: string): Promise<{ success: boolean; message: string }> {
+  async executeNonQueries(sql: string): Promise<IoTDBOperationResult> {
     try {
       const response = await fetch(`${this.baseUrl}/rest/v2/nonQuery`, {
         method: 'POST',
@@ -163,10 +172,11 @@ class IoTDBRESTClient {
         success: data.code === 200,
         message: data.message,
       };
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
-        message: error.message || 'Unknown error',
+        message,
       };
     }
   }
@@ -177,9 +187,9 @@ class IoTDBRESTClient {
     timestamps: number[],
     measurements: string[],
     dataTypes: string[],
-    values: any[][],
+    values: IoTDBValue[][],
     isAligned: boolean = false
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<IoTDBOperationResult> {
     try {
       const response = await fetch(`${this.baseUrl}/rest/v2/insertTablet`, {
         method: 'POST',
@@ -200,10 +210,11 @@ class IoTDBRESTClient {
         success: data.code === 200,
         message: data.message,
       };
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
-        message: error.message || 'Unknown error',
+        message,
       };
     }
   }
@@ -214,9 +225,9 @@ class IoTDBRESTClient {
     timestamps: number[],
     measurementsList: string[][],
     dataTypesList: string[][],
-    valuesList: any[][],
+    valuesList: IoTDBValue[][],
     isAligned: boolean = false
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<IoTDBOperationResult> {
     try {
       const response = await fetch(`${this.baseUrl}/rest/v2/insertRecords`, {
         method: 'POST',
@@ -237,10 +248,11 @@ class IoTDBRESTClient {
         success: data.code === 200,
         message: data.message,
       };
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       return {
         success: false,
-        message: error.message || 'Unknown error',
+        message,
       };
     }
   }
@@ -262,7 +274,21 @@ class IoTDBRESTClient {
   // 显示所有时间序列
   async showTimeseries(): Promise<string[]> {
     const results = await this.queryData('SHOW TIMESERIES');
-    return results.map((r: any) => r['timeseries'] || r.values?.[0]).filter(Boolean);
+    return results
+      .map((r) => {
+        // Handle metadata query format - values is a 2D array
+        const values = r.values as IoTDBValue[][] | undefined;
+        if (values && values[0] && values[0][0] !== undefined) {
+          return String(values[0][0]);
+        }
+        // Handle data query format - dynamic property access
+        const timeseries = r.timeseries as IoTDBValue | undefined;
+        if (timeseries !== undefined) {
+          return String(timeseries);
+        }
+        return null;
+      })
+      .filter((val): val is string => val !== null);
   }
 
   // 查询时间序列数据
@@ -271,7 +297,7 @@ class IoTDBRESTClient {
     limit: number = 1000,
     startTime?: string,
     endTime?: string
-  ): Promise<any[]> {
+  ): Promise<IoTDBQueryRow[]> {
     let sql = `SELECT * FROM ${path}`;
     if (startTime || endTime) {
       sql += ' WHERE';
@@ -301,8 +327,11 @@ class IoTDBRESTClient {
   // 统计时间序列数量
   async countTimeseries(path: string): Promise<number> {
     const results = await this.queryData(`COUNT TIMESERIES ${path}`);
-    if (results.length > 0 && results[0].values) {
-      return parseInt(results[0].values[0][0]) || 0;
+    if (results.length > 0) {
+      const values = results[0].values as IoTDBValue[][] | undefined;
+      if (values && values[0] && values[0][0]) {
+        return parseInt(String(values[0][0]), 10) || 0;
+      }
     }
     return 0;
   }
@@ -313,8 +342,8 @@ class IoTDBRESTClient {
   async trainModel(
     path: string,
     algorithm: 'ARIMA' | 'PROPHET' | 'LSTM' | 'TRANSFORMER',
-    hyperparameters: Record<string, any> = {}
-  ): Promise<{ success: boolean; message: string; modelId?: string }> {
+    hyperparameters: IoTDBTrainingHyperparameters = {}
+  ): Promise<IoTDBTrainModelResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/rest/v2/ainode/train`, {
         method: 'POST',
@@ -332,7 +361,7 @@ class IoTDBRESTClient {
         return {
           success: true,
           message: data.message || 'Training completed successfully',
-          modelId: data.values?.[0]?.[0], // Model ID from response
+          modelId: data.values?.[0]?.[0] as string | undefined, // Model ID from response
         };
       }
 
@@ -340,11 +369,12 @@ class IoTDBRESTClient {
         success: false,
         message: data.message || 'Training failed',
       };
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Training request failed';
       console.error('AINode training error:', error);
       return {
         success: false,
-        message: error.message || 'Training request failed',
+        message,
       };
     }
   }
@@ -355,7 +385,7 @@ class IoTDBRESTClient {
     modelId: string,
     horizon: number,
     confidenceLevel: number = 0.95
-  ): Promise<{ success: boolean; message: string; forecasts?: any[] }> {
+  ): Promise<IoTDBPredictResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/rest/v2/ainode/predict`, {
         method: 'POST',
@@ -372,7 +402,7 @@ class IoTDBRESTClient {
 
       if (data.code === 200 && data.timestamps && data.values) {
         // Parse forecast results
-        const forecasts = data.timestamps.map((timestamp: number, i: number) => ({
+        const forecasts: IoTDBForecast[] = data.timestamps.map((timestamp: number, i: number) => ({
           timestamp: new Date(timestamp),
           predictedValue: data.values![0]?.[i] || null,
           lowerBound: data.values![1]?.[i] || null,
@@ -390,48 +420,56 @@ class IoTDBRESTClient {
         success: false,
         message: data.message || 'Prediction failed',
       };
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Prediction request failed';
       console.error('AINode prediction error:', error);
       return {
         success: false,
-        message: error.message || 'Prediction request failed',
+        message,
       };
     }
   }
 
   // Get list of trained models
-  async listModels(): Promise<{ success: boolean; models?: any[]; message: string }> {
+  async listModels(): Promise<IoTDBListModelsResponse> {
     try {
       const results = await this.queryData('SHOW MODELS');
 
+      const models: IoTDBModel[] = results.map((r) => {
+        const values = r.values as IoTDBValue[][] | undefined;
+        return {
+          modelId: values?.[0]?.[0] || null,
+          algorithm: values?.[0]?.[1] || null,
+          path: values?.[0]?.[2] || null,
+          trainedAt: values?.[0]?.[3] || null,
+        };
+      });
+
       return {
         success: true,
-        models: results.map((r: any) => ({
-          modelId: r.values?.[0]?.[0],
-          algorithm: r.values?.[0]?.[1],
-          path: r.values?.[0]?.[2],
-          trainedAt: r.values?.[0]?.[3],
-        })),
+        models,
         message: 'Models retrieved successfully',
       };
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to list models';
       console.error('AINode list models error:', error);
       return {
         success: false,
-        message: error.message || 'Failed to list models',
+        message,
       };
     }
   }
 
   // Delete a trained model
-  async deleteModel(modelId: string): Promise<{ success: boolean; message: string }> {
+  async deleteModel(modelId: string): Promise<IoTDBOperationResult> {
     try {
       const result = await this.executeNonQueries(`DROP MODEL ${modelId}`);
       return result;
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete model';
       return {
         success: false,
-        message: error.message || 'Failed to delete model',
+        message,
       };
     }
   }
@@ -443,6 +481,9 @@ let iotdbClientInstance: IoTDBRESTClient | null = null;
 // 获取 IoTDB 客户端实例
 export async function getIoTDBClient(): Promise<IoTDBRESTClient> {
   if (!iotdbClientInstance) {
+    // Validate credentials before initializing client in production
+    validateIoTDBCredentials();
+
     iotdbClientInstance = new IoTDBRESTClient(iotdbConfig);
 
     // 测试连接

@@ -31,7 +31,7 @@ export class IoTDBFrontendClient {
   private async request(
     endpoint: string,
     options?: RequestInit
-  ): Promise<any> {
+  ): Promise<unknown> {
     const url = `${config.restUrl}/rest/v1${endpoint}`;
 
     const controller = new AbortController();
@@ -60,8 +60,8 @@ export class IoTDBFrontendClient {
         return await response.json();
       }
       return await response.text();
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`IoTDB request timeout: ${url}`);
       }
       throw error;
@@ -72,8 +72,8 @@ export class IoTDBFrontendClient {
 
   async healthCheck(): Promise<boolean> {
     try {
-      const result = await this.request('/ping');
-      return result.status === 'ok' || result === 'pong';
+      const result = await this.request('/ping') as { status?: string } | string;
+      return (typeof result === 'object' && result.status === 'ok') || result === 'pong';
     } catch {
       return false;
     }
@@ -164,7 +164,7 @@ export class IoTDBFrontendClient {
    */
   async listModels(): Promise<any[]> {
     try {
-      const response = await this.request('/ai/models');
+      const response = await this.request('/ai/models') as { models?: any[] };
       return response.models || [];
     } catch {
       return [];

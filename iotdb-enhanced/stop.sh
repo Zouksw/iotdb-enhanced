@@ -1,17 +1,24 @@
 #!/bin/bash
-# IoTDB Enhanced Platform - Stop Script
+# IoTDB Enhanced Platform - Stop Script (PM2 Version)
 # =======================================
 # 统一停止所有服务：Frontend + Backend + IoTDB + AI Node
 
+set -e
+
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Detect IoTDB installation paths
 IOTDB_HOME="/opt/iotdb-ainode/apache-iotdb-2.0.5-all-bin"
-BACKEND_DIR="$PROJECT_DIR/backend"
-FRONTEND_DIR="$PROJECT_DIR/frontend"
+AINODE_HOME="/opt/iotdb-ainode/apache-iotdb-2.0.5-ainode-bin"
+
+# Use alternative paths if not found
+[ ! -d "$IOTDB_HOME" ] && IOTDB_HOME="/opt/iotdb/apache-iotdb-2.0.6-all-bin"
+[ ! -d "$AINODE_HOME" ] && AINODE_HOME="$IOTDB_HOME"
 
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo "========================================"
@@ -22,114 +29,147 @@ echo "Stopping services..."
 echo ""
 
 # ============================================
-# 1. Stop Frontend
+# 1. Stop PM2 Services
 # ============================================
-echo "[1/4] Stopping Frontend..."
+echo "[1/5] Stopping PM2 managed services..."
 
-cd "$FRONTEND_DIR"
+cd "$PROJECT_DIR"
 
-if [ -f .pid ]; then
-    FRONTEND_PID=$(cat .pid)
-    if ps -p "$FRONTEND_PID" > /dev/null 2>&1; then
-        kill "$FRONTEND_PID" 2>/dev/null || true
-        echo -e "  ${GREEN}✓${NC} Frontend stopped (PID: $FRONTEND_PID)"
-    else
-        echo -e "  ${YELLOW}Frontend process not running${NC}"
-    fi
-    rm -f .pid
+# Stop frontend and backend
+if pm2 list 2>/dev/null | grep -q "iotdb"; then
+    echo "  Stopping PM2 processes..."
+    pm2 stop all 2>/dev/null || true
+    echo -e "  ${GREEN}✓${NC} PM2 services stopped"
 else
-    # Try to find and kill any next-server processes
-    if pkill -f "next-server"; then
-        echo -e "  ${GREEN}✓${NC} Frontend stopped"
-    else
-        echo -e "  ${YELLOW}Frontend not running${NC}"
-    fi
-fi
-
-# Double check port 3000
-if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo -e "  ${YELLOW}⚠ Port 3000 still in use, force killing...${NC}"
-    fuser -k 3000/tcp 2>/dev/null || true
+    echo -e "  ${YELLOW}No PM2 services running${NC}"
 fi
 
 echo ""
 
 # ============================================
-# 2. Stop Backend
+# 2. Stop AI Node
 # ============================================
-echo "[2/4] Stopping Backend..."
+echo "[2/5] Stopping AI Node..."
 
-cd "$BACKEND_DIR"
+if [ -d "$AINODE_HOME" ]; then
+    cd "$AINODE_HOME"
 
-if [ -f .pid ]; then
-    BACKEND_PID=$(cat .pid)
-    if ps -p "$BACKEND_PID" > /dev/null 2>&1; then
-        kill "$BACKEND_PID" 2>/dev/null || true
-        echo -e "  ${GREEN}✓${NC} Backend stopped (PID: $BACKEND_PID)"
+    if [ -f "./sbin/stop-ainode.sh" ]; then
+        ./sbin/stop-ainode.sh > /dev/null 2>&1 &
+        echo "  Waiting for AI Node to stop..."
+
+        # Wait for graceful shutdown
+        for i in {1..15}; do
+            if ! nc -z localhost 10810 2>/dev/null; then
+                echo -e "  ${GREEN}✓${NC} AI Node stopped"
+                break
+            fi
+            sleep 1
+            echo -n "."
+        done
+
+        # Force kill if still running
+        if nc -z localhost 10810 2>/dev/null; then
+            echo ""
+            echo -e "  ${YELLOW}⚠ Force killing AI Node...${NC}"
+            pkill -9 -f "ainode" || true
+            sleep 2
+        fi
     else
-        echo -e "  ${YELLOW}Backend process not running${NC}"
+        # Try to find and kill AINode processes
+        if pkill -f "python.*ainode"; then
+            echo -e "  ${GREEN}✓${NC} AI Node stopped"
+        else
+            echo -e "  ${YELLOW}AI Node not running${NC}"
+        fi
     fi
-    rm -f .pid
 else
-    # Try to find and kill any node processes running on port 8002
-    BACKEND_PID=$(lsof -ti :8002 2>/dev/null)
-    if [ -n "$BACKEND_PID" ]; then
-        kill "$BACKEND_PID" 2>/dev/null || true
-        echo -e "  ${GREEN}✓${NC} Backend stopped"
-    else
-        echo -e "  ${YELLOW}Backend not running${NC}"
-    fi
+    echo -e "  ${YELLOW}AI Node directory not found${NC}"
+    pkill -f "ainode" 2>/dev/null || true
 fi
 
 echo ""
 
 # ============================================
-# 3. Stop IoTDB + AI Node
+# 3. Stop IoTDB
 # ============================================
-echo "[3/4] Stopping IoTDB + AI Node..."
+echo "[3/5] Stopping IoTDB..."
 
-# Check if IoTDB is running
-if ! pgrep -f "iotdb" > /dev/null; then
-    echo -e "  ${YELLOW}IoTDB is not running${NC}"
-else
+if [ -d "$IOTDB_HOME" ]; then
     cd "$IOTDB_HOME"
 
-    # Stop DataNode (this will also stop AI Node)
-    echo "  Stopping IoTDB DataNode..."
-    if [ -f "./sbin/stop-datanode.sh" ]; then
-        ./sbin/stop-datanode.sh > /dev/null 2>&1 &
-    fi
-
-    # Wait for IoTDB to stop
-    echo "  Waiting for IoTDB to stop..."
-    MAX_WAIT=30
-    WAIT_COUNT=0
-    while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
-        if ! pgrep -f "iotdb" > /dev/null; then
-            echo -e "  ${GREEN}✓${NC} IoTDB stopped"
-            break
+    # Check if IoTDB is running
+    if ! pgrep -f "iotdb" > /dev/null; then
+        echo -e "  ${YELLOW}IoTDB is not running${NC}"
+    else
+        # Stop DataNode
+        if [ -f "./sbin/stop-datanode.sh" ]; then
+            echo "  Stopping IoTDB DataNode..."
+            ./sbin/stop-datanode.sh > /dev/null 2>&1 &
         fi
-        sleep 1
-        echo -n "."
-        WAIT_COUNT=$((WAIT_COUNT + 1))
-    done
 
-    if [ $WAIT_COUNT -eq $MAX_WAIT ]; then
-        echo ""
-        echo -e "  ${YELLOW}⚠ IoTDB did not stop gracefully, force killing...${NC}"
-        pkill -9 -f "iotdb" || true
-        sleep 2
+        # Wait for graceful shutdown
+        echo "  Waiting for IoTDB to stop..."
+        MAX_WAIT=30
+        WAIT_COUNT=0
+        while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+            if ! pgrep -f "iotdb" > /dev/null; then
+                echo -e "  ${GREEN}✓${NC} IoTDB stopped"
+                break
+            fi
+            sleep 1
+            echo -n "."
+            WAIT_COUNT=$((WAIT_COUNT + 1))
+        done
+
+        # Force kill if still running
+        if [ $WAIT_COUNT -eq $MAX_WAIT ]; then
+            echo ""
+            echo -e "  ${YELLOW}⚠ IoTDB did not stop gracefully, force killing...${NC}"
+            pkill -9 -f "iotdb" || true
+            sleep 2
+        fi
     fi
+else
+    echo -e "  ${YELLOW}IoTDB directory not found${NC}"
+    pkill -f "iotdb" 2>/dev/null || true
 fi
 
 echo ""
 
 # ============================================
-# 4. Verify ports are released
+# 4. Stop Optional Services
 # ============================================
-echo "[4/4] Verifying ports..."
+echo "[4/5] Stopping optional services..."
 
-PORTS=(6667 10710 10810 18080 8002 3000)
+# Stop PostgreSQL (optional - comment out if you want it to keep running)
+# if pgrep -x postgres > /dev/null; then
+#     echo "  Stopping PostgreSQL..."
+#     sudo systemctl stop postgresql 2>/dev/null || service postgresql stop 2>/dev/null
+#     echo -e "  ${GREEN}✓${NC} PostgreSQL stopped"
+# else
+#     echo -e "  ${YELLOW}PostgreSQL not running${NC}"
+# fi
+
+# Stop Redis (optional - comment out if you want it to keep running)
+# if pgrep -x redis-server > /dev/null; then
+#     echo "  Stopping Redis..."
+#     sudo systemctl stop redis 2>/dev/null || service redis stop 2>/dev/null
+#     echo -e "  ${GREEN}✓${NC} Redis stopped"
+# else
+#     echo -e "  ${YELLOW}Redis not running${NC}"
+# fi
+
+echo -e "  ${YELLOW}PostgreSQL and Redis left running (for data persistence)${NC}"
+
+echo ""
+
+# ============================================
+# 5. Verify ports are released
+# ============================================
+echo "[5/5] Verifying ports..."
+
+PORTS=(6667 10710 10810 18080 8000 3000)
 ALL_CLEARED=true
 
 for PORT in "${PORTS[@]}"; do
@@ -141,6 +181,11 @@ done
 
 if [ "$ALL_CLEARED" = true ]; then
     echo -e "  ${GREEN}✓ All ports released${NC}"
+else
+    echo ""
+    echo "  ${YELLOW}Some ports still in use. You may need to manually kill processes:${NC}"
+    echo "  sudo lsof -ti :3000 | xargs kill -9"
+    echo "  sudo lsof -ti :8000 | xargs kill -9"
 fi
 
 echo ""
@@ -149,5 +194,17 @@ echo "  All Services Stopped!"
 echo "========================================"
 echo ""
 
+# Clean up PM2 PID file (optional)
+# pm2 delete all 2>/dev/null || true
+# pm2 flush 2>/dev/null || true
+
+echo "Note: PostgreSQL and Redis are left running to preserve data."
+echo "      To stop them, uncomment the relevant sections in this script."
+echo ""
+
 # Exit successfully
+# Clear PM2 saved configuration so services don't auto-restart
+pm2 save --force > /dev/null 2>&1
+echo -e "  ${GREEN}✓${NC} PM2 configuration cleared"
+
 exit 0

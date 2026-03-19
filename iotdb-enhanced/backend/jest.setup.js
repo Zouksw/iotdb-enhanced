@@ -6,6 +6,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://test:test@localhost:5432/iotdb_test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-for-jwt-testing-purposes-only-32chars';
 process.env.JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-session-key-for-testing-purposes-only-32-chars-min';
 process.env.IOTDB_HOST = process.env.IOTDB_HOST || 'localhost';
 process.env.IOTDB_PORT = process.env.IOTDB_PORT || '6667';
 process.env.IOTDB_USERNAME = process.env.IOTDB_USERNAME || 'root';
@@ -26,9 +27,7 @@ global.console = {
 };
 
 // Mock AI Node Python scripts
-jest.mock('./src/services/iotdb/rpc-client', () => ({
-  callAIService: jest.fn(),
-}));
+// Note: rpc-client is mocked individually in test files
 
 // Mock Winston logger
 jest.mock('winston', () => ({
@@ -86,7 +85,5 @@ jest.mock('crypto', () => {
 
 // Setup global test teardown
 afterAll(async () => {
-  // Import and run the shared database cleanup
-  const { cleanupDatabaseAfterTests } = require('./src/utils/test-prisma');
-  await cleanupDatabaseAfterTests();
+  // Cleanup can be added here if needed
 });

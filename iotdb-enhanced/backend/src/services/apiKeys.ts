@@ -55,8 +55,10 @@ export async function createApiKey(params: {
   userId: string;
   name: string;
   expiresIn?: number; // seconds
+  ipAddress?: string;
+  userAgent?: string;
 }) {
-  const { userId, name, expiresIn } = params;
+  const { userId, name, expiresIn, ipAddress = '', userAgent = '' } = params;
 
   // Verify user exists
   const user = await prisma.user.findUnique({
@@ -96,8 +98,8 @@ export async function createApiKey(params: {
       resourceType: 'API_KEY',
       resourceId: storedKey.id,
       action: 'CREATE',
-      ipAddress: '', // Will be filled by middleware
-      userAgent: '', // Will be filled by middleware
+      ipAddress,
+      userAgent,
       success: true,
     },
   });

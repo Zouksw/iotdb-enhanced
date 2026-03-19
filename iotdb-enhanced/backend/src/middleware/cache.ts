@@ -5,6 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { get, set, cacheKeys } from '../services/cache';
+import { logger } from '../lib/logger';
 
 interface CachedRequest extends Request {
   cacheKey?: string;
@@ -58,7 +59,7 @@ export const cacheResponse = (options: {
       if (res.statusCode >= 200 && res.statusCode < 300) {
         // Cache the response asynchronously (don't block the response)
         set(cacheKey, body, ttl).catch((err) => {
-          console.error('Cache set error:', err);
+          logger.error('Cache set error:', err);
         });
       }
 

@@ -9,37 +9,48 @@
  *   - Save: pm2 save
  *   - Startup: pm2 startup
  *
+ * Configuration:
+ *   - Set PROJECT_ROOT environment variable to override default path
+ *   - Set PM2_USER environment variable to override default user (default: node)
+ *
  * Author: IoTDB Enhanced Team
- * Version: 1.0.0
+ * Version: 1.2.0
  */
+
+const path = require('path');
+
+// Get project root from environment or use current directory
+const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(__dirname);
+// Get user from environment or default to 'node' (NOT root for security)
+const PM2_USER = process.env.PM2_USER || 'node';
 
 module.exports = {
   apps: [
     {
       name: 'iotdb-backend',
       script: './backend/dist/src/server.js',
-      cwd: '/root/iotdb-enhanced',
-      instances: 1, // Use 'max' for cluster mode with CPU cores
-      exec_mode: 'fork', // Use 'cluster' for multiple instances
+      cwd: PROJECT_ROOT,
+      instances: 'max', // Use all CPU cores for production
+      exec_mode: 'cluster', // Cluster mode for better performance
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'production',
-        PORT: 8002,
+        PORT: 8000,
       },
       env_development: {
         NODE_ENV: 'development',
-        PORT: 8002,
+        PORT: 8000,
       },
       env_staging: {
         NODE_ENV: 'staging',
-        PORT: 8002,
+        PORT: 8000,
       },
       // Logging
-      error_file: './logs/backend-error.log',
-      out_file: './logs/backend-out.log',
-      log_file: './logs/backend-combined.log',
+      error_file: path.join(PROJECT_ROOT, './logs/backend-error.log'),
+      out_file: path.join(PROJECT_ROOT, './logs/backend-out.log'),
+      log_file: path.join(PROJECT_ROOT, './logs/backend-combined.log'),
       time: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
@@ -60,7 +71,7 @@ module.exports = {
       name: 'iotdb-frontend',
       script: './frontend/node_modules/next/dist/bin/next',
       args: 'start -p 3000',
-      cwd: '/root/iotdb-enhanced/frontend',
+      cwd: path.join(PROJECT_ROOT, 'frontend'),
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
@@ -79,9 +90,9 @@ module.exports = {
         PORT: 3000,
       },
       // Logging
-      error_file: './logs/frontend-error.log',
-      out_file: './logs/frontend-out.log',
-      log_file: './logs/frontend-combined.log',
+      error_file: path.join(PROJECT_ROOT, './logs/frontend-error.log'),
+      out_file: path.join(PROJECT_ROOT, './logs/frontend-out.log'),
+      log_file: path.join(PROJECT_ROOT, './logs/frontend-combined.log'),
       time: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       merge_logs: true,
@@ -102,22 +113,23 @@ module.exports = {
 
   deploy: {
     production: {
-      user: 'root',
-      host: 'your-server.com',
+      // SECURITY: Don't run as root user
+      user: PM2_USER,
+      host: process.env.DEPLOY_HOST || 'your-server.com',
       ref: 'origin/main',
-      repo: 'git@github.com:your-org/iotdb-enhanced.git',
-      path: '/root/iotdb-enhanced',
+      repo: process.env.GIT_REPO || 'git@github.com:your-org/iotdb-enhanced.git',
+      path: PROJECT_ROOT,
       'pre-deploy-local': '',
-      'post-deploy': 'npm install && cd backend && npm install && npm run build && cd ../frontend && pnpm install && pnpm run build && pm2 reload ecosystem.config.cjs --env production',
+      'post-deploy': 'pnpm install && cd backend && pnpm install && pnpm run build && cd ../frontend && pnpm install && pnpm run build && pm2 reload ecosystem.config.cjs --env production',
       'pre-setup': '',
     },
     staging: {
-      user: 'root',
-      host: 'staging.your-server.com',
+      user: PM2_USER,
+      host: process.env.DEPLOY_STAGING_HOST || 'staging.your-server.com',
       ref: 'origin/develop',
-      repo: 'git@github.com:your-org/iotdb-enhanced.git',
-      path: '/root/iotdb-enhanced',
-      'post-deploy': 'npm install && cd backend && npm install && npm run build && cd ../frontend && pnpm install && pnpm run build && pm2 reload ecosystem.config.cjs --env staging',
+      repo: process.env.GIT_REPO || 'git@github.com:your-org/iotdb-enhanced.git',
+      path: PROJECT_ROOT,
+      'post-deploy': 'pnpm install && cd backend && pnpm install && pnpm run build && cd ../frontend && pnpm install && pnpm run build && pm2 reload ecosystem.config.cjs --env staging',
     },
   },
 

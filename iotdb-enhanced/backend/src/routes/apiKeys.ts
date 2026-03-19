@@ -17,6 +17,7 @@ import {
   apiKeysSchemas,
 } from '../services/apiKeys';
 import { validate } from '../middleware/security';
+import { success } from '../lib/response';
 
 const router = Router();
 
@@ -40,9 +41,11 @@ router.post(
       userId: req.userId,
       name,
       expiresIn,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') || '',
     });
 
-    res.status(201).json(result);
+    return success(res, result, 201);
   })
 );
 
@@ -57,7 +60,7 @@ router.get('/', authenticate, asyncHandler(async (req: AuthRequest, res: Respons
 
   const apiKeys = await listApiKeys(req.userId);
 
-  res.json({
+  return success(res, {
     apiKeys,
     total: apiKeys.length,
   });
@@ -76,7 +79,7 @@ router.delete('/:id/revoke', authenticate, asyncHandler(async (req: AuthRequest,
 
   const result = await revokeApiKey(req.userId, id);
 
-  res.json(result);
+  return success(res, result);
 }));
 
 /**
@@ -92,7 +95,7 @@ router.delete('/:id', authenticate, asyncHandler(async (req: AuthRequest, res: R
 
   const result = await deleteApiKey(req.userId, id);
 
-  res.json(result);
+  return success(res, result);
 }));
 
 /**
@@ -113,7 +116,7 @@ router.patch(
 
     const result = await updateApiKeyExpiration(req.userId, id, expiresIn);
 
-    res.json(result);
+    return success(res, result);
   })
 );
 

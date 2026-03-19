@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,7 +7,321 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enum definitions
+model User {
+  id                   String                 @id @default(uuid())
+  email                String                 @unique
+  passwordHash         String                 @map("password_hash")
+  name                 String
+  avatarUrl            String?                @map("avatar_url")
+  role                 UserRole               @default(VIEWER)
+  is_mfa_enabled       Boolean                @default(false)
+  mfa_secret           String?
+  preferences          Json?
+  lastLoginAt          DateTime?              @map("last_login_at")
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime?              @updatedAt @map("updated_at")
+  failedLoginAttempts  Int?                   @default(0) @map("failed_login_attempts")
+  lockedUntil          DateTime?              @map("locked_until") @db.Timestamp(6)
+  alerts               Alert[]
+  apiKeys              ApiKey[]
+  auditLogs            AuditLog[]
+  datasets             Dataset[]
+  models               ForecastingModel[]
+  organization_members organization_members[]
+  organizations        organizations[]
+  saved_queries        saved_queries[]
+  securityAuditLogs    SecurityAuditLog[]     @relation("SecurityAuditLogs")
+  sessions             Session[]
+
+  @@index([email])
+  @@index([createdAt(sort: Desc)])
+  @@map("users")
+}
+
+model Dataset {
+  id              String        @id @default(uuid())
+  organization_id String
+  ownerId         String        @map("owner_id")
+  name            String
+  slug            String
+  description     String?
+  storageFormat   StorageFormat @map("storage_format")
+  filePath        String?       @map("file_path")
+  sizeBytes       BigInt?       @map("size_bytes")
+  rowsCount       Int?          @map("rows_count")
+  metadata        Json?
+  isPublic        Boolean       @default(false) @map("is_public")
+  isImported      Boolean       @default(false) @map("is_imported")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime?     @updatedAt @map("updated_at")
+  lastAccessedAt  DateTime?     @map("last_accessed_at")
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  owner           User          @relation(fields: [ownerId], references: [id])
+  timeseries      Timeseries[]
+
+  @@unique([organization_id, slug])
+  @@index([ownerId])
+  @@index([createdAt(sort: Desc)])
+  @@map("datasets")
+}
+
+model Timeseries {
+  id                        String             @id @default(uuid())
+  datasetId                 String             @map("dataset_id")
+  name                      String
+  slug                      String
+  description               String?
+  colorHex                  String?            @map("color_hex")
+  unit                      String?
+  timezone                  String             @default("UTC")
+  isAnomalyDetectionEnabled Boolean            @default(false) @map("is_anomaly_detection_enabled")
+  createdAt                 DateTime           @default(now()) @map("created_at")
+  updatedAt                 DateTime?          @updatedAt @map("updated_at")
+  alerts                    Alert[]
+  anomalies                 Anomaly[]
+  dataPoints                Datapoint[]
+  models                    ForecastingModel[]
+  forecasts                 Forecast[]
+  dataset                   Dataset            @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([datasetId, slug])
+  @@index([createdAt(sort: Desc)])
+  @@map("timeseries")
+}
+
+model Datapoint {
+  id           String     @id @default(uuid())
+  timeseriesId String     @map("timeseries_id")
+  timestamp    DateTime
+  valueJson    Json       @map("value_json")
+  qualityScore Decimal?   @map("quality_score") @db.Decimal(3, 2)
+  isOutlier    Boolean    @default(false) @map("is_outlier")
+  isAnomaly    Boolean    @default(false) @map("is_anomaly")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  timeseries   Timeseries @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
+
+  @@index([timeseriesId, timestamp(sort: Desc)])
+  @@index([timeseriesId, isAnomaly])
+  @@index([timestamp(sort: Desc)]) // NEW: For time-range queries
+  @@index([timeseriesId, isOutlier]) // NEW: For outlier detection
+  @@map("datapoints")
+}
+
+model ForecastingModel {
+  id              String         @id @default(uuid())
+  timeseriesId    String         @map("timeseries_id")
+  trainedById     String?        @map("trained_by_id")
+  algorithm       ModelAlgorithm
+  hyperparameters Json
+  trainingMetrics Json?          @map("training_metrics")
+  version         Int            @default(1)
+  isActive        Boolean        @default(true) @map("is_active")
+  trainedAt       DateTime?      @map("trained_at")
+  deployedAt      DateTime?      @map("deployed_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  timeseries      Timeseries     @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
+  trainedBy       User?          @relation(fields: [trainedById], references: [id])
+  forecasts       Forecast[]
+
+  @@index([timeseriesId])
+  @@index([trainedById])
+  @@index([isActive])
+  @@index([trainedAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@map("forecasting_models")
+}
+
+model Forecast {
+  id                 String           @id @default(uuid())
+  modelId            String           @map("model_id")
+  timeseriesId       String           @map("timeseries_id")
+  timestamp          DateTime
+  predictedValue     Decimal          @map("predicted_value") @db.Decimal(15, 6)
+  lowerBound         Decimal?         @map("lower_bound") @db.Decimal(15, 6)
+  upperBound         Decimal?         @map("upper_bound") @db.Decimal(15, 6)
+  confidence         Decimal          @db.Decimal(3, 2)
+  anomalyProbability Decimal?         @map("anomaly_probability") @db.Decimal(3, 2)
+  isAnomaly          Boolean          @default(false) @map("is_anomaly")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  model              ForecastingModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  timeseries         Timeseries       @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
+
+  @@index([modelId])
+  @@index([timeseriesId, timestamp(sort: Desc)])
+  @@map("forecasts")
+}
+
+model Anomaly {
+  id              String          @id @default(uuid())
+  timeseriesId    String          @map("timeseries_id")
+  datapointId     BigInt?         @map("datapoint_id")
+  severity        AnomalySeverity
+  detectionMethod DetectionMethod @map("detection_method")
+  score           Decimal?        @db.Decimal(5, 2)
+  context         Json?
+  isInvestigated  Boolean         @default(false) @map("is_investigated")
+  resolutionNotes String?         @map("resolution_notes")
+  isResolved      Boolean         @default(false) @map("is_resolved")
+  resolvedAt      DateTime?       @map("resolved_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  timeseries      Timeseries      @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
+
+  @@index([timeseriesId])
+  @@index([timeseriesId, severity])
+  @@index([timeseriesId, isResolved])
+  @@index([createdAt(sort: Desc)])
+  @@map("anomalies")
+}
+
+model Alert {
+  id           String        @id @default(uuid())
+  userId       String        @map("user_id")
+  timeseriesId String        @map("timeseries_id")
+  type         AlertType
+  severity     AlertSeverity
+  message      String
+  metadata     Json?
+  isRead       Boolean       @default(false) @map("is_read")
+  sentAt       DateTime?     @map("sent_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  timeseries   Timeseries    @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([timeseriesId])
+  @@index([userId, isRead])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("alerts")
+}
+
+model ApiKey {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  name           String
+  keyHash        String    @unique @map("key_hash")
+  lastCharacters Int       @map("last_characters")
+  isActive       Boolean   @default(true) @map("is_active")
+  usageCount     Int       @default(0) @map("usage_count")
+  expiresAt      DateTime? @map("expires_at")
+  lastUsedAt     DateTime? @map("last_used_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("api_keys")
+}
+
+model Session {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  tokenHash      String    @map("token_hash")
+  ipAddress      String?   @map("ip_address")
+  userAgent      String?   @map("user_agent")
+  expiresAt      DateTime  @map("expires_at")
+  isActive       Boolean   @default(true) @map("is_active")
+  lastActivityAt DateTime? @map("last_activity_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([isActive])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  userId       String      @map("user_id")
+  resourceType String      @map("resource_type")
+  resourceId   String?     @map("resource_id")
+  action       AuditAction
+  ipAddress    String?     @map("ip_address")
+  userAgent    String?     @map("user_agent")
+  success      Boolean
+  errorCode    String?     @map("error_code")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([resourceType, resourceId])
+  @@map("audit_logs")
+}
+
+model SecurityAuditLog {
+  id         String   @id @default(uuid())
+  event      String
+  timestamp  DateTime @default(now())
+  userId     String?  @map("user_id")
+  sessionId  String   @map("session_id")
+  details    Json     @default("{}")
+  severity   String
+  userAgent  String?  @map("user_agent")
+  url        String?
+  receivedAt DateTime @default(now()) @map("received_at")
+  user       User?    @relation("SecurityAuditLogs", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([event, timestamp])
+  @@index([severity, timestamp])
+  @@index([timestamp])
+  @@map("security_audit_logs")
+}
+
+model organization_members {
+  id              String        @id
+  organization_id String
+  user_id         String
+  role            UserRole      @default(VIEWER)
+  created_at      DateTime      @default(now())
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  users           User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([organization_id, user_id])
+  @@index([user_id])
+}
+
+model organizations {
+  id                   String                 @id
+  owner_id             String
+  name                 String
+  slug                 String                 @unique
+  description          String?
+  logo_url             String?
+  settings             Json?
+  is_archived          Boolean                @default(false)
+  created_at           DateTime               @default(now())
+  updated_at           DateTime?
+  datasets             Dataset[]
+  organization_members organization_members[]
+  users                User                   @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at(sort: Desc)])
+  @@index([owner_id])
+  @@index([slug])
+}
+
+model saved_queries {
+  id              String    @id
+  user_id         String
+  organization_id String?
+  name            String
+  description     String?
+  query_params    Json
+  is_public       Boolean   @default(false)
+  usage_count     Int       @default(0)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime?
+  last_used_at    DateTime?
+  users           User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([organization_id])
+  @@index([user_id, created_at(sort: Desc)])
+  @@index([user_id])
+}
+
 enum UserRole {
   ADMIN
   EDITOR
@@ -65,263 +376,3 @@ enum AuditAction {
   EXPORT
   LOGIN
 }
-
-// User and Authentication
-model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  name         String
-  avatarUrl    String?   @map("avatar_url")
-  role         UserRole  @default(VIEWER)
-  preferences  Json?
-  lastLoginAt  DateTime? @map("last_login_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime? @updatedAt @map("updated_at")
-
-  // Relations
-  apiKeys   ApiKey[]
-  auditLogs AuditLog[]
-  sessions  Session[]
-  datasets  Dataset[]
-  models    ForecastingModel[]
-  alerts    Alert[]
-
-  @@index([email])
-  @@index([createdAt(sort: Desc)])
-  @@map("users")
-}
-
-// Data Management
-model Dataset {
-  id             String        @id @default(uuid())
-  ownerId        String        @map("owner_id")
-  name           String
-  slug           String
-  description    String?       @db.Text
-  storageFormat  StorageFormat @map("storage_format")
-  filePath       String?       @map("file_path")
-  sizeBytes      BigInt?       @map("size_bytes")
-  rowsCount      Int?          @map("rows_count")
-  metadata       Json?
-  isPublic       Boolean       @default(false) @map("is_public")
-  isImported     Boolean       @default(false) @map("is_imported")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime?     @updatedAt @map("updated_at")
-  lastAccessedAt DateTime?     @map("last_accessed_at")
-
-  // Relations
-  owner      User        @relation(fields: [ownerId], references: [id])
-  timeseries Timeseries[]
-
-  @@unique([ownerId, slug])
-  @@index([ownerId])
-  @@index([createdAt(sort: Desc)])
-  @@map("datasets")
-}
-
-model Timeseries {
-  id                        String    @id @default(uuid())
-  datasetId                 String    @map("dataset_id")
-  name                      String
-  slug                      String
-  description               String?   @db.Text
-  colorHex                  String?   @map("color_hex")
-  unit                      String?
-  timezone                  String    @default("UTC")
-  isAnomalyDetectionEnabled Boolean   @default(false) @map("is_anomaly_detection_enabled")
-  createdAt                 DateTime  @default(now()) @map("created_at")
-  updatedAt                 DateTime? @updatedAt @map("updated_at")
-
-  // Relations
-  dataset    Dataset            @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  dataPoints Datapoint[]
-  models     ForecastingModel[]
-  forecasts  Forecast[]
-  anomalies  Anomaly[]
-  alerts     Alert[]
-
-  @@unique([datasetId, slug])
-  @@index([createdAt(sort: Desc)])
-  @@map("timeseries")
-}
-
-model Datapoint {
-  id           String   @id @default(uuid())
-  timeseriesId String   @map("timeseries_id")
-  timestamp    DateTime
-  valueJson    Json     @map("value_json")
-  qualityScore Decimal? @map("quality_score") @db.Decimal(3, 2)
-  isOutlier    Boolean  @default(false) @map("is_outlier")
-  isAnomaly    Boolean  @default(false) @map("is_anomaly")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  // Relations
-  timeseries Timeseries @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
-
-  @@index([timeseriesId, timestamp(sort: Desc)])
-  @@index([timeseriesId, isAnomaly])
-  @@map("datapoints")
-}
-
-// AI Forecasting
-model ForecastingModel {
-  id              String         @id @default(uuid())
-  timeseriesId    String         @map("timeseries_id")
-  trainedById     String?        @map("trained_by_id")
-  algorithm       ModelAlgorithm
-  hyperparameters Json
-  trainingMetrics Json?          @map("training_metrics")
-  version         Int            @default(1)
-  isActive        Boolean        @default(true) @map("is_active")
-  trainedAt       DateTime?      @map("trained_at")
-  deployedAt      DateTime?      @map("deployed_at")
-  createdAt       DateTime       @default(now()) @map("created_at")
-
-  // Relations
-  timeseries Timeseries @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
-  trainedBy  User?      @relation(fields: [trainedById], references: [id])
-  forecasts  Forecast[]
-
-  @@index([timeseriesId])
-  @@index([trainedById])
-  @@index([isActive(timeseriesId)])
-  @@index([trainedAt(sort: Desc)])
-  @@index([createdAt(sort: Desc)])
-  @@map("forecasting_models")
-}
-
-model Forecast {
-  id                 String   @id @default(uuid())
-  modelId            String   @map("model_id")
-  timeseriesId       String   @map("timeseries_id")
-  timestamp          DateTime
-  predictedValue     Decimal  @map("predicted_value") @db.Decimal(15, 6)
-  lowerBound         Decimal? @map("lower_bound") @db.Decimal(15, 6)
-  upperBound         Decimal? @map("upper_bound") @db.Decimal(15, 6)
-  confidence         Decimal  @db.Decimal(3, 2)
-  anomalyProbability Decimal? @map("anomaly_probability") @db.Decimal(3, 2)
-  isAnomaly          Boolean  @default(false) @map("is_anomaly")
-  createdAt          DateTime @default(now()) @map("created_at")
-
-  // Relations
-  model      ForecastingModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  timeseries Timeseries       @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
-
-  @@index([modelId])
-  @@index([timeseriesId, timestamp(sort: Desc)])
-  @@map("forecasts")
-}
-
-// Anomaly Detection
-model Anomaly {
-  id              String          @id @default(uuid())
-  timeseriesId    String          @map("timeseries_id")
-  datapointId     BigInt?         @map("datapoint_id")
-  severity        AnomalySeverity
-  detectionMethod DetectionMethod @map("detection_method")
-  score           Decimal?        @db.Decimal(5, 2)
-  context         Json?
-  isInvestigated  Boolean         @default(false) @map("is_investigated")
-  resolutionNotes String?         @map("resolution_notes") @db.Text
-  isResolved      Boolean         @default(false) @map("is_resolved")
-  resolvedAt      DateTime?       @map("resolved_at")
-  createdAt       DateTime        @default(now()) @map("created_at")
-
-  // Relations
-  timeseries Timeseries @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
-
-  @@index([timeseriesId])
-  @@index([timeseriesId, severity])
-  @@index([timeseriesId, isResolved])
-  @@index([createdAt(sort: Desc)])
-  @@map("anomalies")
-}
-
-// Alerts and Notifications
-model Alert {
-  id           String        @id @default(uuid())
-  userId       String        @map("user_id")
-  timeseriesId String        @map("timeseries_id")
-  type         AlertType
-  severity     AlertSeverity
-  message      String        @db.Text
-  metadata     Json?
-  isRead       Boolean       @default(false) @map("is_read")
-  sentAt       DateTime?     @map("sent_at")
-  createdAt    DateTime      @default(now()) @map("created_at")
-
-  // Relations
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  timeseries Timeseries @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([timeseriesId])
-  @@index([userId, isRead])
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("alerts")
-}
-
-// API Keys and Security
-model ApiKey {
-  id             String    @id @default(uuid())
-  userId         String    @map("user_id")
-  name           String
-  keyHash        String    @unique @map("key_hash")
-  lastCharacters Int       @map("last_characters")
-  isActive       Boolean   @default(true) @map("is_active")
-  usageCount     Int       @default(0) @map("usage_count")
-  expiresAt      DateTime? @map("expires_at")
-  lastUsedAt     DateTime? @map("last_used_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([isActive(userId)])
-  @@map("api_keys")
-}
-
-model Session {
-  id             String    @id @default(uuid())
-  userId         String    @map("user_id")
-  tokenHash      String    @map("token_hash")
-  ipAddress      String?   @map("ip_address")
-  userAgent      String?   @map("user_agent")
-  expiresAt      DateTime  @map("expires_at")
-  isActive       Boolean   @default(true) @map("is_active")
-  lastActivityAt DateTime? @map("last_activity_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([tokenHash])
-  @@index([isActive(userId)])
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("sessions")
-}
-
-model AuditLog {
-  id           String      @id @default(uuid())
-  userId       String      @map("user_id")
-  resourceType String      @map("resource_type")
-  resourceId   String?     @map("resource_id")
-  action       AuditAction
-  ipAddress    String?     @map("ip_address")
-  userAgent    String?     @map("user_agent")
-  success      Boolean
-  errorCode    String?     @map("error_code")
-  createdAt    DateTime    @default(now()) @map("created_at")
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([resourceType, resourceId])
-  @@index([userId, createdAt(sort: Desc)])
-  @@map("audit_logs")
-}
-

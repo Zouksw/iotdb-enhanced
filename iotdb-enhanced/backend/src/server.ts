@@ -32,24 +32,43 @@ const io = new SocketIOServer(httpServer, {
   },
 });
 
-// CORS middleware
-app.use(cors({
+// CORS middleware with whitelist support
+// Security: In production, requires explicit ALLOWED_ORIGINS configuration
+const corsOptions: cors.CorsOptions = {
+  credentials: true,
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
     const allowedOrigins = config.server.corsOrigin;
 
-    // Check if origin is exactly in allowed list or starts with an allowed origin (for ports)
-    if (allowedOrigins.indexOf(origin) !== -1 ||
-        allowedOrigins.some(allowed => origin?.startsWith(allowed.replace(':3000', '').replace(':3001', '').replace(':3002', '')))) {
+    // Security check: Production should have explicit CORS whitelist
+    if (config.server.nodeEnv === 'production' &&
+        (allowedOrigins.length === 0 ||
+         allowedOrigins.includes('*') ||
+         allowedOrigins.some(origin => origin === 'http://localhost:3000' ||
+                                          origin === 'http://localhost:3001' ||
+                                          origin === 'http://localhost:3002'))) {
+      logger.warn('SECURITY: Default localhost origins detected in production CORS configuration. ' +
+                   'Please set CORS_ORIGIN environment variable with your production domains.');
+    }
+
+    // Check if origin is exactly in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // For development, allow variations with different ports
+      if (config.server.nodeEnv !== 'production' &&
+          allowedOrigins.some(allowed => origin?.startsWith(allowed.replace(':3000', '').replace(':3001', '').replace(':3002', '')))) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS policy violation: Origin not allowed'));
+      }
     }
   },
-  credentials: true,
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Security middleware
 app.use(securityHeaders);

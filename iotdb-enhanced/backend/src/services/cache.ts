@@ -4,6 +4,7 @@
  */
 
 import { createClient, RedisClientType } from 'redis';
+import { logger } from '../utils/logger';
 
 let redisClient: RedisClientType | null = null;
 
@@ -23,7 +24,7 @@ export async function initCache() {
       socket: {
         reconnectStrategy: (retries) => {
           if (retries > 10) {
-            console.error('Redis reconnection failed after 10 attempts');
+            logger.error('Redis reconnection failed after 10 attempts');
             return new Error('Redis reconnection failed');
           }
           return retries * 100; // Reconnect with increasing delay
@@ -32,18 +33,18 @@ export async function initCache() {
     }) as RedisClientType;
 
     redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err);
+      logger.error(`Redis Client Error: ${err}`);
     });
 
     redisClient.on('connect', () => {
-      console.log('Redis Client Connected');
+      logger.info('Redis Client Connected');
     });
 
     await redisClient.connect();
 
     return redisClient;
   } catch (error) {
-    console.error('Failed to initialize Redis:', error);
+    logger.error(`Failed to initialize Redis: ${error}`);
     return null;
   }
 }
@@ -69,7 +70,7 @@ export async function get<T>(key: string): Promise<T | null> {
 
     return JSON.parse(data) as T;
   } catch (error) {
-    console.error('Cache get error:', error);
+    logger.error(`Cache get error for key ${key}: ${error}`);
     return null;
   }
 }
@@ -77,7 +78,7 @@ export async function get<T>(key: string): Promise<T | null> {
 /**
  * Set a value in cache
  */
-export async function set(key: string, value: any, ttlSeconds?: number): Promise<void> {
+export async function set(key: string, value: unknown, ttlSeconds?: number): Promise<void> {
   if (!redisClient) {
     await initCache();
   }
@@ -95,7 +96,7 @@ export async function set(key: string, value: any, ttlSeconds?: number): Promise
       await redisClient.set(key, serialized);
     }
   } catch (error) {
-    console.error('Cache set error:', error);
+    logger.error(`Cache set error for key ${key}: ${error}`);
   }
 }
 
@@ -114,7 +115,7 @@ export async function del(key: string): Promise<void> {
   try {
     await redisClient.del(key);
   } catch (error) {
-    console.error('Cache delete error:', error);
+    logger.error(`Cache delete error for key ${key}: ${error}`);
   }
 }
 
@@ -137,7 +138,7 @@ export async function delPattern(pattern: string): Promise<void> {
       await redisClient.del(keys);
     }
   } catch (error) {
-    console.error('Cache delete pattern error:', error);
+    logger.error(`Cache delete pattern error for ${pattern}: ${error}`);
   }
 }
 
@@ -157,7 +158,7 @@ export async function exists(key: string): Promise<boolean> {
     const result = await redisClient.exists(key);
     return result === 1;
   } catch (error) {
-    console.error('Cache exists error:', error);
+    logger.error(`Cache exists error for key ${key}: ${error}`);
     return false;
   }
 }
@@ -177,7 +178,7 @@ export async function incr(key: string): Promise<number> {
   try {
     return await redisClient.incr(key);
   } catch (error) {
-    console.error('Cache increment error:', error);
+    logger.error(`Cache increment error for key ${key}: ${error}`);
     return 0;
   }
 }
@@ -197,7 +198,7 @@ export async function expire(key: string, ttlSeconds: number): Promise<void> {
   try {
     await redisClient.expire(key, ttlSeconds);
   } catch (error) {
-    console.error('Cache expire error:', error);
+    logger.error(`Cache expire error for key ${key} (${ttlSeconds}s): ${error}`);
   }
 }
 
@@ -221,7 +222,7 @@ export async function mget<T>(keys: string[]): Promise<(T | null)[]> {
       }
     });
   } catch (error) {
-    console.error('Cache mget error:', error);
+    logger.error(`Cache mget error for ${keys.length} keys: ${error}`);
     return keys.map(() => null);
   }
 }
@@ -229,7 +230,7 @@ export async function mget<T>(keys: string[]): Promise<(T | null)[]> {
 /**
  * Set multiple keys at once
  */
-export async function mset(items: Array<{ key: string; value: any }>): Promise<void> {
+export async function mset(items: Array<{ key: string; value: unknown }>): Promise<void> {
   if (!redisClient || items.length === 0) {
     return;
   }
@@ -244,14 +245,14 @@ export async function mset(items: Array<{ key: string; value: any }>): Promise<v
 
     await pipeline.exec();
   } catch (error) {
-    console.error('Cache mset error:', error);
+    logger.error(`Cache mset error for ${items.length} items: ${error}`);
   }
 }
 
 /**
  * Cache wrapper - memoizes function results
  */
-export function cache<T extends (...args: any[]) => Promise<any>>(
+export function cache<T extends (...args: unknown[]) => Promise<unknown>>(
   keyPrefix: string,
   fn: T,
   options: {
@@ -321,7 +322,7 @@ export async function getCacheStats(): Promise<{
       memoryUsage: memoryMatch ? memoryMatch[1] : null,
     };
   } catch (error) {
-    console.error('Cache stats error:', error);
+    logger.error(`Cache stats error: ${error}`);
     return {
       connected: false,
       keyCount: 0,
@@ -345,7 +346,7 @@ export async function flushCache(): Promise<void> {
   try {
     await redisClient.flushDb();
   } catch (error) {
-    console.error('Cache flush error:', error);
+    logger.error(`Cache flush error: ${error}`);
   }
 }
 

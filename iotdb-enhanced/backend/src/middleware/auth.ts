@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma, jwtUtils, config } from '../lib';
+import { prisma, jwtUtils, config, logger } from '../lib';
+import { isTokenBlacklisted } from '../services/tokenBlacklist';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -25,6 +26,12 @@ export const authenticate = async (
 
     const token = authHeader.substring(7);
 
+    // Check if token is blacklisted
+    if (await isTokenBlacklisted(token)) {
+      logger.warn(`Blacklisted token used from IP: ${req.ip}`);
+      return res.status(401).json({ error: 'Token has been revoked' });
+    }
+
     try {
       const payload = jwtUtils.verifyToken(token);
       req.userId = payload.userId;
@@ -45,7 +52,7 @@ export const authenticate = async (
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
   } catch (error) {
-    console.error('Authentication error:', error);
+    logger.error(`Authentication error: ${error} from IP: ${req.ip}`);
     res.status(500).json({ error: 'Authentication failed' });
   }
 };
@@ -61,6 +68,13 @@ export const optionalAuth = async (
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
+        // Check blacklist first
+        if (await isTokenBlacklisted(token)) {
+          // Silently skip auth for optional auth
+          next();
+          return;
+        }
+
         const payload = jwtUtils.verifyToken(token);
         req.userId = payload.userId;
 
@@ -106,7 +120,7 @@ export const authorize = (...roles: string[]) => {
 
       next();
     } catch (error) {
-      console.error('Authorization error:', error);
+      logger.error(`Authorization error for user ${req.userId} (${req.user?.role}): ${error}`);
       res.status(500).json({ error: 'Authorization failed' });
     }
   };

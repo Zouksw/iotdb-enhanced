@@ -2,6 +2,24 @@ import { spawn } from 'child_process';
 import { iotdbConfig } from './client';
 
 /**
+ * IoTDB RPC execution result
+ */
+interface RPCExecutionResult {
+  success: boolean;
+  output: string;
+}
+
+/**
+ * IoTDB RPC insert record
+ */
+interface RPCInsertRecord {
+  device: string;
+  measurements: string[];
+  values: unknown[];
+  timestamp: number;
+}
+
+/**
  * IoTDB RPC Client
  *
  * Uses IoTDB CLI for write operations since REST API doesn't support INSERT in standard version.
@@ -19,7 +37,7 @@ export class IoTDBRPCClient {
   /**
    * Execute SQL command via CLI
    */
-  private async executeSQL(sql: string): Promise<any> {
+  private async executeSQL(sql: string): Promise<RPCExecutionResult> {
     return new Promise((resolve, reject) => {
       const args = [
         '-h', this.config.host,
@@ -73,7 +91,7 @@ export class IoTDBRPCClient {
     dataType: string;
     encoding: string;
     compressor?: string;
-  }): Promise<any> {
+  }): Promise<RPCExecutionResult> {
     const sql = `CREATE TIMESERIES ${params.path} WITH DATATYPE=${params.dataType}, ENCODING=${params.encoding}`;
     return this.executeSQL(sql);
   }
@@ -81,12 +99,7 @@ export class IoTDBRPCClient {
   /**
    * Insert records
    */
-  async insertRecords(records: Array<{
-    device: string;
-    measurements: string[];
-    values: any[];
-    timestamp: number;
-  }>): Promise<any> {
+  async insertRecords(records: RPCInsertRecord[]): Promise<RPCExecutionResult> {
     const sqlStatements = records.map(r => {
       const measurements = r.measurements.join(', ');
       const values = r.values.join(', ');
@@ -103,8 +116,8 @@ export class IoTDBRPCClient {
   async insertOneRecord(record: {
     device: string;
     timestamp: number;
-    measurements: Record<string, any>;
-  }): Promise<any> {
+    measurements: Record<string, unknown>;
+  }): Promise<RPCExecutionResult> {
     const measurements = Object.keys(record.measurements).join(', ');
     const values = Object.values(record.measurements).join(', ');
     const sql = `INSERT INTO ${record.device}(time, ${measurements}) VALUES (${record.timestamp}, ${values})`;

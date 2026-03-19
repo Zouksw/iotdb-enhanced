@@ -5,6 +5,9 @@ import { registrationRateLimiter, authRateLimiter } from '../middleware/rateLimi
 import { validate, validationSchemas } from '../middleware/security';
 import { asyncHandler, UnauthorizedError, NotFoundError, BadRequestError, ConflictError } from '../middleware/errorHandler';
 import { prisma, jwtUtils, config } from '../lib';
+import { blacklistToken, isTokenBlacklisted } from '../services/tokenBlacklist';
+import { generateCsrfToken, revokeCsrfToken } from '../middleware/csrf';
+import { success, successWithMessage } from '../lib/response';
 
 const router = Router();
 
@@ -45,8 +48,8 @@ router.post('/register', registrationRateLimiter, validate(registerSchema), asyn
     throw new ConflictError('Email already registered');
   }
 
-  // Hash password
-  const passwordHash = await bcrypt.hash(validatedData.password, 10);
+  // Hash password with 12 rounds for better security (OWASP recommendation)
+  const passwordHash = await bcrypt.hash(validatedData.password, 12);
 
   // Create user
   const user = await prisma.user.create({
@@ -74,7 +77,7 @@ router.post('/register', registrationRateLimiter, validate(registerSchema), asyn
   await prisma.session.create({
     data: {
       userId: user.id,
-      tokenHash: await bcrypt.hash(refreshToken, 10),
+      tokenHash: await bcrypt.hash(refreshToken, 12),
       expiresAt: new Date(Date.now() + config.session.expiresDays * 24 * 60 * 60 * 1000),
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
@@ -94,11 +97,23 @@ router.post('/register', registrationRateLimiter, validate(registerSchema), asyn
     },
   });
 
-  res.status(201).json({
+  // Set HttpOnly auth cookie for enhanced security
+  const cookieOptions = {
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'strict' as const,
+    maxAge: config.session.expiresDays * 24 * 60 * 60 * 1000,
+    path: '/',
+  };
+
+  // Set the auth token as HttpOnly cookie
+  res.cookie('auth_token', token, cookieOptions);
+
+  return success(res, {
     user,
     token,
     refreshToken,
-  });
+  }, 201);
 }));
 
 // POST /api/auth/login - Login user
@@ -118,20 +133,6 @@ router.post('/login', authRateLimiter, validate(loginSchema), asyncHandler(async
   const isValidPassword = await bcrypt.compare(validatedData.password, user.passwordHash);
 
   if (!isValidPassword) {
-    // Log failed login attempt
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        resourceType: 'User',
-        resourceId: user.id,
-        action: 'LOGIN',
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent'),
-        success: false,
-        errorCode: 'INVALID_PASSWORD',
-      },
-    }).catch(() => {});
-
     throw new UnauthorizedError('Invalid email or password');
   }
 
@@ -143,7 +144,7 @@ router.post('/login', authRateLimiter, validate(loginSchema), asyncHandler(async
   const session = await prisma.session.create({
     data: {
       userId: user.id,
-      tokenHash: await bcrypt.hash(refreshToken, 10),
+      tokenHash: await bcrypt.hash(refreshToken, 12),
       expiresAt: new Date(Date.now() + config.session.expiresDays * 24 * 60 * 60 * 1000),
       ipAddress: req.ip,
       userAgent: req.get('user-agent'),
@@ -169,7 +170,18 @@ router.post('/login', authRateLimiter, validate(loginSchema), asyncHandler(async
     },
   });
 
-  res.json({
+  // Set HttpOnly auth cookie
+  const cookieOptions = {
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'strict' as const,
+    maxAge: config.session.expiresDays * 24 * 60 * 60 * 1000,
+    path: '/',
+  };
+
+  res.cookie('auth_token', token, cookieOptions);
+
+  return success(res, {
     user: {
       id: user.id,
       email: user.email,
@@ -185,17 +197,38 @@ router.post('/login', authRateLimiter, validate(loginSchema), asyncHandler(async
 
 // POST /api/auth/logout - Logout user
 router.post('/logout', asyncHandler(async (req: Request, res: Response) => {
-  const userId = await getUserIdFromToken(req.headers.authorization);
+  const authHeader = req.headers.authorization;
+  const userId = await getUserIdFromToken(authHeader);
 
   if (!userId) {
     throw new UnauthorizedError('Invalid token');
   }
+
+  // Extract and blacklist the access token
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    await blacklistToken(token, 'logout');
+  }
+
+  // Revoke CSRF token
+  await revokeCsrfToken(userId);
 
   // Invalidate all sessions for this user
   await prisma.session.updateMany({
     where: { userId, isActive: true },
     data: { isActive: false },
   });
+
+  // Clear auth cookie
+  res.clearCookie('auth_token', {
+    path: '/',
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'strict',
+  });
+
+  // Clear CSRF cookie
+  res.clearCookie('csrf_token');
 
   // Log logout
   await prisma.auditLog.create({
@@ -209,7 +242,7 @@ router.post('/logout', asyncHandler(async (req: Request, res: Response) => {
     },
   }).catch(() => {});
 
-  res.json({ message: 'Logged out successfully' });
+  return successWithMessage(res, {}, 'Logged out successfully');
 }));
 
 // POST /api/auth/refresh - Refresh access token
@@ -244,7 +277,7 @@ router.post('/refresh', asyncHandler(async (req: Request, res: Response) => {
   // Generate new access token
   const newToken = jwtUtils.generateToken(userId);
 
-  res.json({ token: newToken });
+  return success(res, { token: newToken });
 }));
 
 // GET /api/auth/me - Get current user
@@ -279,7 +312,7 @@ router.get('/me', asyncHandler(async (req: Request, res: Response) => {
     throw new NotFoundError('User');
   }
 
-  res.json({ user });
+  return success(res, { user });
 }));
 
 // PUT /api/auth/me - Update current user
@@ -311,12 +344,13 @@ router.put('/me', asyncHandler(async (req: Request, res: Response) => {
     },
   });
 
-  res.json({ user });
+  return success(res, { user });
 }));
 
 // POST /api/auth/change-password - Change password
 router.post('/change-password', asyncHandler(async (req: Request, res: Response) => {
-  const userId = await getUserIdFromToken(req.headers.authorization);
+  const authHeader = req.headers.authorization;
+  const userId = await getUserIdFromToken(authHeader);
 
   if (!userId) {
     throw new UnauthorizedError('Invalid token');
@@ -345,8 +379,14 @@ router.post('/change-password', asyncHandler(async (req: Request, res: Response)
     throw new UnauthorizedError('Current password is incorrect');
   }
 
-  // Hash new password
-  const passwordHash = await bcrypt.hash(validatedData.newPassword, 10);
+  // Hash new password with 12 rounds for better security
+  const passwordHash = await bcrypt.hash(validatedData.newPassword, 12);
+
+  // Blacklist current token
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    await blacklistToken(token, 'password_change');
+  }
 
   // Update password
   await prisma.user.update({
@@ -373,7 +413,75 @@ router.post('/change-password', asyncHandler(async (req: Request, res: Response)
     },
   });
 
-  res.json({ message: 'Password changed successfully. Please login again.' });
+  return successWithMessage(res, {}, 'Password changed successfully. Please login again.');
+}));
+
+// GET /api/auth/csrf-token - Get CSRF token
+router.get('/csrf-token', asyncHandler(async (req: Request, res: Response) => {
+  const userId = await getUserIdFromToken(req.headers.authorization);
+
+  // Generate CSRF token
+  const token = await generateCsrfToken(userId || undefined);
+
+  // Set token as cookie
+  res.cookie('csrf_token', token, {
+    httpOnly: true,
+    secure: req.secure,
+    sameSite: 'strict',
+    maxAge: 86400000, // 24 hours
+  });
+
+  // Also return in response for AJAX requests
+  res.setHeader('x-csrf-token', token);
+  return success(res, { csrfToken: token });
+}));
+
+// GET /api/auth/verify - Verify current token
+// Supports both Authorization header and HttpOnly cookie
+router.get('/verify', asyncHandler(async (req: Request, res: Response) => {
+  // Try to get token from Authorization header first, then from cookie
+  const authHeader = req.headers.authorization;
+  const cookieToken = req.cookies?.auth_token;
+
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.substring(7)
+    : cookieToken;
+
+  if (!token) {
+    throw new UnauthorizedError('No token provided');
+  }
+
+  // Verify token
+  try {
+    const payload = jwtUtils.verifyToken(token);
+
+    // Check if token is blacklisted
+    const isBlacklisted = await isTokenBlacklisted(token);
+
+    if (isBlacklisted) {
+      throw new UnauthorizedError('Token has been revoked');
+    }
+
+    // Check if session is still active
+    const sessions = await prisma.session.findMany({
+      where: { userId: payload.userId, isActive: true },
+    });
+
+    if (sessions.length === 0) {
+      throw new UnauthorizedError('No active session');
+    }
+
+    return success(res, {
+      valid: true,
+      userId: payload.userId,
+      exp: payload.exp,
+    });
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      throw error;
+    }
+    throw new UnauthorizedError('Invalid token');
+  }
 }));
 
 export { router as authRouter };

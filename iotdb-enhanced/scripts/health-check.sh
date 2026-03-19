@@ -1,203 +1,365 @@
 #!/bin/bash
+#
+# IoTDB Enhanced - Health Check Script
+#
+# Verifies health of all services after deployment.
+# Can be run standalone or as part of deployment.
+#
+# Usage:
+#   ./health-check.sh [options]
+#
+# Options:
+#   --verbose       Show detailed output
+#   --timeout N     Timeout in seconds (default: 60)
+#   --no-color      Disable colored output
+#
+
+set -euo pipefail
 
 # ============================================================================
-# IoTDB Enhanced - Comprehensive Health Check Script
+# Configuration
 # ============================================================================
 
-set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Health check endpoints
+BACKEND_URL="${BACKEND_URL:-http://localhost:3001/api/health}"
+FRONTEND_URL="${FRONTEND_URL:-http://localhost:3000}"
+API_BASE="${API_BASE:-http://localhost:3001/api}"
+
+# Timeout configuration
+TIMEOUT=60
+INTERVAL=5
+
+# Colors
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Counters
-PASS=0
-FAIL=0
-WARN=0
+# Parse command line arguments
+VERBOSE=false
+NO_COLOR=false
 
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}IoTDB Enhanced - System Health Check${NC}"
-echo -e "${BLUE}========================================${NC}"
-echo ""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --verbose)
+      VERBOSE=true
+      shift
+      ;;
+    --timeout)
+      TIMEOUT="$2"
+      shift 2
+      ;;
+    --no-color)
+      NO_COLOR=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+done
 
-# Function to check service
-check_service() {
-    local name=$1
-    local host=$2
-    local port=$3
-    local command=$4
-    
-    echo -n "Checking $name... "
-    
-    if [ -n "$command" ]; then
-        if eval "$command" > /dev/null 2>&1; then
-            echo -e "${GREEN}✓ PASS${NC}"
-            ((PASS++))
-            return 0
-        fi
-    elif nc -zv "$host" "$port" 2>&1 | grep -q succeeded; then
-        echo -e "${GREEN}✓ PASS${NC}"
-        ((PASS++))
-        return 0
+# Disable colors if requested
+if [ "$NO_COLOR" = true ]; then
+  RED=''
+  GREEN=''
+  YELLOW=''
+  BLUE=''
+  NC=''
+fi
+
+# ============================================================================
+# Status Tracking
+# ============================================================================
+
+CHECKS_PASSED=0
+CHECKS_FAILED=0
+CHECKS_TOTAL=0
+
+# ============================================================================
+# Utility Functions
+# ============================================================================
+
+log_info() {
+  echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+log_success() {
+  echo -e "${GREEN}[PASS]${NC} $1"
+  ((CHECKS_PASSED++)) || true
+}
+
+log_error() {
+  echo -e "${RED}[FAIL]${NC} $1"
+  ((CHECKS_FAILED++)) || true
+}
+
+log_warn() {
+  echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+verbose_log() {
+  if [ "$VERBOSE" = true ]; then
+    echo "$1"
+  fi
+}
+
+# Increment total checks
+increment_total() {
+  ((CHECKS_TOTAL++)) || true
+}
+
+# ============================================================================
+# Check Functions
+# ============================================================================
+
+check_backend_health() {
+  increment_total
+  local check_name="Backend Health Endpoint"
+
+  log_info "Checking $check_name..."
+
+  local response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$BACKEND_URL" 2>/dev/null || echo "000")
+
+  if [ "$response" = "200" ]; then
+    log_success "$check_name: HTTP $response"
+
+    if [ "$VERBOSE" = true ]; then
+      local health_data=$(curl -s "$BACKEND_URL" 2>/dev/null || echo '{}')
+      verbose_log "Response: $health_data"
     fi
-    
-    echo -e "${RED}✗ FAIL${NC}"
-    ((FAIL++))
+
+    return 0
+  else
+    log_error "$check_name: HTTP $response"
     return 1
+  fi
 }
 
-# Function to check HTTP endpoint
-check_http() {
-    local name=$1
-    local url=$2
-    local expected=$3
-    
-    echo -n "Checking $name... "
-    
-    response=$(curl -s -o /dev/null -w "%{http_code}" "$url")
-    
-    if [ "$response" = "$expected" ]; then
-        echo -e "${GREEN}✓ PASS${NC} (HTTP $response)"
-        ((PASS++))
-        return 0
-    else
-        echo -e "${RED}✗ FAIL${NC} (HTTP $response, expected $expected)"
-        ((FAIL++))
-        return 1
-    fi
+check_frontend() {
+  increment_total
+  local check_name="Frontend Accessibility"
+
+  log_info "Checking $check_name..."
+
+  local response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$FRONTEND_URL" 2>/dev/null || echo "000")
+
+  if [ "$response" = "200" ]; then
+    log_success "$check_name: HTTP $response"
+    return 0
+  else
+    log_error "$check_name: HTTP $response"
+    return 1
+  fi
 }
 
-# Function to check JSON API
-check_api() {
-    local name=$1
-    local url=$2
-    local field=$3
-    local expected=$4
-    
-    echo -n "Checking $name... "
-    
-    response=$(curl -s "$url")
-    value=$(echo "$response" | grep -o "\"$field\":\"[^\"]*" | cut -d'"' -f4)
-    
-    if [ "$value" = "$expected" ]; then
-        echo -e "${GREEN}✓ PASS${NC} ($field=$value)"
-        ((PASS++))
-        return 0
-    else
-        echo -e "${RED}✗ FAIL${NC} ($field=$value, expected $expected)"
-        ((FAIL++))
-        return 1
-    fi
+check_database() {
+  increment_total
+  local check_name="Database Connection"
+
+  log_info "Checking $check_name..."
+
+  # Check via backend health endpoint (includes DB status)
+  local health_data=$(curl -s "$BACKEND_URL" 2>/dev/null || echo '{}')
+
+  if echo "$health_data" | grep -q '"database":"ok"' || echo "$health_data" | grep -q '"database":true'; then
+    log_success "$check_name: Connected"
+    return 0
+  else
+    log_error "$check_name: Failed"
+    return 1
+  fi
 }
 
-echo -e "${YELLOW}=== Core Services ===${NC}"
-check_service "Backend API" "localhost" "8000"
-check_service "Frontend" "localhost" "3000"
-check_service "PostgreSQL" "localhost" "5432" "pg_isready -h localhost"
-check_service "Redis" "localhost" "6379" "redis-cli ping"
-echo ""
+check_redis() {
+  increment_total
+  local check_name="Redis Connection"
 
-echo -e "${YELLOW}=== IoTDB Services ===${NC}"
-check_service "IoTDB DataNode" "localhost" "6667"
-check_service "IoTDB ConfigNode" "localhost" "10710"
-check_service "IoTDB REST API" "localhost" "18080"
-echo ""
+  log_info "Checking $check_name..."
 
-echo -e "${YELLOW}=== HTTP Endpoints ===${NC}"
-check_http "Backend Health" "http://localhost:8000/health" "200"
-check_http "Frontend Home" "http://localhost:3000/" "200"
-check_http "Frontend Login" "http://localhost:3000/login" "200"
-check_http "Frontend Dashboard" "http://localhost:3000/dashboard" "200"
-echo ""
+  local health_data=$(curl -s "$BACKEND_URL" 2>/dev/null || echo '{}')
 
-echo -e "${YELLOW}=== API Functionality ===${NC}"
-check_api "Backend Status" "http://localhost:8000/health" "status" "ok"
-check_api "IoTDB Status" "http://localhost:8000/api/iotdb/status" "status" "healthy"
-echo ""
+  if echo "$health_data" | grep -q '"redis":"ok"' || echo "$health_data" | grep -q '"redis":true'; then
+    log_success "$check_name: Connected"
+    return 0
+  else
+    log_error "$check_name: Failed"
+    return 1
+  fi
+}
 
-echo -e "${YELLOW}=== PM2 Processes ===${NC}"
-if pm2 list 2>/dev/null | grep -q "online"; then
-    echo -e "${GREEN}✓ PASS${NC} PM2 processes running"
-    ((PASS++))
-    pm2 list 2>/dev/null | grep online
-else
-    echo -e "${RED}✗ FAIL${NC} No PM2 processes running"
-    ((FAIL++))
-fi
-echo ""
+check_iotdb() {
+  increment_total
+  local check_name="IoTDB Connection"
 
-echo -e "${YELLOW}=== Disk Space ===${NC}"
-disk_usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
-echo "Root disk usage: $disk_usage%"
-if [ "$disk_usage" -lt 80 ]; then
-    echo -e "${GREEN}✓ PASS${NC} Disk space OK"
-    ((PASS++))
-elif [ "$disk_usage" -lt 90 ]; then
-    echo -e "${YELLOW}⚠ WARN${NC} Disk space above 80%"
-    ((WARN++))
-else
-    echo -e "${RED}✗ FAIL${NC} Disk space critical"
-    ((FAIL++))
-fi
-echo ""
+  log_info "Checking $check_name..."
 
-echo -e "${YELLOW}=== Memory Usage ===${NC}"
-mem_usage=$(free | grep Mem | awk '{printf "%.0f", $3/$2 * 100}')
-echo "Memory usage: $mem_usage%"
-if [ "$mem_usage" -lt 80 ]; then
-    echo -e "${GREEN}✓ PASS${NC} Memory OK"
-    ((PASS++))
-elif [ "$mem_usage" -lt 90 ]; then
-    echo -e "${YELLOW}⚠ WARN${NC} Memory usage above 80%"
-    ((WARN++))
-else
-    echo -e "${RED}✗ FAIL${NC} Memory critical"
-    ((FAIL++))
-fi
-echo ""
+  local health_data=$(curl -s "$BACKEND_URL" 2>/dev/null || echo '{}')
 
-echo -e "${YELLOW}=== Environment Variables ===${NC}"
-env_file="/root/iotdb-enhanced/backend/.env"
-missing=0
+  if echo "$health_data" | grep -q '"iotdb":"ok"' || echo "$health_data" | grep -q '"iotdb":true'; then
+    log_success "$check_name: Connected"
+    return 0
+  else
+    log_error "$check_name: Failed"
+    return 1
+  fi
+}
 
-if [ -f "$env_file" ]; then
-    for var in DATABASE_URL JWT_SECRET SESSION_SECRET REDIS_URL IOTDB_HOST IOTDB_PASSWORD; do
-        if grep -q "^${var}=" "$env_file" && ! grep -q "CHANGE_ME" "$env_file" | grep -q "^${var}="; then
-            :  # Variable is set and not placeholder
-        else
-            echo -e "${RED}✗ $var: ${NC}Missing or using placeholder"
-            ((missing++))
-        fi
-    done
-    
-    if [ $missing -eq 0 ]; then
-        echo -e "${GREEN}✓ PASS${NC} All required environment variables set"
-        ((PASS++))
-    else
-        echo -e "${RED}✗ FAIL${NC} $missing environment variable(s) missing"
-        ((FAIL++))
+check_docker_containers() {
+  increment_total
+  local check_name="Docker Containers Running"
+
+  log_info "Checking $check_name..."
+
+  local running_containers=$(docker ps --format '{{.Names}}' | grep -c "iotdb" || echo "0")
+
+  if [ "$running_containers" -ge 2 ]; then
+    log_success "$check_name: $running_containers containers running"
+
+    if [ "$VERBOSE" = true ]; then
+      docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep iotdb || true
     fi
-else
-    echo -e "${RED}✗ FAIL${NC} .env file not found"
-    ((FAIL++))
-fi
-echo ""
 
-# Summary
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}Health Check Summary${NC}"
-echo -e "${BLUE}========================================${NC}"
-echo -e "${GREEN}Passed: $PASS${NC}"
-echo -e "${YELLOW}Warnings: $WARN${NC}"
-echo -e "${RED}Failed: $FAIL${NC}"
-echo ""
+    return 0
+  else
+    log_error "$check_name: Only $running_containers containers running"
+    return 1
+  fi
+}
 
-if [ $FAIL -eq 0 ]; then
-    echo -e "${GREEN}✓ All critical checks passed!${NC}"
+check_disk_space() {
+  increment_total
+  local check_name="Disk Space"
+
+  log_info "Checking $check_name..."
+
+  local disk_usage=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+
+  if [ "$disk_usage" -lt 80 ]; then
+    log_success "$check_name: ${disk_usage}% used"
+    return 0
+  elif [ "$disk_usage" -lt 90 ]; then
+    log_warn "$check_name: ${disk_usage}% used (warning)"
+    return 0
+  else
+    log_error "$check_name: ${disk_usage}% used (critical)"
+    return 1
+  fi
+}
+
+check_memory() {
+  increment_total
+  local check_name="Memory Usage"
+
+  log_info "Checking $check_name..."
+
+  local mem_usage=$(free | awk 'NR==2 {printf "%.0f", $3/$2*100}')
+
+  if [ "$mem_usage" -lt 80 ]; then
+    log_success "$check_name: ${mem_usage}% used"
+    return 0
+  elif [ "$mem_usage" -lt 90 ]; then
+    log_warn "$check_name: ${mem_usage}% used (warning)"
+    return 0
+  else
+    log_error "$check_name: ${mem_usage}% used (critical)"
+    return 1
+  fi
+}
+
+check_cpu() {
+  increment_total
+  local check_name="CPU Load"
+
+  log_info "Checking $check_name..."
+
+  local load=$(uptime | awk -F'load average:' '{print $2}' | awk '{print $1}' | sed 's/,//')
+  local cpus=$(nproc)
+  local load_percentage=$(echo "$load $cpus" | awk '{printf "%.0f", $1/$2*100}')
+
+  if [ "$load_percentage" -lt 80 ]; then
+    log_success "$check_name: ${load} (${load_percentage}% of ${cpus} cores)"
+    return 0
+  elif [ "$load_percentage" -lt 100 ]; then
+    log_warn "$check_name: ${load} (${load_percentage}% of ${cpus} cores)"
+    return 0
+  else
+    log_error "$check_name: ${load} (${load_percentage}% of ${cpus} cores)"
+    return 1
+  fi
+}
+
+# ============================================================================
+# Main Health Check Routine
+# ============================================================================
+
+main() {
+  echo "=========================================="
+  echo "  IoTDB Enhanced Health Check"
+  echo "=========================================="
+  echo "Started at: $(date)"
+  echo "Timeout: ${TIMEOUT}s"
+  echo ""
+
+  local start_time=$(date +%s)
+  local elapsed=0
+
+  # Wait for services to be ready with timeout
+  while [ $elapsed -lt $TIMEOUT ]; do
+    CHECKS_PASSED=0
+    CHECKS_FAILED=0
+    CHECKS_TOTAL=0
+
+    # Run all checks
+    check_backend_health || true
+    check_frontend || true
+    check_database || true
+    check_redis || true
+    check_iotdb || true
+    check_docker_containers || true
+
+    # System resource checks
+    check_disk_space || true
+    check_memory || true
+    check_cpu || true
+
+    # Check if all core checks passed
+    if [ $CHECKS_FAILED -eq 0 ]; then
+      break
+    fi
+
+    log_info "Retrying in ${INTERVAL}s... (${elapsed}/${TIMEOUT}s elapsed)"
+    sleep $INTERVAL
+    elapsed=$((elapsed + INTERVAL))
+  done
+
+  local end_time=$(date +%s)
+  local duration=$((end_time - start_time))
+
+  echo ""
+  echo "=========================================="
+  echo "  Health Check Results"
+  echo "=========================================="
+  echo "Duration: ${duration}s"
+  echo "Total Checks: $CHECKS_TOTAL"
+  echo -e "${GREEN}Passed: $CHECKS_PASSED${NC}"
+  echo -e "${RED}Failed: $CHECKS_FAILED${NC}"
+  echo "Completed at: $(date)"
+
+  if [ $CHECKS_FAILED -eq 0 ]; then
+    echo ""
+    log_success "All health checks passed!"
     exit 0
-else
-    echo -e "${RED}✗ Some checks failed. Please review above.${NC}"
+  else
+    echo ""
+    log_error "Some health checks failed!"
     exit 1
-fi
+  fi
+}
+
+main "$@"

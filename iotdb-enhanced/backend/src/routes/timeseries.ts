@@ -1,10 +1,33 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../lib';
+import { prisma, logger } from '../lib';
+import { authenticate, AuthRequest } from '../middleware/auth';
 import { getIoTDBClient } from '../../config/iotdb';
 import { asyncHandler, NotFoundError } from '../middleware/errorHandler';
 import { getPagination, paginationSchema, limitSchema } from '../schemas/common';
+import { success, paginated } from '../lib/response';
+import type { IoTDBDataPoint, QueryConditions } from '../types';
+import type { Timeseries } from '@prisma/client';
 
 const router = Router();
+
+/**
+ * Timeseries with IoTDB extended data
+ */
+interface TimeseriesWithIoTDB extends Timeseries {
+  datapointCount: number;
+  iotdbDataPoints?: number;
+  latestData?: IoTDBDataPoint;
+  iotdbAvailable?: boolean;
+  dataset?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  _count?: {
+    dataPoints: number;
+    anomalies: number;
+  };
+}
 
 // GET /api/timeseries - Get all timeseries with filters
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
@@ -12,7 +35,7 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { skip, take } = getPagination(req.query);
   const params = paginationSchema.parse(req.query);
 
-  const where: any = {};
+  const where: QueryConditions['where'] = {};
   if (datasetId) {
     where.datasetId = datasetId as string;
   }
@@ -37,14 +60,11 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
     prisma.timeseries.count({ where }),
   ]);
 
-  res.json({
-    timeseries,
-    pagination: {
-      page: params.page,
-      limit: params.limit,
-      total,
-      totalPages: Math.ceil(total / params.limit),
-    },
+  return paginated(res, timeseries, {
+    page: params.page,
+    limit: params.limit,
+    total,
+    totalPages: Math.ceil(total / params.limit),
   });
 }));
 
@@ -65,14 +85,10 @@ router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
     throw new NotFoundError('Timeseries');
   }
 
-  // Count datapoints
-  const datapointCount = await prisma.datapoint.count({
-    where: { timeseriesId: id }
-  });
-
-  const result: any = {
+  // Use _count from the query result instead of separate count query (fixes N+1 issue)
+  const result: TimeseriesWithIoTDB = {
     ...timeseries,
-    datapointCount,
+    datapointCount: timeseries._count.dataPoints,
   };
 
   // Try to get latest data from IoTDB
@@ -88,11 +104,29 @@ router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
       result.latestData = iotdbData[0];
     }
   } catch (err) {
-    // IoTDB connection is optional
-    console.debug('IoTDB query failed (expected if not configured):', err);
+    // IoTDB connection failure - log with appropriate level
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('connect')) {
+      logger.warn('[IoTDB] Connection failed - check if IoTDB is running', {
+        timeseriesId: id,
+        error: errorMessage,
+      });
+    } else if (errorMessage.includes('not found') || errorMessage.includes('does not exist')) {
+      logger.info('[IoTDB] Timeseries not found (may not exist yet)', {
+        timeseriesId: id,
+        path: `root.${timeseries.datasetId}.${timeseries.name}`,
+      });
+    } else {
+      logger.warn('[IoTDB] Query failed', {
+        timeseriesId: id,
+        error: errorMessage,
+      });
+    }
+    // Set iotdbAvailable flag so frontend knows
+    result.iotdbAvailable = false;
   }
 
-  res.json(result);
+  return success(res, result);
 }));
 
 // GET /api/timeseries/:id/data - Get timeseries data
@@ -117,7 +151,8 @@ router.get('/:id/data', asyncHandler(async (req: Request, res: Response) => {
   });
 
   // Try to get data from IoTDB
-  let iotdbData: any[] = [];
+  let iotdbData: IoTDBDataPoint[] = [];
+  let iotdbError: string | null = null;
   try {
     const iotdbClient = await getIoTDBClient();
     iotdbData = await iotdbClient.queryTimeseriesData(
@@ -127,13 +162,33 @@ router.get('/:id/data', asyncHandler(async (req: Request, res: Response) => {
       endTime as string
     );
   } catch (err) {
-    // IoTDB connection is optional
-    console.debug('IoTDB query failed (expected if not configured):', err);
+    // Log IoTDB errors with context
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    iotdbError = errorMessage;
+
+    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('connect')) {
+      logger.warn('[IoTDB] Connection failed - check if IoTDB is running', {
+        timeseriesId: id,
+        error: errorMessage,
+      });
+    } else if (errorMessage.includes('not found') || errorMessage.includes('does not exist')) {
+      logger.info('[IoTDB] Timeseries not found', {
+        timeseriesId: id,
+        path: `root.${timeseries.datasetId}.${timeseries.name}`,
+      });
+    } else {
+      logger.warn('[IoTDB] Query failed', {
+        timeseriesId: id,
+        error: errorMessage,
+      });
+    }
   }
 
-  res.json({
+  return success(res, {
     data: datapoints,
     iotdbData: iotdbData || [],
+    iotdbError, // Include error info so frontend can display it
+    iotdbAvailable: !iotdbError,
     pagination: {
       page: 1,
       limit: params.limit,
@@ -143,10 +198,10 @@ router.get('/:id/data', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
-// POST /api/timeseries/:id/data - Insert data point
-router.post('/:id/data', asyncHandler(async (req: Request, res: Response) => {
+// POST /api/timeseries/:id/data - Insert data point (requires authentication)
+router.post('/:id/data', authenticate, asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { timestamp, value, quality } = req.body;
+  const { timestamp, value } = req.body;
 
   const timeseries = await prisma.timeseries.findUnique({
     where: { id },
@@ -178,14 +233,14 @@ router.post('/:id/data', asyncHandler(async (req: Request, res: Response) => {
     );
   } catch (err) {
     // IoTDB connection is optional
-    console.debug('IoTDB insert failed (expected if not configured):', err);
+    logger.debug('IoTDB insert failed (expected if not configured):', err);
   }
 
-  res.status(201).json(datapoint);
+  return success(res, datapoint, 201);
 }));
 
-// DELETE /api/timeseries/:id - Delete timeseries
-router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
+// DELETE /api/timeseries/:id - Delete timeseries (requires authentication)
+router.delete('/:id', authenticate, asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 
   const timeseries = await prisma.timeseries.findUnique({
@@ -204,7 +259,7 @@ router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
     );
   } catch (err) {
     // IoTDB connection is optional
-    console.debug('IoTDB delete failed (expected if not configured):', err);
+    logger.debug('IoTDB delete failed (expected if not configured):', err);
   }
 
   // Delete from PostgreSQL
@@ -216,7 +271,7 @@ router.delete('/:id', asyncHandler(async (req: Request, res: Response) => {
     where: { id }
   });
 
-  res.json({
+  return success(res, {
     success: true,
     message: 'Timeseries deleted successfully',
   });

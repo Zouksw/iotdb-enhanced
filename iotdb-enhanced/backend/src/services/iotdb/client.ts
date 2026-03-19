@@ -1,4 +1,44 @@
 import fetch from 'node-fetch';
+import { logger } from '../../utils/logger';
+import {
+  validateIoTDBPath,
+  validateDataType,
+  validateEncoding,
+  validateDeviceName,
+  validateMeasurement,
+} from './validator';
+import {
+  buildCreateTimeseriesSQL,
+  buildDropTimeseriesSQL,
+  buildShowTimeseriesSQL,
+  buildInsertSQL,
+  buildBatchInsertSQL,
+  buildSelectQuery,
+  buildAggregateQuery,
+  buildDeleteSQL,
+  validateQueryParams,
+} from './query-builder';
+
+/**
+ * IoTDB query response
+ */
+interface IoTDBResponse {
+  code?: number;
+  message?: string;
+  timestamps?: number[];
+  measurements?: string[][];
+  values?: unknown[][];
+}
+
+/**
+ * IoTDB insert record
+ */
+interface IoTDBInsertRecord {
+  device: string;
+  measurements: string[];
+  values: unknown[];
+  timestamp: number;
+}
 
 export interface IoTDBConfig {
   // RPC connection config
@@ -35,6 +75,44 @@ export const iotdbConfig: IoTDBConfig = {
   maxConnections: parseInt(process.env.IOTDB_MAX_CONNECTIONS || '100'),
   requestTimeout: parseInt(process.env.IOTDB_REQUEST_TIMEOUT || '60000'),
 };
+
+// ==============================================================================
+// SECURITY: Validate IoTDB credentials in production
+// ==============================================================================
+// This prevents deployment with default credentials which is a critical security risk
+if (process.env.NODE_ENV === 'production') {
+  if (iotdbConfig.username === 'root' && iotdbConfig.password === 'root') {
+    throw new Error(
+      '\n' +
+      '╔══════════════════════════════════════════════════════════════════════╗\n' +
+      '║           SECURITY ALERT: IOTDB DEFAULT CREDENTIALS DETECTED          ║\n' +
+      '╠══════════════════════════════════════════════════════════════════════╣\n' +
+      '║  Your application is running in PRODUCTION mode with the default    ║\n' +
+      '║  IoTDB credentials (root/root). This is a CRITICAL SECURITY RISK!   ║\n' +
+      '║                                                                      ║\n' +
+      '║  Required actions:                                                  ║\n' +
+      '║  1. Create a new IoTDB user with strong credentials:                ║\n' +
+      '║     CREATE USER admin_user WITH PASSWORD \'your_secure_password\';    ║\n' +
+      '║  2. Grant appropriate permissions:                                  ║\n' +
+      '║     GRANT ADMIN ON root TO admin_user;                              ║\n' +
+      '║  3. Update your environment variables:                              ║\n' +
+      '║     IOTDB_USERNAME=admin_user                                       ║\n' +
+      '║     IOTDB_PASSWORD=your_secure_password                             ║\n' +
+      '║                                                                      ║\n' +
+      '║  For more information, see:                                         ║\n' +
+      '║  https://iotdb.apache.org/UserGuide/latest/API/Security.html       ║\n' +
+      '╚══════════════════════════════════════════════════════════════════════╝\n'
+    );
+  }
+
+  // Also warn if only one of the credentials is default
+  if (iotdbConfig.username === 'root' || iotdbConfig.password === 'root') {
+    logger.warn(
+      'Security Warning: IoTDB is using default credentials (root). ' +
+      'While not both defaults, consider using a dedicated user with limited permissions.'
+    );
+  }
+}
 
 export class IoTDBClient {
   private config = iotdbConfig;
@@ -82,11 +160,12 @@ export class IoTDBClient {
         return await response.json();
       }
       return await response.text();
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new Error(`IoTDB request timeout: ${url}`);
       }
-      console.error(`IoTDB request failed: ${url}`, error.message);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      logger.error(`IoTDB request failed for ${url}: ${message}`);
       throw error;
     }
   }
@@ -110,41 +189,53 @@ export class IoTDBClient {
     dataType: string;
     encoding: string;
     compressor?: string;
-  }): Promise<any> {
-    // Use SQL CREATE TIMESERIES for IoTDB 2.0
-    const sql = `CREATE TIMESERIES ${params.path} WITH DATATYPE=${params.dataType}, ENCODING=${params.encoding}`;
+  }): Promise<IoTDBResponse> {
+    // Validate all inputs to prevent SQL injection
+    validateIoTDBPath(params.path);
+    validateDataType(params.dataType);
+    validateEncoding(params.encoding);
+    if (params.compressor) {
+      validateEncoding(params.compressor); // Reuse validation for compressor
+    }
+
+    const sql = buildCreateTimeseriesSQL(params);
+
+    logger.debug(`Creating timeseries: ${params.path}`);
     return this.query(sql);
   }
 
-  async deleteTimeseries(path: string): Promise<any> {
-    // Use SQL DROP TIMESERIES for IoTDB 2.0
-    const sql = `DROP TIMESERIES ${path}`;
+  async deleteTimeseries(path: string): Promise<IoTDBResponse> {
+    // Validate path to prevent SQL injection
+    validateIoTDBPath(path);
+
+    const sql = buildDropTimeseriesSQL(path);
+    logger.debug(`Deleting timeseries: ${path}`);
     return this.query(sql);
   }
 
-  async listTimeseries(path?: string): Promise<any> {
-    // Use SQL SHOW TIMESERIES for IoTDB 2.0
-    const sql = path ? `SHOW TIMESERIES ${path}` : 'SHOW TIMESERIES';
+  async listTimeseries(path?: string): Promise<IoTDBResponse> {
+    // Validate path if provided
+    if (path) {
+      validateIoTDBPath(path);
+    }
+
+    const sql = buildShowTimeseriesSQL(path);
     return this.query(sql);
   }
 
   // === 数据操作 ===
 
-  async insertRecords(records: Array<{
-    device: string;
-    measurements: string[];
-    values: any[];
-    timestamp: number;
-  }>): Promise<any> {
-    // Use SQL INSERT for IoTDB 2.0
-    const sqlStatements = records.map(r => {
-      const measurements = r.measurements.join(', ');
-      const values = r.values.join(', ');
-      return `INSERT INTO ${r.device}(${measurements}, timestamp) VALUES (${values}, ${r.timestamp})`;
-    });
+  async insertRecords(records: IoTDBInsertRecord[]): Promise<IoTDBResponse> {
+    // Validate and build SQL statements for IoTDB 2.0
+    for (const r of records) {
+      // Validate inputs
+      validateDeviceName(r.device);
+      r.measurements.forEach(validateMeasurement);
+    }
 
-    // Execute all statements in a batch
-    const sql = sqlStatements.join('; ');
+    // Build SQL
+    const sql = buildBatchInsertSQL(records);
+    logger.debug(`Batch inserting ${records.length} records`);
     return this.query(sql);
   }
 
@@ -153,10 +244,17 @@ export class IoTDBClient {
     timestamp: number;
     measurements: Record<string, any>;
   }): Promise<any> {
-    // Use SQL INSERT for IoTDB 2.0
-    const measurements = Object.keys(record.measurements).join(', ');
-    const values = Object.values(record.measurements).join(', ');
-    const sql = `INSERT INTO ${record.device}(${measurements}, timestamp) VALUES (${values}, ${record.timestamp})`;
+    // Validate device name
+    validateDeviceName(record.device);
+
+    // Validate and process measurements
+    for (const key of Object.keys(record.measurements)) {
+      validateMeasurement(key);
+    }
+
+    // Build SQL
+    const sql = buildInsertSQL(record);
+    logger.debug(`Inserting single record into ${record.device}`);
     return this.query(sql);
   }
 
@@ -175,22 +273,18 @@ export class IoTDBClient {
     startTime?: number;
     endTime?: number;
   }): Promise<any> {
-    // Use SQL SELECT for IoTDB 2.0
+    // Validate path if provided
     const path = params.path || '*';
-    const whereClause: string[] = [];
-
-    if (params.startTime) {
-      whereClause.push(`time >= ${params.startTime}`);
-    }
-    if (params.endTime) {
-      whereClause.push(`time <= ${params.endTime}`);
+    if (path !== '*') {
+      validateIoTDBPath(path);
     }
 
-    const where = whereClause.length > 0 ? ` WHERE ${whereClause.join(' AND ')}` : '';
-    const limit = params.limit ? ` LIMIT ${params.limit}` : '';
-    const offset = params.offset ? ` OFFSET ${params.offset}` : '';
+    // Validate numeric parameters
+    validateQueryParams(params);
 
-    const sql = `SELECT * FROM ${path}${where}${limit}${offset}`;
+    // Build query
+    const sql = buildSelectQuery(params);
+    logger.debug(`Executing query: ${sql.substring(0, 100)}...`);
     return this.query(sql);
   }
 
@@ -203,20 +297,7 @@ export class IoTDBClient {
     endTime?: number;
     interval?: string;
   }): Promise<any> {
-    // Use SQL aggregation for IoTDB 2.0
-    const funcUpper = params.func.toUpperCase();
-    const whereClause: string[] = [];
-
-    if (params.startTime) {
-      whereClause.push(`time >= ${params.startTime}`);
-    }
-    if (params.endTime) {
-      whereClause.push(`time <= ${params.endTime}`);
-    }
-
-    const where = whereClause.length > 0 ? ` WHERE ${whereClause.join(' AND ')}` : '';
-    const sql = `SELECT ${funcUpper}(${params.path}) FROM ${params.path}${where}`;
-
+    const sql = buildAggregateQuery(params);
     return this.query(sql);
   }
 
@@ -227,19 +308,11 @@ export class IoTDBClient {
     startTime?: number;
     endTime?: number;
   }): Promise<any> {
-    // Use SQL DELETE for IoTDB 2.0
-    const whereClause: string[] = [];
+    // Validate path
+    validateIoTDBPath(params.path);
 
-    if (params.startTime) {
-      whereClause.push(`time >= ${params.startTime}`);
-    }
-    if (params.endTime) {
-      whereClause.push(`time <= ${params.endTime}`);
-    }
-
-    const where = whereClause.length > 0 ? ` WHERE ${whereClause.join(' AND ')}` : '';
-    const sql = `DELETE FROM ${params.path}${where}`;
-
+    // Build SQL
+    const sql = buildDeleteSQL(params);
     return this.query(sql);
   }
 }

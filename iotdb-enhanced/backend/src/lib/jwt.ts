@@ -5,28 +5,40 @@
 
 import jwt from 'jsonwebtoken';
 import { config } from './config';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface TokenPayload {
   userId: string;
   type?: 'access' | 'refresh';
+  jti?: string;
+  exp?: number;
+  iat?: number;
 }
 
 /**
  * Generate an access token for the given user ID
  */
 export function generateToken(userId: string): string {
-  return jwt.sign({ userId }, config.jwt.secret, {
-    expiresIn: config.jwt.expiresIn,
-  } as jwt.SignOptions);
+  return jwt.sign(
+    { userId, jti: uuidv4() },
+    config.jwt.secret,
+    {
+      expiresIn: config.jwt.expiresIn,
+    } as jwt.SignOptions
+  );
 }
 
 /**
  * Generate a refresh token for the given user ID
  */
 export function generateRefreshToken(userId: string): string {
-  return jwt.sign({ userId, type: 'refresh' }, config.jwt.secret, {
-    expiresIn: `${config.session.expiresDays}d`,
-  } as jwt.SignOptions);
+  return jwt.sign(
+    { userId, type: 'refresh', jti: uuidv4() },
+    config.jwt.secret,
+    {
+      expiresIn: `${config.session.expiresDays}d`,
+    } as jwt.SignOptions
+  );
 }
 
 /**
@@ -69,6 +81,18 @@ export function extractToken(authHeader: string | undefined): string | null {
   return authHeader.substring(7);
 }
 
+/**
+ * Decode a token without verification (for blacklist extraction)
+ * WARNING: Do not use for authentication decisions
+ */
+export function decodeToken(token: string): TokenPayload | null {
+  try {
+    return jwt.decode(token) as TokenPayload;
+  } catch {
+    return null;
+  }
+}
+
 // Export as a grouped utility object
 export const jwtUtils = {
   generateToken,
@@ -76,6 +100,7 @@ export const jwtUtils = {
   verifyToken,
   verifyRefreshToken,
   extractToken,
+  decodeToken,
 };
 
 export default jwtUtils;

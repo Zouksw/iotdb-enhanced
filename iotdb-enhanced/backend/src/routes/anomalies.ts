@@ -1,14 +1,16 @@
 import { Router } from 'express';
-import { AnomalySeverity, DetectionMethod, AlertSeverity, AlertType } from '@prisma/client';
-import { z } from 'zod';
-import { prisma } from '../lib';
+import { AnomalySeverity, DetectionMethod, AlertSeverity, AlertType, Prisma } from '@prisma/client';
+import { prisma, logger } from '../lib';
+import { authenticate, AuthRequest } from '../middleware/auth';
 import { asyncHandler, NotFoundError, BadRequestError } from '../middleware/errorHandler';
 import { getPagination, paginationSchema } from '../schemas/common';
 import { anomaliesQuerySchema, detectAnomaliesSchema, updateAnomalySchema, bulkResolveSchema } from '../schemas/anomalies';
+import { success, paginated, successWithMessage } from '../lib/response';
 
 const router = Router();
 
-const getUser = (req: any) => req.headers['x-user-id'] as string || '00000000-0000-0000-0000-000000000001';
+// Get authenticated user ID, fallback to default for compatibility
+const getUser = (req: AuthRequest) => req.userId || '00000000-0000-0000-0000-000000000001';
 
 // GET /api/anomalies - Get all anomalies
 router.get('/', asyncHandler(async (req, res) => {
@@ -16,9 +18,9 @@ router.get('/', asyncHandler(async (req, res) => {
   const { skip, take } = getPagination(req.query);
   const params = anomaliesQuerySchema.parse(req.query);
 
-  const where: any = {};
+  const where: Prisma.AnomalyWhereInput = {};
   if (timeseriesId) where.timeseriesId = timeseriesId as string;
-  if (severity) where.severity = severity as string;
+  if (severity) where.severity = severity as AnomalySeverity;
   if (params.isResolved !== undefined) where.isResolved = params.isResolved;
 
   const [anomalies, total] = await Promise.all([
@@ -36,14 +38,11 @@ router.get('/', asyncHandler(async (req, res) => {
     prisma.anomaly.count({ where }),
   ]);
 
-  res.json({
-    anomalies,
-    pagination: {
-      page: params.page,
-      limit: params.limit,
-      total,
-      totalPages: Math.ceil(total / params.limit),
-    },
+  return paginated(res, anomalies, {
+    page: params.page,
+    limit: params.limit,
+    total,
+    totalPages: Math.ceil(total / params.limit),
   });
 }));
 
@@ -66,11 +65,11 @@ router.get('/:id', asyncHandler(async (req, res) => {
     throw new NotFoundError('Anomaly');
   }
 
-  res.json({ anomaly });
+  return success(res, { anomaly });
 }));
 
-// POST /api/anomalies/detect - Run anomaly detection
-router.post('/detect', asyncHandler(async (req, res) => {
+// POST /api/anomalies/detect - Run anomaly detection (requires authentication)
+router.post('/detect', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   const validatedData = detectAnomaliesSchema.parse(req.body);
 
   const timeseries = await prisma.timeseries.findUnique({
@@ -97,14 +96,14 @@ router.post('/detect', asyncHandler(async (req, res) => {
   }
 
   // Detect anomalies based on method
-  const detectedAnomalies: {
+  const detectedAnomalies: Array<{
     timeseriesId: string;
     datapointId: bigint;
     severity: AnomalySeverity;
     detectionMethod: DetectionMethod;
     score: string;
-    context: any;
-  }[] = [];
+    context: Prisma.InputJsonValue;
+  }> = [];
 
   if (validatedData.method === 'STATISTICAL') {
     // Z-score based detection
@@ -169,22 +168,12 @@ router.post('/detect', asyncHandler(async (req, res) => {
       }
     }
   } else {
-    // ML_AUTOENCODER - placeholder for future implementation
-    // For now, generate random anomalies as demo
-    const numAnomalies = Math.floor(dataPoints.length * 0.01); // 1% anomalies
-    for (let i = 0; i < numAnomalies; i++) {
-      const idx = Math.floor(Math.random() * (dataPoints.length - validatedData.windowSize)) + validatedData.windowSize;
-      detectedAnomalies.push({
-        timeseriesId: validatedData.timeseriesId,
-        datapointId: BigInt(dataPoints[idx].id),
-        severity: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'][Math.floor(Math.random() * 4)] as AnomalySeverity,
-        detectionMethod: 'ML_AUTOENCODER' as DetectionMethod,
-        score: (Math.random() * 0.5 + 0.5).toFixed(2),
-        context: {
-          reconstructionError: (Math.random() * 10).toFixed(2),
-        },
-      });
-    }
+    // ML_AUTOENCODER - not yet implemented
+    throw new BadRequestError(
+      'ML_AUTOENCODER detection method is not yet implemented. ' +
+      'Please use STATISTICAL or RULE_BASED methods. ' +
+      'Contact administrator for AI feature availability.'
+    );
   }
 
   // Batch create anomalies
@@ -221,14 +210,22 @@ router.post('/detect', asyncHandler(async (req, res) => {
   // Emit WebSocket event
   const io = req.app.get('io');
   if (io) {
-    io.to(`timeseries:${validatedData.timeseriesId}`).emit('anomalies:detected', {
-      timeseriesId: validatedData.timeseriesId,
-      count: detectedAnomalies.length,
-      method: validatedData.method,
-    });
+    try {
+      io.to(`timeseries:${validatedData.timeseriesId}`).emit('anomalies:detected', {
+        timeseriesId: validatedData.timeseriesId,
+        count: detectedAnomalies.length,
+        method: validatedData.method,
+      });
+    } catch (wsError) {
+      // Log WebSocket error but don't fail the request
+      logger.warn('WebSocket emit failed for anomalies:detected event', {
+        timeseriesId: validatedData.timeseriesId,
+        error: wsError instanceof Error ? wsError.message : 'Unknown error'
+      });
+    }
   }
 
-  res.status(201).json({
+  return success(res, {
     anomalies: detectedAnomalies.slice(0, 100), // Return first 100
     meta: {
       timeseriesId: validatedData.timeseriesId,
@@ -237,11 +234,11 @@ router.post('/detect', asyncHandler(async (req, res) => {
       anomaliesDetected: detectedAnomalies.length,
       anomaliesCreated: created.count,
     },
-  });
+  }, 201);
 }));
 
-// PATCH /api/anomalies/:id - Update anomaly
-router.patch('/:id', asyncHandler(async (req, res) => {
+// PATCH /api/anomalies/:id - Update anomaly (requires authentication)
+router.patch('/:id', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   const validatedData = updateAnomalySchema.parse(req.body);
 
   const anomaly = await prisma.anomaly.update({
@@ -257,16 +254,16 @@ router.patch('/:id', asyncHandler(async (req, res) => {
     },
   });
 
-  res.json({ anomaly });
+  return success(res, { anomaly });
 }));
 
-// DELETE /api/anomalies/:id - Delete anomaly
-router.delete('/:id', asyncHandler(async (req, res) => {
+// DELETE /api/anomalies/:id - Delete anomaly (requires authentication)
+router.delete('/:id', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   await prisma.anomaly.delete({
     where: { id: req.params.id },
   });
 
-  res.json({ success: true, message: 'Anomaly deleted successfully' });
+  return successWithMessage(res, {}, 'Anomaly deleted successfully');
 }));
 
 // GET /api/anomalies/stats - Get anomaly statistics
@@ -274,7 +271,7 @@ router.get('/stats/timeseries/:timeseriesId', asyncHandler(async (req, res) => {
   const { timeseriesId } = req.params;
   const { start, end } = req.query;
 
-  const where: any = { timeseriesId };
+  const where: Prisma.AnomalyWhereInput = { timeseriesId };
   if (start || end) {
     where.createdAt = {};
     if (start) where.createdAt.gte = new Date(start as string);
@@ -292,12 +289,12 @@ router.get('/stats/timeseries/:timeseriesId', asyncHandler(async (req, res) => {
     prisma.anomaly.count({ where: { ...where, isResolved: false } }),
   ]);
 
-  const severityBreakdown = bySeverity.reduce((acc: any, item) => {
+  const severityBreakdown = bySeverity.reduce((acc: Record<string, number>, item) => {
     acc[item.severity] = item._count;
     return acc;
-  }, {});
+  }, {} as Record<string, number>);
 
-  res.json({
+  return success(res, {
     stats: {
       total,
       resolved,
@@ -308,13 +305,13 @@ router.get('/stats/timeseries/:timeseriesId', asyncHandler(async (req, res) => {
   });
 }));
 
-// POST /api/anomalies/bulk-resolve - Bulk resolve anomalies
-router.post('/bulk-resolve', asyncHandler(async (req, res) => {
+// POST /api/anomalies/bulk-resolve - Bulk resolve anomalies (requires authentication)
+router.post('/bulk-resolve', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   const validatedData = bulkResolveSchema.parse(req.body);
 
-  const where: any = { isResolved: false };
+  const where: Prisma.AnomalyWhereInput = { isResolved: false };
   if (validatedData.timeseriesId) where.timeseriesId = validatedData.timeseriesId;
-  if (validatedData.severity) where.severity = validatedData.severity;
+  if (validatedData.severity) where.severity = validatedData.severity as AnomalySeverity;
   if (validatedData.start || validatedData.end) {
     where.createdAt = {};
     if (validatedData.start) where.createdAt.gte = new Date(validatedData.start);
@@ -329,11 +326,7 @@ router.post('/bulk-resolve', asyncHandler(async (req, res) => {
     },
   });
 
-  res.json({
-    success: true,
-    count: result.count,
-    message: `Resolved ${result.count} anomalies`,
-  });
+  return successWithMessage(res, { count: result.count }, `Resolved ${result.count} anomalies`);
 }));
 
 export { router as anomaliesRouter };

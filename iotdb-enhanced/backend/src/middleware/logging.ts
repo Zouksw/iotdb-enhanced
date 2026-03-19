@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { v4 as uuidv4 } from "uuid";
+import { logger } from "../lib/logger";
 
 // Extend Express Request type to include correlation ID
 declare global {
@@ -19,31 +20,27 @@ export const requestLoggingMiddleware = (req: Request, res: Response, next: Next
   req.startTime = Date.now();
 
   // Log request
-  console.log(JSON.stringify({
+  logger.http("HTTP_REQUEST", "Incoming request", {
     correlationId: req.correlationId,
-    timestamp: new Date().toISOString(),
-    type: "request",
     method: req.method,
     url: req.url,
     ip: req.ip,
     userAgent: req.get("user-agent"),
     userId: req.userId,
-  }));
+  });
 
   // Log response
   res.on("finish", () => {
     const duration = req.startTime ? Date.now() - req.startTime : 0;
 
-    console.log(JSON.stringify({
+    logger.http("HTTP_RESPONSE", "Request completed", {
       correlationId: req.correlationId,
-      timestamp: new Date().toISOString(),
-      type: "response",
       method: req.method,
       url: req.url,
       statusCode: res.statusCode,
       duration: `${duration}ms`,
       userId: req.userId,
-    }));
+    });
   });
 
   // Add correlation ID to response headers
@@ -61,18 +58,15 @@ export const errorLoggingMiddleware = (
 ) => {
   const duration = req.startTime ? Date.now() - req.startTime : 0;
 
-  console.error(JSON.stringify({
+  logger.error("MIDDLEWARE_ERROR", err.message, {
     correlationId: req.correlationId,
-    timestamp: new Date().toISOString(),
-    type: "error",
-    message: err.message,
-    stack: err.stack,
     method: req.method,
     url: req.url,
     statusCode: res.statusCode,
     duration: `${duration}ms`,
     userId: req.userId,
-  }));
+    stack: err.stack,
+  });
 
   next(err);
 };
@@ -82,14 +76,12 @@ export const detailedRequestLogger = (req: Request, res: Response, next: NextFun
   if (process.env.LOG_LEVEL === "debug") {
     const originalSend = res.send;
     res.send = function (data) {
-      console.log(JSON.stringify({
+      logger.debug("RESPONSE_BODY", "Response data", {
         correlationId: req.correlationId,
-        timestamp: new Date().toISOString(),
-        type: "response_body",
         method: req.method,
         url: req.url,
         body: data?.toString().substring(0, 1000), // Truncate large responses
-      }));
+      });
       return originalSend.call(this, data);
     };
   }
@@ -104,16 +96,14 @@ export const slowQueryLogger = (threshold: number = 1000) => {
     res.on("finish", () => {
       const duration = Date.now() - startTime;
       if (duration > threshold) {
-        console.warn(JSON.stringify({
+        logger.warn("SLOW_REQUEST", "Request exceeded threshold", {
           correlationId: req.correlationId,
-          timestamp: new Date().toISOString(),
-          type: "slow_request",
           method: req.method,
           url: req.url,
           duration: `${duration}ms`,
           threshold: `${threshold}ms`,
           userId: req.userId,
-        }));
+        });
       }
     });
 
@@ -127,16 +117,14 @@ export const securityEventLogger = (
   details: Record<string, any>,
   req?: Request
 ) => {
-  console.warn(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    type: "security_event",
+  logger.warn("SECURITY_EVENT", `Security event: ${eventType}`, {
     eventType,
     correlationId: req?.correlationId,
     ip: req?.ip,
     userAgent: req?.get("user-agent"),
     userId: req?.userId,
     ...details,
-  }));
+  });
 };
 
 // API activity logging for audit trail
@@ -147,15 +135,13 @@ export const auditLogger = (
   userId: string,
   details?: Record<string, any>
 ) => {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    type: "audit",
+  logger.info("AUDIT_LOG", `${action} ${entityType}`, {
     action,
     entityType,
     entityId,
     userId,
     details,
-  }));
+  });
 };
 
 // Performance logging
@@ -164,23 +150,19 @@ export const performanceLogger = (
   duration: number,
   metadata?: Record<string, any>
 ) => {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    type: "performance",
+  logger.info("PERFORMANCE", `Operation: ${operation}`, {
     operation,
     duration: `${duration}ms`,
     ...metadata,
-  }));
+  });
 };
 
 // Health check logger
 export const healthLogger = (status: "healthy" | "unhealthy", details: Record<string, any>) => {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    type: "health",
+  logger.info("HEALTH_CHECK", `Health status: ${status}`, {
     status,
     ...details,
-  }));
+  });
 };
 
 // Database operation logger
@@ -191,15 +173,14 @@ export const dbLogger = (
   success: boolean,
   details?: Record<string, any>
 ) => {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    type: "database",
+  const level = success ? "info" : "error";
+  logger[level](`DB_OPERATION_${operation.toUpperCase()}`, `${operation} on ${table}`, {
     operation,
     table,
     duration: `${duration}ms`,
     status: success ? "success" : "error",
     ...details,
-  }));
+  });
 };
 
 // IoTDB operation logger
@@ -210,15 +191,14 @@ export const iotdbLogger = (
   success: boolean = true,
   details?: Record<string, any>
 ) => {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    type: "iotdb",
+  const level = success ? "info" : "error";
+  logger[level](`IOTDB_OPERATION_${operation.toUpperCase()}`, `${operation} ${device || ""}`, {
     operation,
     device,
     duration: duration ? `${duration}ms` : undefined,
     status: success ? "success" : "error",
     ...details,
-  }));
+  });
 };
 
 // AI model operation logger
@@ -229,15 +209,14 @@ export const aiLogger = (
   success: boolean = true,
   details?: Record<string, any>
 ) => {
-  console.log(JSON.stringify({
-    timestamp: new Date().toISOString(),
-    type: "ai_operation",
+  const level = success ? "info" : "error";
+  logger[level](`AI_OPERATION_${operation.toUpperCase()}`, `${operation} ${modelName}`, {
     operation,
     modelName,
     duration: duration ? `${duration}ms` : undefined,
     status: success ? "success" : "error",
     ...details,
-  }));
+  });
 };
 
 // Export combined middleware

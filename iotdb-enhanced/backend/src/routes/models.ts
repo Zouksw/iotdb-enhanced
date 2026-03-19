@@ -1,8 +1,10 @@
+import { success, paginated, successWithMessage } from '../lib/response';
 import { Router } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
-import { prisma } from '../lib';
+import { prisma, logger } from '../lib';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { checkAIAccess } from '../middleware/aiAccess';
 import { asyncHandler, NotFoundError, BadRequestError } from '../middleware/errorHandler';
 import { getPagination, paginationSchema, limitSchema } from '../schemas/common';
 import { modelsQuerySchema, trainModelSchema, predictSchema, forecastsQuerySchema } from '../schemas/models';
@@ -16,7 +18,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const { skip, take } = getPagination(req.query);
   const params = modelsQuerySchema.parse(req.query);
 
-  const where: any = {};
+  const where: Prisma.ForecastingModelWhereInput = {};
   if (timeseriesId) where.timeseriesId = timeseriesId as string;
   if (params.isActive !== undefined) where.isActive = params.isActive;
   if (algorithm) where.algorithm = algorithm as string;
@@ -39,15 +41,11 @@ router.get('/', asyncHandler(async (req, res) => {
     }),
     prisma.forecastingModel.count({ where }),
   ]);
-
-  res.json({
-    models,
-    pagination: {
-      page: params.page,
-      limit: params.limit,
-      total,
-      totalPages: Math.ceil(total / params.limit),
-    },
+  return paginated(res, models, {
+    page: params.page,
+    limit: params.limit,
+    total,
+    totalPages: Math.ceil(total / params.limit),
   });
 }));
 
@@ -81,12 +79,11 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!model) {
     throw new NotFoundError('Model');
   }
-
-  res.json({ model });
+  return success(res, { model });
 }));
 
 // POST /api/models/train - Train a new forecasting model using IoTDB AINode
-router.post('/train', authenticate, asyncHandler(async (req: AuthRequest, res) => {
+router.post('/train', authenticate, checkAIAccess, asyncHandler(async (req: AuthRequest, res) => {
   const userId = req.userId!;
   const validatedData = trainModelSchema.parse(req.body);
 
@@ -173,14 +170,20 @@ router.post('/train', authenticate, asyncHandler(async (req: AuthRequest, res) =
   // Emit WebSocket event
   const io = req.app.get('io');
   if (io) {
-    io.to(`timeseries:${validatedData.timeseriesId}`).emit('model:trained', model);
+    try {
+      io.to(`timeseries:${validatedData.timeseriesId}`).emit('model:trained', model);
+    } catch (wsError) {
+      logger.warn('WebSocket emit failed for model:trained event', {
+        timeseriesId: validatedData.timeseriesId,
+        error: wsError instanceof Error ? wsError.message : 'Unknown error'
+      });
+    }
   }
-
-  res.status(201).json({ model });
+  return success(res, { model }, 201);
 }));
 
-// POST /api/models/:modelId/predict - Generate forecast using IoTDB AINode
-router.post('/:modelId/predict', asyncHandler(async (req, res) => {
+// POST /api/models/:modelId/predict - Generate forecast using IoTDB AINode (requires authentication)
+router.post('/:modelId/predict', authenticate, checkAIAccess, asyncHandler(async (req: AuthRequest, res) => {
   const { modelId } = req.params;
   const validatedData = predictSchema.parse(req.body);
 
@@ -223,7 +226,14 @@ router.post('/:modelId/predict', asyncHandler(async (req, res) => {
   }
 
   // Convert AINode forecasts to database format
-  const forecasts = predictResult.forecasts.map((f: any) => ({
+  interface AINodeForecast {
+    timestamp: number;
+    predictedValue?: number;
+    lowerBound?: number;
+    upperBound?: number;
+  }
+
+  const forecasts = predictResult.forecasts.map((f: AINodeForecast) => ({
     modelId,
     timeseriesId: model.timeseriesId,
     timestamp: f.timestamp,
@@ -244,20 +254,27 @@ router.post('/:modelId/predict', asyncHandler(async (req, res) => {
   // Emit WebSocket event
   const io = req.app.get('io');
   if (io) {
-    io.to(`timeseries:${model.timeseriesId}`).emit('forecast:generated', {
-      modelId,
-      count: forecasts.length,
-    });
+    try {
+      io.to(`timeseries:${model.timeseriesId}`).emit('forecast:generated', {
+        modelId,
+        count: forecasts.length,
+      });
+    } catch (wsError) {
+      logger.warn('WebSocket emit failed for forecast:generated event', {
+        modelId,
+        timeseriesId: model.timeseriesId,
+        error: wsError instanceof Error ? wsError.message : 'Unknown error'
+      });
+    }
   }
-
-  res.status(201).json({
+  return success(res, {
     forecasts,
     meta: {
       modelId,
       horizon: forecasts.length,
       generatedAt: new Date(),
     },
-  });
+  }, 201);
 }));
 
 // GET /api/models/:modelId/forecasts - Get forecasts from a model
@@ -266,7 +283,7 @@ router.get('/:modelId/forecasts', asyncHandler(async (req, res) => {
   const { start, end } = req.query;
   const params = limitSchema.parse(req.query);
 
-  const where: any = { modelId };
+  const where: Prisma.ForecastWhereInput = { modelId };
 
   if (start || end) {
     where.timestamp = {};
@@ -280,11 +297,11 @@ router.get('/:modelId/forecasts', asyncHandler(async (req, res) => {
     orderBy: { timestamp: 'asc' },
   });
 
-  res.json({ forecasts });
+  return success(res, { forecasts });
 }));
 
-// PATCH /api/models/:id - Update model
-router.patch('/:id', asyncHandler(async (req, res) => {
+// PATCH /api/models/:id - Update model (requires authentication)
+router.patch('/:id', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   const { isActive } = req.body;
 
   if (typeof isActive !== 'undefined') {
@@ -309,27 +326,25 @@ router.patch('/:id', asyncHandler(async (req, res) => {
       where: { id: req.params.id },
       data: { isActive },
     });
-
-    return res.json({ model });
+  return success(res, { model });
   }
 
   throw new BadRequestError('No valid fields to update');
 }));
 
-// DELETE /api/models/:id - Delete model
-router.delete('/:id', asyncHandler(async (req, res) => {
+// DELETE /api/models/:id - Delete model (requires authentication)
+router.delete('/:id', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   await prisma.forecastingModel.delete({
     where: { id: req.params.id },
   });
-
-  res.json({ success: true, message: 'Model deleted successfully' });
+  return successWithMessage(res, {}, 'Model deleted successfully');
 }));
 
-// DELETE /api/models/:modelId/forecasts - Clear forecasts
-router.delete('/:modelId/forecasts', asyncHandler(async (req, res) => {
+// DELETE /api/models/:modelId/forecasts - Clear forecasts (requires authentication)
+router.delete('/:modelId/forecasts', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   const { start, end } = req.query;
 
-  const where: any = { modelId: req.params.modelId };
+  const where: Prisma.ForecastWhereInput = { modelId: req.params.modelId };
 
   if (start || end) {
     where.timestamp = {};
@@ -339,11 +354,7 @@ router.delete('/:modelId/forecasts', asyncHandler(async (req, res) => {
 
   const result = await prisma.forecast.deleteMany({ where });
 
-  res.json({
-    success: true,
-    count: result.count,
-    message: `Deleted ${result.count} forecasts`,
-  });
+  return successWithMessage(res, { count: result.count }, `Deleted ${result.count} forecasts`);
 }));
 
 export { router as modelsRouter };

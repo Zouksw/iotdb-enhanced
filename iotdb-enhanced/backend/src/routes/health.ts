@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib';
 import { asyncHandler } from '../middleware/errorHandler';
+import { success, error } from '../lib/response';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ const router = Router();
  * Basic health check
  */
 router.get('/', (req: Request, res: Response) => {
-  res.json({
+  return success(res, {
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -50,17 +51,13 @@ router.get('/ready', asyncHandler(async (req: Request, res: Response) => {
   // Note: IoTDB check would go here
 
   if (allHealthy) {
-    res.json({
+    return success(res, {
       status: 'ready',
       checks,
       timestamp: new Date().toISOString(),
     });
   } else {
-    res.status(503).json({
-      status: 'not ready',
-      checks,
-      timestamp: new Date().toISOString(),
-    });
+    return error(res, 'Service not ready', 503, 'SERVICE_NOT_READY', { checks });
   }
 }));
 
@@ -69,7 +66,7 @@ router.get('/ready', asyncHandler(async (req: Request, res: Response) => {
  * Liveness check - verifies the process is running
  */
 router.get('/live', (req: Request, res: Response) => {
-  res.json({
+  return success(res, {
     status: 'alive',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
