@@ -59,7 +59,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.iotdb-enhanced.com http://localhost:4000 http://localhost:4001 ws://localhost:4000 ws://localhost:4001",
+              "connect-src 'self' https://api.iotdb-enhanced.com http://localhost:8000 https://localhost:8000 ws://localhost:8000 wss://localhost:8000",
               "frame-src 'none'",
               "object-src 'none'",
               "base-uri 'self'",
