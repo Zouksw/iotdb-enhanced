@@ -14,28 +14,31 @@ import {
 } from '../tokenBlacklist';
 
 // Mock Redis with factory function
-const mockRedisSetEx = jest.fn() as jest.MockedFunction<any>;
-const mockRedisSAdd = jest.fn() as jest.MockedFunction<any>;
-const mockRedisExpireAt = jest.fn() as jest.MockedFunction<any>;
+const mockRedisSetEx = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<any>;
+const mockRedisSAdd = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<any>;
+const mockRedisExpireAt = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<any>;
 const mockRedisSIsMember = jest.fn() as jest.MockedFunction<any>;
-const mockRedisSDel = jest.fn() as jest.MockedFunction<any>;
-const mockRedisSRem = jest.fn() as jest.MockedFunction<any>;
+const mockRedisSDel = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<any>;
+const mockRedisSRem = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<any>;
 const mockRedisSMembers = jest.fn() as jest.MockedFunction<any>;
 const mockRedisSCard = jest.fn() as jest.MockedFunction<any>;
 const mockRedisMulti = jest.fn() as jest.MockedFunction<any>;
 
+// Mock Redis client
+const mockRedisClient = {
+  setEx: mockRedisSetEx,
+  sAdd: mockRedisSAdd,
+  expireAt: mockRedisExpireAt,
+  sIsMember: mockRedisSIsMember,
+  del: mockRedisSDel,
+  sRem: mockRedisSRem,
+  sMembers: mockRedisSMembers,
+  sCard: mockRedisSCard,
+  multi: mockRedisMulti,
+};
+
 jest.mock('../../lib/redis', () => ({
-  redis: {
-    setEx: (...args: any[]) => mockRedisSetEx(...args),
-    sAdd: (...args: any[]) => mockRedisSAdd(...args),
-    expireAt: (...args: any[]) => mockRedisExpireAt(...args),
-    sIsMember: (...args: any[]) => mockRedisSIsMember(...args),
-    del: (...args: any[]) => mockRedisSDel(...args),
-    sRem: (...args: any[]) => mockRedisSRem(...args),
-    sMembers: (...args: any[]) => mockRedisSMembers(...args),
-    sCard: (...args: any[]) => mockRedisSCard(...args),
-    multi: (...args: any[]) => mockRedisMulti(...args),
-  },
+  redis: jest.fn(() => Promise.resolve(mockRedisClient)),
 }));
 
 // Mock JWT utils

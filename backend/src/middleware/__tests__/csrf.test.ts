@@ -24,16 +24,19 @@ jest.mock('crypto', () => {
 });
 
 // Mock Redis with factory function
-const mockRedisSetEx = jest.fn();
+const mockRedisSetEx = jest.fn().mockResolvedValue(undefined);
 const mockRedisGet = jest.fn();
-const mockRedisDel = jest.fn();
+const mockRedisDel = jest.fn().mockResolvedValue(undefined);
+
+// Mock Redis client
+const mockRedisClient = {
+  setEx: mockRedisSetEx,
+  get: mockRedisGet,
+  del: mockRedisDel,
+};
 
 jest.mock('../../lib/redis', () => ({
-  redis: {
-    setEx: (...args: any[]) => mockRedisSetEx(...args),
-    get: (...args: any[]) => mockRedisGet(...args),
-    del: (...args: any[]) => mockRedisDel(...args),
-  },
+  redis: jest.fn(() => Promise.resolve(mockRedisClient)),
 }));
 
 // Mock logger

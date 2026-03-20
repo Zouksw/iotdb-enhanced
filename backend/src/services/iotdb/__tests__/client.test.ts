@@ -25,14 +25,9 @@ jest.mock('../../../utils/logger', () => ({
   },
 }));
 
-// Mock node-fetch
-jest.mock('node-fetch', () => {
-  const mockFn = jest.fn();
-  return mockFn;
-});
-
-import fetch from 'node-fetch';
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+// Mock global fetch
+const mockFetch = jest.fn();
+global.fetch = mockFetch as any;
 
 describe('IoTDBClient', () => {
   let client: IoTDBClient;

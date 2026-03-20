@@ -400,7 +400,8 @@ describe('Alert Rules Complex Integration Tests', () => {
       await evaluateAlertRule(rule, data);
 
       // Set lastTriggeredAt to exactly cooldown period ago
-      const boundaryTime = new Date(Date.now() - cooldownMinutes * 60 * 1000);
+      const now = Date.now();
+      const boundaryTime = new Date(now - cooldownMinutes * 60 * 1000);
       rule.lastTriggeredAt = boundaryTime;
 
       // At exact boundary, implementation checks: if (new Date() < cooldownEnd)
@@ -409,8 +410,9 @@ describe('Alert Rules Complex Integration Tests', () => {
       const result = await evaluateAlertRule(rule, data);
       expect(result).toBe(true);
 
-      // 1ms BEFORE boundary (still in cooldown), should NOT trigger
-      rule.lastTriggeredAt = new Date(boundaryTime.getTime() + 1);
+      // 100ms AFTER boundary (still in cooldown), should NOT trigger
+      // Use a fixed time to avoid race conditions
+      rule.lastTriggeredAt = new Date(now - cooldownMinutes * 60 * 1000 + 100);
       const resultBefore = await evaluateAlertRule(rule, data);
       expect(resultBefore).toBe(false);
     });
