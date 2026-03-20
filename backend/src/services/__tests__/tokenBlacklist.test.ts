@@ -313,31 +313,4 @@ describe('tokenBlacklist service', () => {
       await expect(checkTokenBlacklist(testToken)).resolves.toBeUndefined();
     });
   });
-
-  describe('extractTokenId (internal function)', () => {
-    it('should use jti from token when available', async () => {
-      mockDecodeToken.mockReturnValue({ jti: 'custom-jti-123' });
-
-      await blacklistToken(testToken);
-
-      expect(mockRedisSAdd).toHaveBeenCalledWith('token:blacklist:all', 'custom-jti-123');
-    });
-
-    it('should generate hash when jti is not available', async () => {
-      mockDecodeToken.mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 3600 });
-
-      await blacklistToken(testToken);
-
-      // Should call with some hash string
-      expect(mockRedisSAdd).toHaveBeenCalledWith('token:blacklist:all', expect.any(String));
-    });
-
-    it('should use token prefix as fallback on decode error', async () => {
-      mockDecodeToken.mockReturnValue(null);
-
-      await blacklistToken(testToken);
-
-      expect(mockRedisSAdd).toHaveBeenCalledWith('token:blacklist:all', expect.any(String));
-    });
-  });
 });

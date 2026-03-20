@@ -1,14 +1,86 @@
 /**
  * Tests for cache service
+ *
+ * Organized into:
+ * 1. Utility functions (no Redis needed)
+ * 2. Basic operations (with mocked Redis)
+ * 3. Error handling and edge cases
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import {
-  cacheKeys,
-} from '../cache';
 
-// Test cacheKeys utility which doesn't need Redis
+// Mock redis module
+jest.mock('redis', () => ({
+  createClient: jest.fn(),
+}));
+
+// Mock logger
+jest.mock('../../utils/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
+
+import { createClient } from 'redis';
+import * as cacheService from '../cache';
+
+// ============================================================================
+// Test Utilities
+// ============================================================================
+
+function createMockRedisClient(overrides: any = {}) {
+  const mockPipeline = {
+    set: jest.fn().mockReturnThis(),
+    exec: jest.fn().mockResolvedValue(undefined),
+    ...overrides._pipeline,
+  };
+
+  return {
+    connect: jest.fn().mockResolvedValue(undefined),
+    on: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
+    setEx: jest.fn(),
+    del: jest.fn(),
+    keys: jest.fn(),
+    exists: jest.fn(),
+    incr: jest.fn(),
+    expire: jest.fn(),
+    mGet: jest.fn(),
+    multi: jest.fn().mockReturnValue(mockPipeline),
+    dbSize: jest.fn(),
+    info: jest.fn(),
+    flushDb: jest.fn(),
+    quit: jest.fn(),
+    _pipeline: mockPipeline,
+    ...overrides,
+  };
+}
+
+let mockRedisClient: ReturnType<typeof createMockRedisClient>;
+
+beforeEach(async () => {
+  jest.clearAllMocks();
+  await cacheService.closeCache();
+  mockRedisClient = createMockRedisClient();
+  (createClient as jest.Mock).mockReturnValue(mockRedisClient);
+  process.env.REDIS_URL = 'redis://localhost:6379';
+});
+
+afterEach(async () => {
+  delete process.env.REDIS_URL;
+  await cacheService.closeCache();
+});
+
+// ============================================================================
+// Part 1: Utility Functions (no Redis needed)
+// ============================================================================
+
 describe('cacheKeys utility', () => {
+  const { cacheKeys } = require('../cache');
+
   it('should generate prediction key', () => {
     const key = cacheKeys.prediction('ts-123', 'arima', 10);
     expect(key).toBe('prediction:ts-123:arima:10');
@@ -47,47 +119,309 @@ describe('cacheKeys utility', () => {
   });
 });
 
-// Test cache service error handling
-describe('cache service error handling', () => {
-  beforeEach(() => {
-    // Mock Redis environment variable to prevent real connection
-    process.env.REDIS_URL = 'redis://localhost:9999'; // Non-existent Redis
+// ============================================================================
+// Part 2: Basic Operations
+// ============================================================================
+
+describe('Cache - Basic Operations', () => {
+  beforeEach(async () => {
+    await cacheService.initCache();
   });
 
-  afterEach(() => {
-    delete process.env.REDIS_URL;
+  describe('get', () => {
+    it('should get and parse JSON value', async () => {
+      mockRedisClient.get.mockResolvedValue('{"data":"test","number":123}');
+      const result = await cacheService.get<{ data: string; number: number }>('test-key');
+      expect(result).toEqual({ data: 'test', number: 123 });
+    });
+
+    it('should return null for non-existent key', async () => {
+      mockRedisClient.get.mockResolvedValue(null);
+      const result = await cacheService.get('test-key');
+      expect(result).toBeNull();
+    });
+
+    it('should return null for invalid JSON', async () => {
+      mockRedisClient.get.mockResolvedValue('not-json');
+      const result = await cacheService.get('test-key');
+      expect(result).toBeNull();
+    });
   });
 
-  it('should handle Redis connection failure gracefully', async () => {
-    const { get } = await import('../cache');
-    const result = await get('test-key');
-    // Should return null instead of throwing
-    expect(result).toBeNull();
+  describe('set', () => {
+    it('should set value without TTL', async () => {
+      await cacheService.set('test-key', { data: 'test' });
+      expect(mockRedisClient.set).toHaveBeenCalledWith(
+        'test-key',
+        JSON.stringify({ data: 'test' })
+      );
+    });
+
+    it('should set value with TTL', async () => {
+      await cacheService.set('test-key', { data: 'test' }, 60);
+      expect(mockRedisClient.setEx).toHaveBeenCalledWith(
+        'test-key',
+        60,
+        JSON.stringify({ data: 'test' })
+      );
+    });
   });
 
-  it('should handle set failure gracefully', async () => {
-    const { set } = await import('../cache');
-    // Should not throw
-    await expect(set('test-key', { data: 'test' })).resolves.not.toThrow();
+  describe('del', () => {
+    it('should delete key', async () => {
+      await cacheService.del('test-key');
+      expect(mockRedisClient.del).toHaveBeenCalledWith('test-key');
+    });
   });
 
-  it('should handle delete failure gracefully', async () => {
-    const { del } = await import('../cache');
-    // Should not throw
-    await expect(del('test-key')).resolves.not.toThrow();
+  describe('exists', () => {
+    it('should return true for existing key', async () => {
+      mockRedisClient.exists.mockResolvedValue(1);
+      const result = await cacheService.exists('test-key');
+      expect(result).toBe(true);
+    });
+
+    it('should return false for non-existing key', async () => {
+      mockRedisClient.exists.mockResolvedValue(0);
+      const result = await cacheService.exists('test-key');
+      expect(result).toBe(false);
+    });
   });
 
-  it('should handle exists failure gracefully', async () => {
-    const { exists } = await import('../cache');
-    const result = await exists('test-key');
-    // Should return false on failure
-    expect([false, true]).toContain(result);
+  describe('incr', () => {
+    it('should increment and return value', async () => {
+      mockRedisClient.incr.mockResolvedValue(5);
+      const result = await cacheService.incr('counter');
+      expect(result).toBe(5);
+      expect(mockRedisClient.incr).toHaveBeenCalledWith('counter');
+    });
   });
 
-  it('should handle incr failure gracefully', async () => {
-    const { incr } = await import('../cache');
-    const result = await incr('counter');
-    // Should return a number
-    expect(typeof result).toBe('number');
+  describe('expire', () => {
+    it('should set expiration time', async () => {
+      await cacheService.expire('test-key', 60);
+      expect(mockRedisClient.expire).toHaveBeenCalledWith('test-key', 60);
+    });
+  });
+});
+
+// ============================================================================
+// Part 3: Advanced Operations
+// ============================================================================
+
+describe('Cache - Advanced Operations', () => {
+  beforeEach(async () => {
+    await cacheService.initCache();
+  });
+
+  describe('mget', () => {
+    it('should get multiple keys', async () => {
+      mockRedisClient.mGet.mockResolvedValue([
+        '{"data":"test1"}',
+        null,
+        '{"data":"test3"}',
+      ]);
+
+      const result = await cacheService.mget<{ data: string }>(['key1', 'key2', 'key3']);
+      expect(result).toEqual([
+        { data: 'test1' },
+        null,
+        { data: 'test3' },
+      ]);
+    });
+
+    it('should return empty array for no keys', async () => {
+      const result = await cacheService.mget([]);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('mset', () => {
+    it('should set multiple keys', async () => {
+      const items = [
+        { key: 'key1', value: { data: 'test1' } },
+        { key: 'key2', value: { data: 'test2' } },
+      ];
+
+      await cacheService.mset(items);
+
+      expect(mockRedisClient.multi).toHaveBeenCalled();
+      expect(mockRedisClient._pipeline.set).toHaveBeenCalledTimes(2);
+      expect(mockRedisClient._pipeline.exec).toHaveBeenCalled();
+    });
+
+    it('should handle empty items array', async () => {
+      await cacheService.mset([]);
+      expect(mockRedisClient.multi).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('delPattern', () => {
+    it('should delete keys matching pattern', async () => {
+      mockRedisClient.keys.mockResolvedValue(['key1', 'key2', 'key3']);
+      await cacheService.delPattern('test:*');
+      expect(mockRedisClient.keys).toHaveBeenCalledWith('test:*');
+      expect(mockRedisClient.del).toHaveBeenCalledWith(['key1', 'key2', 'key3']);
+    });
+
+    it('should handle no keys found', async () => {
+      mockRedisClient.keys.mockResolvedValue([]);
+      await cacheService.delPattern('test:*');
+      expect(mockRedisClient.del).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cache wrapper', () => {
+    it('should cache function results', async () => {
+      const mockFn = jest.fn().mockResolvedValue({ result: 'test' });
+      mockRedisClient.get.mockResolvedValueOnce(null).mockResolvedValueOnce('{"result":"test"}');
+
+      const cached = cacheService.cache('test:', mockFn, { ttl: 60 });
+
+      const result1 = await cached('arg1');
+      expect(result1).toEqual({ result: 'test' });
+      expect(mockFn).toHaveBeenCalledWith('arg1');
+
+      const result2 = await cached('arg1');
+      expect(result2).toEqual({ result: 'test' });
+      expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getCacheStats', () => {
+    it('should return cache stats', async () => {
+      mockRedisClient.info.mockResolvedValue('used_memory_human:1.5M\nother:data');
+      mockRedisClient.dbSize.mockResolvedValue(100);
+
+      const stats = await cacheService.getCacheStats();
+
+      expect(stats).toEqual({
+        connected: true,
+        keyCount: 100,
+        memoryUsage: '1.5M',
+      });
+    });
+  });
+
+  describe('flushCache', () => {
+    it('should flush cache', async () => {
+      await cacheService.flushCache();
+      expect(mockRedisClient.flushDb).toHaveBeenCalled();
+    });
+  });
+
+  describe('closeCache', () => {
+    it('should close Redis connection', async () => {
+      await cacheService.closeCache();
+      expect(mockRedisClient.quit).toHaveBeenCalled();
+    });
+  });
+});
+
+// ============================================================================
+// Part 4: Error Handling
+// ============================================================================
+
+describe('Cache - Error Handling', () => {
+  beforeEach(async () => {
+    await cacheService.initCache();
+  });
+
+  describe('Redis operation failures', () => {
+    it('should handle get error gracefully', async () => {
+      mockRedisClient.get.mockRejectedValue(new Error('Redis error'));
+      const result = await cacheService.get('test-key');
+      expect(result).toBeNull();
+    });
+
+    it('should handle set error gracefully', async () => {
+      mockRedisClient.set.mockRejectedValue(new Error('Redis error'));
+      await expect(cacheService.set('test-key', { data: 'test' })).resolves.not.toThrow();
+    });
+
+    it('should handle del error gracefully', async () => {
+      mockRedisClient.del.mockRejectedValue(new Error('Redis error'));
+      await expect(cacheService.del('test-key')).resolves.not.toThrow();
+    });
+
+    it('should handle exists error gracefully', async () => {
+      mockRedisClient.exists.mockRejectedValue(new Error('Redis error'));
+      const result = await cacheService.exists('test-key');
+      expect(result).toBe(false);
+    });
+
+    it('should handle incr error gracefully', async () => {
+      mockRedisClient.incr.mockRejectedValue(new Error('Redis error'));
+      const result = await cacheService.incr('counter');
+      expect(result).toBe(0);
+    });
+
+    it('should handle expire error gracefully', async () => {
+      mockRedisClient.expire.mockRejectedValue(new Error('Redis error'));
+      await expect(cacheService.expire('test-key', 60)).resolves.not.toThrow();
+    });
+
+    it('should handle mget error gracefully', async () => {
+      mockRedisClient.mGet.mockRejectedValue(new Error('Redis error'));
+      const result = await cacheService.mget(['key1', 'key2']);
+      expect(result).toEqual([null, null]);
+    });
+
+    it('should handle keys error gracefully', async () => {
+      mockRedisClient.keys.mockRejectedValue(new Error('Redis error'));
+      await expect(cacheService.delPattern('test:*')).resolves.not.toThrow();
+    });
+  });
+
+  describe('Connection failures', () => {
+    it('should handle operations when Redis is not connected', async () => {
+      await cacheService.closeCache();
+      mockRedisClient.connect.mockRejectedValue(new Error('Connection failed'));
+
+      const result = await cacheService.get('test-key');
+      expect(result).toBeNull();
+    });
+
+    it('should handle stats when Redis is not connected', async () => {
+      await cacheService.closeCache();
+      mockRedisClient.connect.mockRejectedValue(new Error('Connection failed'));
+
+      const stats = await cacheService.getCacheStats();
+      expect(stats.connected).toBe(false);
+    });
+  });
+
+  describe('Invalid JSON handling', () => {
+    it('should handle invalid JSON in get', async () => {
+      mockRedisClient.get.mockResolvedValue('invalid-json{');
+      const result = await cacheService.get('test-key');
+      expect(result).toBeNull();
+    });
+
+    it('should handle invalid JSON in mget', async () => {
+      mockRedisClient.mGet.mockResolvedValue(['{"data":"test1"}', 'invalid-json']);
+      const result = await cacheService.mget<{ data: string }>(['key1', 'key2']);
+      expect(result).toEqual([{ data: 'test1' }, null]);
+    });
+  });
+});
+
+// ============================================================================
+// Part 4: Connection Management
+// ============================================================================
+
+describe('Cache - Connection Management', () => {
+  it('should return same client on multiple initCache calls', async () => {
+    const client1 = await cacheService.initCache();
+    const client2 = await cacheService.initCache();
+
+    expect(client1).toBe(client2);
+    expect(mockRedisClient.connect).toHaveBeenCalledTimes(1);
+  });
+
+  it('should handle connection failure gracefully', async () => {
+    mockRedisClient.connect.mockRejectedValue(new Error('Connection failed'));
+    const client = await cacheService.initCache();
+    expect(client).toBeNull();
   });
 });
