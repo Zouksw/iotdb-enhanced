@@ -12,6 +12,7 @@ import {
   predictSchema,
   batchPredictSchema,
   detectAnomaliesSchema,
+  visualizePredictSchema,
 } from '../schemas/iotdb';
 import { get as cacheGet, set as cacheSet, mget, cacheKeys } from '../services/cache';
 
@@ -266,6 +267,38 @@ router.post('/ai/predict/batch', aiRateLimiter, asyncHandler(async (req: Request
 }));
 
 /**
+ * POST /api/iotdb/ai/predict/visualize
+ * Get historical data + predictions for chart visualization
+ */
+router.post('/ai/predict/visualize', aiRateLimiter, asyncHandler(async (req: Request, res: Response) => {
+  const { timeseries, horizon, algorithm, confidenceLevel, historyPoints } = visualizePredictSchema.parse(req.body);
+
+  // Normalize algorithm
+  const normalizedAlgorithm = algorithm === 'prophet' ? 'arima' : algorithm || 'arima';
+
+  // Get historical data for context
+  const historicalResult = await iotdbClient.queryData({
+    path: timeseries,
+    limit: historyPoints || 50,
+  });
+
+  // Get predictions
+  const predictionResult = await iotdbAIService.predict({
+    timeseries,
+    horizon: horizon || 10,
+    algorithm: normalizedAlgorithm as any,
+    confidenceLevel: confidenceLevel || 0.95,
+  });
+
+  res.json({
+    timeseries,
+    historical: historicalResult.data || [],
+    prediction: predictionResult,
+    algorithm: normalizedAlgorithm,
+  });
+}));
+
+/**
  * POST /api/iotdb/ai/anomalies
  * Detect anomalies using AI
  */
@@ -282,6 +315,40 @@ router.post('/ai/anomalies', asyncHandler(async (req: Request, res: Response) =>
   });
 
   res.json(result);
+}));
+
+/**
+ * POST /api/iotdb/ai/anomalies/visualize
+ * Get historical data + anomalies for chart visualization
+ */
+router.post('/ai/anomalies/visualize', aiRateLimiter, asyncHandler(async (req: Request, res: Response) => {
+  const { timeseries, method, threshold, startTime, endTime, historyPoints } = req.body;
+
+  // Get historical data for context
+  const limit = historyPoints || 100;
+  const historicalResult = await iotdbClient.queryData({
+    path: timeseries,
+    limit,
+    startTime,
+    endTime,
+  });
+
+  // Detect anomalies
+  const anomalyResult = await iotdbAIService.detectAnomalies({
+    timeseries,
+    method: method || 'statistical',
+    threshold: threshold || 2.5,
+    startTime,
+    endTime,
+  });
+
+  res.json({
+    timeseries,
+    historical: historicalResult.data || [],
+    anomalies: anomalyResult.anomalies || [],
+    statistics: anomalyResult.statistics || { total: 0, bySeverity: {} },
+    method: method || 'statistical',
+  });
 }));
 
 /**

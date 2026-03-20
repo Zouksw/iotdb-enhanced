@@ -4,7 +4,7 @@
 
 IoTDB Enhanced is a time-series data analytics platform built on Apache IoTDB 2.0.5 + AI Node, providing:
 - Time-series data storage and querying (IoTDB)
-- AI-powered prediction and anomaly detection
+- **AI-powered prediction and anomaly detection** (AI Node - ✅ **RUNNING**)
 - RESTful API with Next.js 14 frontend
 - PostgreSQL + Redis for application data
 - PM2 process management
@@ -14,7 +14,8 @@ IoTDB Enhanced is a time-series data analytics platform built on Apache IoTDB 2.
 **Backend**: Node.js 18.x, Express 4.x, TypeScript 5.x, Prisma ORM
 **Frontend**: Next.js 14, React 19, Ant Design
 **Databases**: PostgreSQL 15, Redis 7, IoTDB 2.0.5
-**Testing**: Jest + Supertest (575 tests, 34.46% coverage)
+**AI Engine**: Apache IoTDB AI Node 2.0.5 (Python 3.10)
+**Testing**: Jest + Supertest (1255 tests, 62.57% coverage)
 **Process Management**: PM2
 
 ## Development Commands
@@ -38,17 +39,15 @@ npm run lint       # Run ESLint
 
 **Service Management**:
 ```bash
-./start.sh         # Start all services
+./start.sh         # Start all services (including AI Node)
 ./stop.sh          # Stop all services
 ./check.sh         # Check service status
 ```
 
-**Testing**:
+**AI Node Management**:
 ```bash
-cd backend
-npm test                          # Run all tests
-npm run test:coverage             # Coverage report
-npm run test:watch                # Watch mode
+./scripts/start-ainode.sh   # Start AI Node only
+./scripts/stop-ainode.sh    # Stop AI Node only
 ```
 
 ## Project Structure
@@ -68,7 +67,10 @@ iotdb-enhanced/
 │       ├── app/          # Next.js 14 app router pages
 │       └── components/   # React components
 ├── scripts/              # Operations scripts
-└── docs/                 # Documentation
+│   ├── start-ainode.sh   # AI Node start script
+│   └── stop-ainode.sh    # AI Node stop script
+└── docs/
+    └── ai-node-setup.md  # AI Node documentation
 ```
 
 ## Key Services
@@ -79,18 +81,129 @@ iotdb-enhanced/
 - **Alert Service**: `backend/src/services/alerts.ts` - Alert management
 - **Auth Lockout**: `backend/src/services/authLockout.ts` - Account lockout
 
+## AI Node Integration
+
+### Status: ✅ **RUNNING**
+
+The Apache IoTDB AI Node is installed and operational:
+- **Installation**: `/opt/iotdb-ainode/apache-iotdb-2.0.5-ainode-bin/`
+- **Port**: 10810
+- **Python**: 3.10 (virtual environment)
+- **Models**: 7 available (ARIMA, Timer_XL, Sundial, Holt-Winters, etc.)
+
+### Available AI Features
+
+**Prediction Models:**
+- ARIMA, Timer_XL (LSTM), Sundial (Transformer)
+- Holt-Winters, Exponential Smoothing, Naive, STL
+
+**Anomaly Detection:**
+- STRAY, Statistical, ML-based
+
+### API Endpoints
+
+```bash
+# List available models
+GET /api/iotdb/ai/models
+
+# Time series prediction
+POST /api/iotdb/ai/predict
+{
+  "timeseries": "root.sg.device1.temperature",
+  "horizon": 10,
+  "algorithm": "arima"
+}
+
+# Anomaly detection
+POST /api/iotdb/ai/anomalies
+{
+  "timeseries": "root.sg.device1.temperature",
+  "method": "statistical"
+}
+
+# Train custom model
+POST /api/iotdb/ai/models/train
+```
+
+### Documentation
+
+See [AI Node Setup Guide](docs/ai-node-setup.md) for complete documentation.
+
 ## Security Guidelines
 
 - JWT tokens stored in HttpOnly cookies only (never localStorage)
 - CSRF protection enabled (double-submit cookie pattern)
 - SQL injection prevention via input validation
 - AI features disabled by default, require admin role
+- AI isolation: Process isolation with resource limits
 - Rate limiting via Redis (100 req/15min per IP)
 
 ## Environment Files
 
 - Backend: `backend/.env` (copy from `backend/.env.example`)
 - Frontend: `frontend/.env.local` (copy from `frontend/.env.example`)
+
+**AI Configuration** (in `backend/.env`):
+```bash
+AI_FEATURES_DISABLED=false    # Enable AI features
+IOTDB_AI_ENABLED=true         # Enable IoTDB AI
+AI_NODE_HOST=127.0.0.1        # AI Node host
+AI_NODE_PORT=10810            # AI Node port
+AI_MAX_MEMORY=512M            # Memory limit per request
+AI_TIMEOUT=120000             # Timeout (ms)
+```
+
+## Current Development Focus
+
+Based on ROADMAP.md, the next phases are:
+
+**Phase 3 - Advanced Features** (In Progress):
+- ✅ AI Node integration and verification
+- Observability & Monitoring (OpenTelemetry, Prometheus, Grafana)
+- Performance Optimization (Advanced caching, read replicas)
+- Security Enhancements (2FA, RBAC, CSP)
+- Developer Experience (SDK generation, dev tools)
+
+**Phase 4 - Scalability** (Planned):
+- Kubernetes deployment
+- Auto-scaling (HPA, VPA)
+- High availability (database HA, multi-region)
+
+## Testing Guidelines
+
+- All new code requires tests
+- Aim for >80% coverage on new modules
+- Run tests before committing: `cd backend && npm test`
+- Use `/ship` skill for automated release workflow
+
+## Common Issues
+
+**AI Node not responding?**
+```bash
+# Check AI Node status
+nc -z localhost 10810 && echo "AI Node OK" || echo "AI Node DOWN"
+
+# View AI Node logs
+tail -50 /opt/iotdb-ainode/apache-iotdb-2.0.5-ainode-bin/logs/log_ainode_error.log
+
+# Restart AI Node
+./scripts/stop-ainode.sh && ./scripts/start-ainode.sh
+```
+
+**Tests failing?**
+- Check PostgreSQL and Redis are running
+- Verify environment variables are set
+- Run `cd backend && npm test` to see specific failures
+
+**IoTDB connection issues?**
+- Check IoTDB is running: `nc -z localhost 6667`
+- Verify credentials in `backend/.env`
+- Check AI Node if using AI features: `nc -z localhost 10810`
+
+**PM2 processes not starting?**
+- Check logs: `pm2 logs`
+- Verify ports aren't already in use
+- Run `./check.sh` for status overview
 
 ## gstack Integration
 
@@ -138,48 +251,3 @@ If gstack skills aren't working, run:
 ```bash
 cd .claude/skills/gstack && ./setup
 ```
-
-## Current Development Focus
-
-Based on ROADMAP.md, the next phases are:
-
-**Phase 3 - Advanced Features** (In Progress):
-- Observability & Monitoring (OpenTelemetry, Prometheus, Grafana)
-- Performance Optimization (Advanced caching, read replicas)
-- Security Enhancements (2FA, RBAC, CSP)
-- Developer Experience (SDK generation, dev tools)
-
-**Phase 4 - Scalability** (Planned):
-- Kubernetes deployment
-- Auto-scaling (HPA, VPA)
-- High availability (database HA, multi-region)
-
-## Testing Guidelines
-
-- All new code requires tests
-- Aim for >80% coverage on new modules
-- Run tests before committing: `cd backend && npm test`
-- Use `/ship` skill for automated release workflow
-
-## Documentation Guidelines
-
-- Update CHANGELOG.md for all user-visible changes
-- Keep API.md synchronized with API changes
-- Use `/document-release` after shipping features
-
-## Common Issues
-
-**Tests failing?**
-- Check PostgreSQL and Redis are running
-- Verify environment variables are set
-- Run `cd backend && npm test` to see specific failures
-
-**IoTDB connection issues?**
-- Check IoTDB is running: `nc -z localhost 6667`
-- Verify credentials in `backend/.env`
-- Check AI Node if using AI features: `nc -z localhost 10810`
-
-**PM2 processes not starting?**
-- Check logs: `pm2 logs`
-- Verify ports aren't already in use
-- Run `./check.sh` for status overview

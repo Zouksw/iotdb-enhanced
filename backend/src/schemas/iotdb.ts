@@ -75,3 +75,20 @@ export const detectAnomaliesSchema = z.object({
   startTime: z.coerce.number().optional(),
   endTime: z.coerce.number().optional(),
 });
+
+export const visualizePredictSchema = z.object({
+  timeseries: z.string(),
+  horizon: z.coerce.number().int().positive().max(1000).optional(),
+  algorithm: z.string().optional(),
+  confidenceLevel: z.coerce.number().min(0).max(1).optional(),
+  historyPoints: z.coerce.number().int().positive().max(500).optional(),
+});
+
+export const visualizeAnomaliesSchema = z.object({
+  timeseries: z.string(),
+  method: z.string().optional(),
+  threshold: z.coerce.number().optional(),
+  startTime: z.coerce.number().optional(),
+  endTime: z.coerce.number().optional(),
+  historyPoints: z.coerce.number().int().positive().max(1000).optional(),
+});

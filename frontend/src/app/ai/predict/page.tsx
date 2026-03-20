@@ -16,13 +16,11 @@ import {
   Spin,
   Tag,
   Divider,
-  Timeline,
 } from "antd";
 import {
   ThunderboltOutlined,
   RocketOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   LineChartOutlined,
   ExperimentOutlined,
   WarningOutlined,
@@ -33,6 +31,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentCard } from "@/components/layout/ContentCard";
 import GlassCard from "@/components/ui/GlassCard";
 import { useIsMobile } from "@/lib/responsive-utils";
+import PredictionChart from "@/components/charts/PredictionChart";
 
 // Check if AI features are disabled
 const AI_DISABLED = process.env.NEXT_PUBLIC_AI_DISABLED === 'true';
@@ -42,38 +41,36 @@ interface PredictionRequest {
   model: string;
   horizon?: number;
   startTime?: number;
+  historyPoints?: number;
 }
 
-interface PredictionResult {
-  predicted: Array<{ timestamp: number; value: number }>;
-  model: string;
-  method: string;
-  ainode?: boolean;
-  statistics?: {
-    count: number;
-    min: number;
-    max: number;
-    mean: number;
-    std: number;
+interface VisualizationResult {
+  timeseries: string;
+  historical: Array<{ timestamp: number; value: number }>;
+  prediction: {
+    timestamps: number[];
+    values: number[];
+    confidence?: number[];
   };
-  metadata?: {
-    executionTime: number;
-    datapoints: number;
-    modelVersion: string;
-  };
+  algorithm: string;
 }
 
 export default function AIPredictPage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<PredictionResult | null>(null);
+  const [result, setResult] = useState<VisualizationResult | null>(null);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
+  // AI Node built-in algorithms
   const models = [
     { id: "arima", name: "ARIMA", type: "Classic", description: "Auto-Regressive Integrated Moving Average" },
-    { id: "fft", name: "FFT", type: "Spectral", description: "Fast Fourier Transform" },
-    { id: "mlp", name: "Neural Network", type: "Deep Learning", description: "Multi-Layer Perceptron" },
+    { id: "timer_xl", name: "Timer_XL (LSTM)", type: "Deep Learning", description: "Long Short-Term Memory Network" },
+    { id: "sundial", name: "Sundial (Transformer)", type: "Deep Learning", description: "Transformer-based Model" },
+    { id: "holtwinters", name: "Holt-Winters", type: "Classic", description: "Triple Exponential Smoothing" },
+    { id: "exponential_smoothing", name: "Exponential Smoothing", type: "Classic", description: "Simple Exponential Smoothing" },
+    { id: "naive_forecaster", name: "Naive Forecaster", type: "Baseline", description: "Naive Prediction Method" },
+    { id: "stl_forecaster", name: "STL Forecaster", type: "Decomposition", description: "STL Decomposition Forecast" },
   ];
 
   const handlePredict = async (values: PredictionRequest) => {
@@ -82,13 +79,14 @@ export default function AIPredictPage() {
     setPermissionError(null);
 
     try {
-      const response = await fetch("/api/iotdb/ai/predict", {
+      const response = await fetch("/api/iotdb/ai/predict/visualize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           timeseries: values.timeseries,
           algorithm: values.model,
           horizon: values.horizon || 10,
+          historyPoints: values.historyPoints || 50,
         }),
       });
 
@@ -103,7 +101,7 @@ export default function AIPredictPage() {
 
       const data = await response.json();
       setResult(data);
-      message.success(`Prediction completed! Generated ${data.values?.length || data.predicted?.length || 0} data points.`);
+      message.success(`Prediction completed! Generated ${data.prediction?.values?.length || 0} data points.`);
     } catch (error: any) {
       if (!permissionError) {
         message.error(`Prediction failed: ${error.message}`);
@@ -254,6 +252,20 @@ export default function AIPredictPage() {
                 />
               </Form.Item>
 
+              <Form.Item
+                label="Historical Data Points"
+                name="historyPoints"
+                tooltip="Number of historical data points to display on chart"
+              >
+                <InputNumber
+                  min={10}
+                  max={500}
+                  step={10}
+                  style={{ width: "100%" }}
+                  placeholder="e.g., 50"
+                />
+              </Form.Item>
+
               <Divider style={{ margin: "16px 0" }} />
 
               <Form.Item>
@@ -292,20 +304,23 @@ export default function AIPredictPage() {
             <div style={{ fontSize: 13, color: "#64748b", lineHeight: "1.6" }}>
               <p style={{ margin: "0 0 8px 0" }}>
                 AI prediction uses machine learning models to forecast future values based on
-                historical time series data.
+                historical time series data from IoTDB.
               </p>
               <p style={{ margin: "0 0 8px 0" }}>
-                <strong>Supported models:</strong>
+                <strong>AI Node Built-in Algorithms:</strong>
               </p>
               <ul style={{ margin: 0, paddingLeft: 16 }}>
                 <li>
                   <strong>ARIMA:</strong> Classic statistical method for time series forecasting
                 </li>
                 <li>
-                  <strong>FFT:</strong> Spectral analysis for periodic patterns
+                  <strong>Timer_XL (LSTM):</strong> Long Short-Term Memory for complex patterns
                 </li>
                 <li>
-                  <strong>Neural Network:</strong> Deep learning approach for complex patterns
+                  <strong>Sundial (Transformer):</strong> Transformer-based for complex time patterns
+                </li>
+                <li>
+                  <strong>Holt-Winters:</strong> Triple exponential smoothing for trend and seasonality
                 </li>
               </ul>
             </div>
@@ -328,144 +343,23 @@ export default function AIPredictPage() {
               {/* Success Alert */}
               <Alert
                 message="Prediction Completed Successfully"
-                description={`Generated ${result.predicted.length} data points using ${result.model} model`}
+                description={`Generated ${result.prediction.values.length} predictions using ${result.algorithm} model`}
                 type="success"
                 showIcon
                 icon={<CheckCircleOutlined />}
                 style={{ marginBottom: isMobile ? 16 : 24 }}
               />
 
-              {/* Metadata Card */}
-              {result.metadata && (
-                <GlassCard
-                  intensity="medium"
-                  gradientBorder
-                  gradient="success"
-                  style={{ marginBottom: isMobile ? 16 : 24, padding: isMobile ? "16px" : "20px" }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <div>
-                      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
-                        Execution Time
-                      </div>
-                      <div style={{ fontSize: 20, fontWeight: 700 }}>
-                        {result.metadata.executionTime}ms
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
-                        Data Points
-                      </div>
-                      <div style={{ fontSize: 20, fontWeight: 700 }}>
-                        {result.metadata.datapoints}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>
-                        Model Version
-                      </div>
-                      <div style={{ fontSize: 14, fontWeight: 600 }}>
-                        {result.metadata.modelVersion}
-                      </div>
-                    </div>
-                  </div>
-                </GlassCard>
-              )}
-
-              {/* Statistics */}
-              {result.statistics && (
-                <ContentCard
-                  title="Prediction Statistics"
-                  subtitle={<span style={{ fontSize: 13 }}>Statistical analysis of predictions</span>}
-                  style={{ marginBottom: isMobile ? 16 : 24 }}
-                >
-                  <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
-                    <Col xs={12} sm={6}>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>Count</div>
-                        <div style={{ fontSize: 20, fontWeight: 700 }}>{result.statistics.count}</div>
-                      </div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>Min</div>
-                        <div style={{ fontSize: 20, fontWeight: 700, color: "#10b981" }}>
-                          {formatValue(result.statistics.min)}
-                        </div>
-                      </div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>Max</div>
-                        <div style={{ fontSize: 20, fontWeight: 700, color: "#3b82f6" }}>
-                          {formatValue(result.statistics.max)}
-                        </div>
-                      </div>
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>Mean</div>
-                        <div style={{ fontSize: 20, fontWeight: 700, color: "#8b5cf6" }}>
-                          {formatValue(result.statistics.mean)}
-                        </div>
-                      </div>
-                    </Col>
-                  </Row>
-                </ContentCard>
-              )}
-
-              {/* Prediction Results */}
-              <ContentCard
-                title="Predicted Values"
-                subtitle={
-                  <span style={{ fontSize: 13 }}>
-                    <Tag color="blue" icon={<ClockCircleOutlined />}>
-                      {result.predicted.length} points
-                    </Tag>
-                  </span>
-                }
-              >
-                <div style={{ maxHeight: 500, overflowY: "auto" }}>
-                  <Timeline
-                    mode="left"
-                    items={result.predicted.map((point, index) => ({
-                      color: index < 3 ? "green" : index === 3 ? "blue" : "gray",
-                      dot: index === 0 ? <ThunderboltOutlined style={{ fontSize: 16 }} /> : undefined,
-                      children: (
-                        <div
-                          style={{
-                            paddingBottom: 12,
-                            fontSize: 13,
-                          }}
-                        >
-                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                            <span style={{ fontWeight: 500, color: "#1e293b" }}>
-                              Point {index + 1}
-                            </span>
-                            <span
-                              style={{
-                                fontWeight: 700,
-                                fontSize: 16,
-                                color:
-                                  index < 3
-                                    ? "#10b981"
-                                    : index === 3
-                                    ? "#3b82f6"
-                                    : "#64748b",
-                              }}
-                            >
-                              {formatValue(point.value)}
-                            </span>
-                          </div>
-                          <div style={{ color: "#94a3b8", fontSize: 12 }}>
-                            {formatTimestamp(point.timestamp)}
-                          </div>
-                        </div>
-                      ),
-                    }))}
-                  />
-                </div>
-              </ContentCard>
+              {/* Prediction Chart */}
+              <PredictionChart
+                timeseries={result.timeseries}
+                historicalData={result.historical}
+                predictionData={result.prediction}
+                algorithm={result.algorithm}
+                onExport={(format) => {
+                  console.log(`Exported as ${format}`);
+                }}
+              />
 
               {/* Model Information */}
               <ContentCard
@@ -473,28 +367,22 @@ export default function AIPredictPage() {
                 style={{ marginTop: 24 }}
               >
                 <Descriptions bordered column={2} size="small">
-                  <Descriptions.Item label="Model" span={2}>
+                  <Descriptions.Item label="Algorithm" span={2}>
                     <Tag color="purple" icon={<ExperimentOutlined />}>
-                      {result.model.toUpperCase()}
+                      {result.algorithm.toUpperCase()}
                     </Tag>
-                    {result.ainode && (
-                      <Tag color="blue" style={{ marginLeft: 8 }}>
-                        AI Node
-                      </Tag>
-                    )}
+                    <Tag color="blue" style={{ marginLeft: 8 }}>
+                      AI Node
+                    </Tag>
                   </Descriptions.Item>
-                  <Descriptions.Item label="Method" span={2}>
-                    {result.method}
+                  <Descriptions.Item label="Time Series" span={2}>
+                    {result.timeseries}
                   </Descriptions.Item>
-                  <Descriptions.Item label="First Prediction" span={2}>
-                    {result.predicted.length > 0
-                      ? formatTimestamp(result.predicted[0].timestamp)
-                      : "-"}
+                  <Descriptions.Item label="Historical Points" span={1}>
+                    {result.historical.length}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Last Prediction" span={2}>
-                    {result.predicted.length > 0
-                      ? formatTimestamp(result.predicted[result.predicted.length - 1].timestamp)
-                      : "-"}
+                  <Descriptions.Item label="Prediction Points" span={1}>
+                    {result.prediction.values.length}
                   </Descriptions.Item>
                 </Descriptions>
               </ContentCard>

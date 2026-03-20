@@ -47,10 +47,14 @@ fi
 echo ""
 
 # ============================================
-# 2. Stop AI Node
+# 2. Stop AI Node Components
 # ============================================
-echo "[2/5] Stopping AI Node..."
+echo "[2/5] Stopping AI Node components..."
 
+# Define ConfigNode home (same as IOTDB_HOME)
+CONFIG_NODE_HOME="$IOTDB_HOME"
+
+# First, stop AI Node (DataNode)
 if [ -d "$AINODE_HOME" ]; then
     cd "$AINODE_HOME"
 
@@ -61,7 +65,7 @@ if [ -d "$AINODE_HOME" ]; then
         # Wait for graceful shutdown
         for i in {1..15}; do
             if ! nc -z localhost 10810 2>/dev/null; then
-                echo -e "  ${GREEN}✓${NC} AI Node stopped"
+                echo -e "  ${GREEN}✓${NC} AI Node (DataNode) stopped"
                 break
             fi
             sleep 1
@@ -78,14 +82,54 @@ if [ -d "$AINODE_HOME" ]; then
     else
         # Try to find and kill AINode processes
         if pkill -f "python.*ainode"; then
-            echo -e "  ${GREEN}✓${NC} AI Node stopped"
+            echo -e "  ${GREEN}✓${NC} AI Node (DataNode) stopped"
         else
-            echo -e "  ${YELLOW}AI Node not running${NC}"
+            echo -e "  ${YELLOW}AI Node (DataNode) not running${NC}"
         fi
     fi
 else
     echo -e "  ${YELLOW}AI Node directory not found${NC}"
     pkill -f "ainode" 2>/dev/null || true
+fi
+
+# Then, stop ConfigNode
+echo ""
+echo "  Stopping ConfigNode..."
+if [ -d "$CONFIG_NODE_HOME" ]; then
+    cd "$CONFIG_NODE_HOME"
+
+    if [ -f "./sbin/stop-confignode.sh" ]; then
+        ./sbin/stop-confignode.sh > /dev/null 2>&1 &
+        echo "  Waiting for ConfigNode to stop..."
+
+        # Wait for graceful shutdown
+        for i in {1..15}; do
+            if ! nc -z localhost 10710 2>/dev/null; then
+                echo -e "  ${GREEN}✓${NC} ConfigNode stopped"
+                break
+            fi
+            sleep 1
+            echo -n "."
+        done
+
+        # Force kill if still running
+        if nc -z localhost 10710 2>/dev/null; then
+            echo ""
+            echo -e "  ${YELLOW}⚠ Force killing ConfigNode...${NC}"
+            pkill -9 -f "ConfigNode" || true
+            sleep 2
+        fi
+    else
+        # Try to find and kill ConfigNode processes
+        if pkill -f "ConfigNode"; then
+            echo -e "  ${GREEN}✓${NC} ConfigNode stopped"
+        else
+            echo -e "  ${YELLOW}ConfigNode not running${NC}"
+        fi
+    fi
+else
+    echo -e "  ${YELLOW}ConfigNode directory not found${NC}"
+    pkill -f "ConfigNode" 2>/dev/null || true
 fi
 
 echo ""

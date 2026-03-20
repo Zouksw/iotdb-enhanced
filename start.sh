@@ -97,48 +97,113 @@ echo ""
 # ============================================
 echo "[2/6] Checking AI Node..."
 
+# Define ConfigNode home (same as IOTDB_HOME)
+CONFIG_NODE_HOME="$IOTDB_HOME"
+
 if nc -z localhost 10810 2>/dev/null; then
     echo -e "  ${GREEN}✓${NC} AI Node is already running (port 10810)"
 elif [ ! -d "$AINODE_HOME" ] || [ ! -f "$AINODE_HOME/sbin/start-ainode.sh" ]; then
     echo -e "  ${YELLOW}⚠${NC} AI Node not found at $AINODE_HOME"
     echo -e "  ${YELLOW}⚠${NC} Skipping AI Node startup (AI features will be unavailable)"
-elif [ "$IOTDB_STARTED" = false ]; then
-    echo -e "  ${YELLOW}⚠${NC} Skipping AI Node (IoTDB not running)"
-    echo -e "  ${YELLOW}⚠${NC} AI features will be unavailable"
+elif [ ! -d "$CONFIG_NODE_HOME" ] || [ ! -f "$CONFIG_NODE_HOME/sbin/start-confignode.sh" ]; then
+    echo -e "  ${YELLOW}⚠${NC} ConfigNode not found at $CONFIG_NODE_HOME"
+    echo -e "  ${YELLOW}⚠${NC} Skipping AI Node startup (ConfigNode is required)"
 else
-    echo "  Starting AI Node..."
-    cd "$AINODE_HOME"
+    # First, ensure ConfigNode is running
+    if ! nc -z localhost 10710 2>/dev/null; then
+        echo "  Starting ConfigNode (required for AI Node)..."
+        cd "$CONFIG_NODE_HOME"
 
-    # Check for conflicting nodes if IoTDB is running
-    if nc -z localhost 6667 2>/dev/null; then
-        if "$IOTDB_HOME/sbin/start-cli.sh" -h localhost -p 6667 -u root -pw root -e "show cluster details" 2>/dev/null | grep -q "AINode"; then
-            echo "  Removing conflicting AINode from cluster..."
-            "$IOTDB_HOME/sbin/start-cli.sh" -h localhost -p 6667 -u root -pw root -e "remove ainode 2" 2>/dev/null || true
-            sleep 2
+        nohup ./sbin/start-confignode.sh > /tmp/confignode.log 2>&1 &
+        CONFIGNODE_PID=$!
+
+        # Wait for ConfigNode to start
+        for i in {1..30}; do
+            if nc -z localhost 10710 2>/dev/null; then
+                echo -e "  ${GREEN}✓${NC} ConfigNode started (port 10710)"
+                break
+            fi
+            sleep 1
+            echo -n "."
+        done
+
+        # If ConfigNode still not started, skip AI Node
+        if ! nc -z localhost 10710 2>/dev/null; then
+            echo -e "\n  ${YELLOW}⚠${NC} ConfigNode failed to start, skipping AI Node"
+            echo -e "  ${YELLOW}⚠${NC} AI features will be unavailable"
+            cd "$PROJECT_DIR"
+        else
+            # ConfigNode is running, now start AI Node
+            cd "$PROJECT_DIR"
+            echo ""
+            echo "  Starting AI Node..."
+            cd "$AINODE_HOME"
+
+            # Clean old AI Node data if needed
+            if [ -d "data/ainode" ]; then
+                echo "  Cleaning old AI Node data directory..."
+                rm -rf "data/ainode"
+            fi
+
+            # Start AI Node
+            nohup ./sbin/start-ainode.sh > /tmp/ainode.log 2>&1 &
+            AINODE_PID=$!
+
+            # Wait for AI Node to start
+            AINODE_STARTED=false
+            for i in {1..30}; do
+                if nc -z localhost 10810 2>/dev/null; then
+                    echo -e "  ${GREEN}✓${NC} AI Node started (port 10810)"
+                    AINODE_STARTED=true
+                    break
+                fi
+                sleep 1
+                echo -n "."
+            done
+
+            cd "$PROJECT_DIR"
+
+            if ! $AINODE_STARTED; then
+                echo -e "\n  ${YELLOW}⚠${NC} AI Node did not start within timeout (30s)"
+                echo -e "  ${YELLOW}⚠${NC} Continuing without AI Node..."
+                kill $AINODE_PID 2>/dev/null || true
+            fi
         fi
-    fi
+    else
+        echo -e "  ${GREEN}✓${NC} ConfigNode is already running (port 10710)"
+        echo ""
+        echo "  Starting AI Node..."
+        cd "$AINODE_HOME"
 
-    # Start AI Node
-    nohup ./sbin/start-ainode.sh > /tmp/ainode.log 2>&1 &
-    AINODE_PID=$!
-
-    # Wait for AI Node to start with timeout
-    AINODE_STARTED=false
-    for i in {1..20}; do
-        if nc -z localhost 10810 2>/dev/null; then
-            echo -e "  ${GREEN}✓${NC} AI Node started"
-            AINODE_STARTED=true
-            break
+        # Clean old AI Node data if needed
+        if [ -d "data/ainode" ]; then
+            echo "  Cleaning old AI Node data directory..."
+            rm -rf "data/ainode"
         fi
-        sleep 2
-        echo -n "."
-    done
 
-    if ! $AINODE_STARTED; then
-        echo -e "\n  ${YELLOW}⚠${NC} AI Node did not start within timeout (40s)"
-        echo -e "  ${YELLOW}⚠${NC} Continuing without AI Node..."
-        # Kill the hung process
-        kill $AINODE_PID 2>/dev/null || true
+        # Start AI Node
+        nohup ./sbin/start-ainode.sh > /tmp/ainode.log 2>&1 &
+        AINODE_PID=$!
+
+        # Wait for AI Node to start
+        AINODE_STARTED=false
+        for i in {1..30}; do
+            if nc -z localhost 10810 2>/dev/null; then
+                echo -e "  ${GREEN}✓${NC} AI Node started (port 10810)"
+                AINODE_STARTED=true
+                break
+            fi
+            sleep 1
+            echo -n "."
+        done
+
+        cd "$PROJECT_DIR"
+
+        if ! $AINODE_STARTED; then
+            echo -e "\n  ${YELLOW}⚠${NC} AI Node did not start within timeout (30s)"
+            echo -e "  ${YELLOW}⚠${NC} Continuing without AI Node..."
+            kill $AINODE_PID 2>/dev/null || true
+        fi
     fi
 fi
 

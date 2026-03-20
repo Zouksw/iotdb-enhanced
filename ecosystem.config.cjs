@@ -14,7 +14,11 @@
  *   - Set PM2_USER environment variable to override default user (default: node)
  *
  * Author: IoTDB Enhanced Team
- * Version: 1.2.0
+ * Version: 1.3.0
+ *
+ * AI Node Setup:
+ *   AI Node is managed separately via scripts/start-ainode.sh and scripts/stop-ainode.sh
+ *   For PM2 management, use: pm2 start scripts/start-ainode.sh --name iotdb-ainode
  */
 
 const path = require('path');
@@ -106,6 +110,46 @@ module.exports = {
       pmx: true,
       automation: false,
       treekill: true,
+    },
+    // AI Node (Python service) - Optional PM2 management
+    // Note: AI Node is typically started/stopped via scripts/start-ainode.sh
+    // To enable PM2 management, uncomment the following and run:
+    // pm2 start ecosystem.config.cjs --only iotdb-ainode
+    {
+      name: 'iotdb-ainode',
+      script: './scripts/start-ainode.sh',
+      cwd: PROJECT_ROOT,
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: false, // AI Node has its own restart logic
+      watch: false,
+      max_memory_restart: '1G',
+      // AI Node specific environment
+      env: {
+        AINODE_HOME: '/opt/iotdb-ainode/apache-iotdb-2.0.5-ainode-bin',
+        AINODE_PORT: 10810,
+      },
+      // Logging
+      error_file: path.join(PROJECT_ROOT, './logs/ainode-error.log'),
+      out_file: path.join(PROJECT_ROOT, './logs/ainode-out.log'),
+      log_file: path.join(PROJECT_ROOT, './logs/ainode-combined.log'),
+      time: true,
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
+      // Graceful shutdown - use custom stop script
+      kill_timeout: 10000,
+      listen_timeout: 15000,
+      stop_script: './scripts/stop-ainode.sh',
+      // Health check
+      min_uptime: '10s',
+      max_restarts: 3, // AI Node has complex dependencies
+      restart_delay: 5000,
+      // Additional options
+      pmx: true,
+      automation: false,
+      treekill: true,
+      // Interpreter
+      interpreter: '/bin/bash',
     },
   ],
 

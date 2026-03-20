@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { ContentCard } from "@/components/layout/ContentCard";
 import { DataTable } from "@/components/tables/DataTable";
+import AnomalyChart from "@/components/charts/AnomalyChart";
 
 interface Anomaly {
   timestamp: number;
@@ -27,10 +28,21 @@ interface AnomalyDetectionResult {
   method?: string;
 }
 
+interface VisualizationResult {
+  timeseries: string;
+  historical: Array<{ timestamp: number; value: number }>;
+  anomalies: Anomaly[];
+  statistics: {
+    total: number;
+    bySeverity: Record<string, number>;
+  };
+  method: string;
+}
+
 export default function AIAnomaliesPage() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<AnomalyDetectionResult | null>(null);
+  const [result, setResult] = useState<VisualizationResult | null>(null);
 
   const severityColors: Record<string, string> = {
     LOW: "green",
@@ -51,13 +63,14 @@ export default function AIAnomaliesPage() {
     setResult(null);
 
     try {
-      const response = await fetch("/api/iotdb/ai/anomalies", {
+      const response = await fetch("/api/iotdb/ai/anomalies/visualize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           timeseries: values.timeseries,
           threshold: values.threshold,
-          method: values.method || "ml",
+          method: values.method || "statistical",
+          historyPoints: values.historyPoints || 100,
         }),
       });
 
@@ -160,7 +173,8 @@ export default function AIAnomaliesPage() {
           initialValues={{
             timeseries: "root.test2",
             threshold: 2.5,
-            method: "ml",
+            method: "statistical",
+            historyPoints: 100,
           }}
         >
           <Row gutter={[16, 16]}>
@@ -187,9 +201,24 @@ export default function AIAnomaliesPage() {
 
           <Form.Item label="Detection Method" name="method">
             <Select>
-              <Select.Option value="ml">Machine Learning (Z-score)</Select.Option>
-              <Select.Option value="statistical">Statistical</Select.Option>
+              <Select.Option value="statistical">Statistical (Z-score)</Select.Option>
+              <Select.Option value="ml">Machine Learning</Select.Option>
+              <Select.Option value="stray">STRAY Algorithm</Select.Option>
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            label="Historical Data Points"
+            name="historyPoints"
+            tooltip="Number of historical data points to display on chart"
+          >
+            <InputNumber
+              min={10}
+              max={1000}
+              step={10}
+              style={{ width: "100%" }}
+              placeholder="e.g., 100"
+            />
           </Form.Item>
 
           <Form.Item>
@@ -214,7 +243,19 @@ export default function AIAnomaliesPage() {
 
       {result && (
         <>
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          {/* Anomaly Chart */}
+          <AnomalyChart
+            timeseries={result.timeseries}
+            historicalData={result.historical}
+            anomalies={result.anomalies}
+            method={result.method}
+            onExport={(format) => {
+              console.log(`Exported as ${format}`);
+            }}
+          />
+
+          {/* Statistics Cards */}
+          <Row gutter={[16, 16]} style={{ marginTop: 24, marginBottom: 24 }}>
             <Col xs={24} sm={12} md={6}>
               <StatCard
                 title="Total Anomalies"
@@ -245,6 +286,7 @@ export default function AIAnomaliesPage() {
             )}
           </Row>
 
+          {/* Anomaly Details Table */}
           <ContentCard title="Anomaly Details">
             <DataTable
               columns={columns}
