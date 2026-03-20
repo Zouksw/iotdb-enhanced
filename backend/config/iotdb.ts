@@ -2,7 +2,6 @@
 // Uses Apache IoTDB REST API V2
 // Documentation: https://iotdb.apache.org/UserGuide/latest/API/RestServiceV2.html
 
-import fetch from 'node-fetch';
 import type {
   IoTDBConfig,
   IoTDBQueryResult,

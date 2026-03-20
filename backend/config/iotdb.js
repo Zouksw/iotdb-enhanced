@@ -9,6 +9,22 @@ const iotdbConfig = {
     password: process.env.IOTDB_PASSWORD || 'root',
     database: process.env.IOTDB_DATABASE || 'root',
 };
+/**
+ * Validate IoTDB credentials for security
+ * Throws an error if default credentials are detected in production
+ */
+export function validateIoTDBCredentials() {
+    if (process.env.NODE_ENV === 'production') {
+        const defaultUsernames = ['root', 'admin', 'change_this_username'];
+        const defaultPasswords = ['root', 'admin', 'password', 'change_this_secure_password', '123456'];
+        const isDefaultUsername = defaultUsernames.includes(iotdbConfig.username.toLowerCase());
+        const isDefaultPassword = defaultPasswords.some(pwd => iotdbConfig.password.toLowerCase().includes(pwd.toLowerCase()));
+        if (isDefaultUsername || isDefaultPassword) {
+            throw new Error('SECURITY: Default IoTDB credentials detected in production environment. ' +
+                'Please update IOTDB_USERNAME and IOTDB_PASSWORD environment variables with secure credentials.');
+        }
+    }
+}
 // 连接状态
 let connectionStatus = 'not_connected';
 // 生成 Basic Auth 头
@@ -75,10 +91,8 @@ class IoTDBRESTClient {
             const numColumns = data.values.length > 0 ? data.values[0].length : 0;
             for (let i = 0; i < numColumns; i++) {
                 const row = {
-                    expressions: null,
                     column_names: data.column_names,
-                    timestamps: null,
-                    values: data.values.map(col => col[i]),
+                    values: data.values.map((col) => col[i]),
                 };
                 results.push(row);
             }
@@ -115,9 +129,10 @@ class IoTDBRESTClient {
             };
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
             return {
                 success: false,
-                message: error.message || 'Unknown error',
+                message,
             };
         }
     }
@@ -143,9 +158,10 @@ class IoTDBRESTClient {
             };
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
             return {
                 success: false,
-                message: error.message || 'Unknown error',
+                message,
             };
         }
     }
@@ -171,9 +187,10 @@ class IoTDBRESTClient {
             };
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown error';
             return {
                 success: false,
-                message: error.message || 'Unknown error',
+                message,
             };
         }
     }
@@ -190,7 +207,21 @@ class IoTDBRESTClient {
     // 显示所有时间序列
     async showTimeseries() {
         const results = await this.queryData('SHOW TIMESERIES');
-        return results.map((r) => r['timeseries'] || r.values?.[0]).filter(Boolean);
+        return results
+            .map((r) => {
+            // Handle metadata query format - values is a 2D array
+            const values = r.values;
+            if (values && values[0] && values[0][0] !== undefined) {
+                return String(values[0][0]);
+            }
+            // Handle data query format - dynamic property access
+            const timeseries = r.timeseries;
+            if (timeseries !== undefined) {
+                return String(timeseries);
+            }
+            return null;
+        })
+            .filter((val) => val !== null);
     }
     // 查询时间序列数据
     async queryTimeseriesData(path, limit = 1000, startTime, endTime) {
@@ -225,8 +256,11 @@ class IoTDBRESTClient {
     // 统计时间序列数量
     async countTimeseries(path) {
         const results = await this.queryData(`COUNT TIMESERIES ${path}`);
-        if (results.length > 0 && results[0].values) {
-            return parseInt(results[0].values[0][0]) || 0;
+        if (results.length > 0) {
+            const values = results[0].values;
+            if (values && values[0] && values[0][0]) {
+                return parseInt(String(values[0][0]), 10) || 0;
+            }
         }
         return 0;
     }
@@ -257,10 +291,11 @@ class IoTDBRESTClient {
             };
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : 'Training request failed';
             console.error('AINode training error:', error);
             return {
                 success: false,
-                message: error.message || 'Training request failed',
+                message,
             };
         }
     }
@@ -298,10 +333,11 @@ class IoTDBRESTClient {
             };
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : 'Prediction request failed';
             console.error('AINode prediction error:', error);
             return {
                 success: false,
-                message: error.message || 'Prediction request failed',
+                message,
             };
         }
     }
@@ -309,22 +345,27 @@ class IoTDBRESTClient {
     async listModels() {
         try {
             const results = await this.queryData('SHOW MODELS');
+            const models = results.map((r) => {
+                const values = r.values;
+                return {
+                    modelId: values?.[0]?.[0] || null,
+                    algorithm: values?.[0]?.[1] || null,
+                    path: values?.[0]?.[2] || null,
+                    trainedAt: values?.[0]?.[3] || null,
+                };
+            });
             return {
                 success: true,
-                models: results.map((r) => ({
-                    modelId: r.values?.[0]?.[0],
-                    algorithm: r.values?.[0]?.[1],
-                    path: r.values?.[0]?.[2],
-                    trainedAt: r.values?.[0]?.[3],
-                })),
+                models,
                 message: 'Models retrieved successfully',
             };
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to list models';
             console.error('AINode list models error:', error);
             return {
                 success: false,
-                message: error.message || 'Failed to list models',
+                message,
             };
         }
     }
@@ -335,9 +376,10 @@ class IoTDBRESTClient {
             return result;
         }
         catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to delete model';
             return {
                 success: false,
-                message: error.message || 'Failed to delete model',
+                message,
             };
         }
     }
@@ -347,6 +389,8 @@ let iotdbClientInstance = null;
 // 获取 IoTDB 客户端实例
 export async function getIoTDBClient() {
     if (!iotdbClientInstance) {
+        // Validate credentials before initializing client in production
+        validateIoTDBCredentials();
         iotdbClientInstance = new IoTDBRESTClient(iotdbConfig);
         // 测试连接
         const isConnected = await iotdbClientInstance.ping();
