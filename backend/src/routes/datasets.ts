@@ -122,6 +122,23 @@ router.post('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
     throw new BadRequestError('Slug already exists');
   }
 
+  // Get or create default organization for the user
+  const defaultOrgId = 'default-org-id';
+  let organization = await prisma.organizations.findFirst({
+    where: { name: 'Default' },
+  });
+
+  if (!organization) {
+    organization = await prisma.organizations.create({
+      data: {
+        id: defaultOrgId,
+        owner_id: userId,
+        name: 'Default',
+        slug: 'default',
+      },
+    });
+  }
+
   const dataset = await prisma.dataset.create({
     data: {
       name: validatedData.name,
@@ -129,6 +146,7 @@ router.post('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
       description: validatedData.description,
       storageFormat: validatedData.storageFormat,
       ownerId: userId,
+      organization_id: organization.id,
     },
     include: {
       owner: { select: { id: true, name: true, email: true } },

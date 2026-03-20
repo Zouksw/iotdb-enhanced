@@ -16,6 +16,24 @@ async function main() {
 
   console.log(`✅ Found user: ${user.email}`);
 
+  // Get or create default organization
+  const defaultOrgId = 'default-org-id';
+  let organization = await prisma.organizations.findFirst({
+    where: { name: 'Default' },
+  });
+
+  if (!organization) {
+    organization = await prisma.organizations.create({
+      data: {
+        id: defaultOrgId,
+        owner_id: user.id,
+        name: 'Default',
+        slug: 'default',
+      },
+    });
+    console.log(`✅ Created organization: ${organization.name}`);
+  }
+
   // Create dataset
   const dataset = await prisma.dataset.upsert({
     where: {
@@ -24,6 +42,7 @@ async function main() {
     create: {
       id: user.id + '-demo-dataset',
       ownerId: user.id,
+      organization_id: organization.id,
       name: 'Demo IoT Sensor Data',
       slug: 'demo-iot-sensor-data',
       description: 'Sample IoT sensor readings for demonstration',

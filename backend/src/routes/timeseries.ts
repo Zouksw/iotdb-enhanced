@@ -5,7 +5,7 @@ import { getIoTDBClient } from '../../config/iotdb';
 import { asyncHandler, NotFoundError } from '../middleware/errorHandler';
 import { getPagination, paginationSchema, limitSchema } from '../schemas/common';
 import { success, paginated } from '../lib/response';
-import type { IoTDBDataPoint, QueryConditions } from '../types';
+import type { IoTDBQueryRow, QueryConditions } from '../types';
 import type { Timeseries } from '@prisma/client';
 
 const router = Router();
@@ -16,7 +16,7 @@ const router = Router();
 interface TimeseriesWithIoTDB extends Timeseries {
   datapointCount: number;
   iotdbDataPoints?: number;
-  latestData?: IoTDBDataPoint;
+  latestData?: IoTDBQueryRow;
   iotdbAvailable?: boolean;
   dataset?: {
     id: string;
@@ -151,7 +151,7 @@ router.get('/:id/data', asyncHandler(async (req: Request, res: Response) => {
   });
 
   // Try to get data from IoTDB
-  let iotdbData: IoTDBDataPoint[] = [];
+  let iotdbData: IoTDBQueryRow[] = [];
   let iotdbError: string | null = null;
   try {
     const iotdbClient = await getIoTDBClient();
@@ -228,7 +228,7 @@ router.post('/:id/data', authenticate, asyncHandler(async (req: AuthRequest, res
       [ts],
       [['value']],
       [['DOUBLE']],
-      [[[value !== undefined ? value : 0]]],
+      [[value !== undefined ? value : 0]],
       false
     );
   } catch (err) {

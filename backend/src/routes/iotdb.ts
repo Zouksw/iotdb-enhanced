@@ -123,8 +123,19 @@ router.post('/insert', asyncHandler(async (req: Request, res: Response) => {
 router.post('/insert/one', asyncHandler(async (req: Request, res: Response) => {
   const validatedData = insertOneRecordSchema.parse(req.body);
 
+  // Convert measurements array to Record format for RPC client
+  // Schema: [{ name: 'temp', value: 25.5 }, ...] -> Record: { temp: 25.5, ... }
+  const measurementsRecord: Record<string, unknown> = {};
+  for (const m of validatedData.measurements) {
+    measurementsRecord[m.name] = m.value;
+  }
+
   // Use RPC client for INSERT operations
-  const result = await iotdbRPCClient.insertOneRecord(validatedData);
+  const result = await iotdbRPCClient.insertOneRecord({
+    device: validatedData.device,
+    timestamp: validatedData.timestamp,
+    measurements: measurementsRecord,
+  });
   res.json({ success: true, result });
 }));
 

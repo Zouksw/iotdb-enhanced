@@ -5,7 +5,7 @@
  */
 
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { logger } from '../lib/logger';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -100,7 +100,7 @@ router.post('/audit', asyncHandler(async (req: AuthRequest, res: Response) => {
     timestamp: log.timestamp ? new Date(log.timestamp) : new Date(),
     userId,
     sessionId: log.sessionId,
-    details: log.details || {},
+    details: (log.details || {}) as Prisma.InputJsonValue,
     severity: log.severity,
     userAgent: log.userAgent || null,
     url: log.url || null,

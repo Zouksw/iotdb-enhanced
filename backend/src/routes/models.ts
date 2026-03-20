@@ -1,7 +1,7 @@
 import { success, paginated, successWithMessage } from '../lib/response';
 import { Router } from 'express';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma, ModelAlgorithm } from '@prisma/client';
 import { prisma, logger } from '../lib';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { checkAIAccess } from '../middleware/aiAccess';
@@ -21,7 +21,10 @@ router.get('/', asyncHandler(async (req, res) => {
   const where: Prisma.ForecastingModelWhereInput = {};
   if (timeseriesId) where.timeseriesId = timeseriesId as string;
   if (params.isActive !== undefined) where.isActive = params.isActive;
-  if (algorithm) where.algorithm = algorithm as string;
+  if (algorithm) {
+    // Use 'in' filter for enum values (requires array)
+    where.algorithm = { in: [algorithm as ModelAlgorithm] };
+  }
 
   const [models, total] = await Promise.all([
     prisma.forecastingModel.findMany({
@@ -226,24 +229,21 @@ router.post('/:modelId/predict', authenticate, checkAIAccess, asyncHandler(async
   }
 
   // Convert AINode forecasts to database format
-  interface AINodeForecast {
-    timestamp: number;
-    predictedValue?: number;
-    lowerBound?: number;
-    upperBound?: number;
-  }
-
-  const forecasts = predictResult.forecasts.map((f: AINodeForecast) => ({
-    modelId,
-    timeseriesId: model.timeseriesId,
-    timestamp: f.timestamp,
-    predictedValue: new Prisma.Decimal(String(f.predictedValue ?? 0)),
-    lowerBound: new Prisma.Decimal(String(f.lowerBound ?? f.predictedValue ?? 0)),
-    upperBound: new Prisma.Decimal(String(f.upperBound ?? f.predictedValue ?? 0)),
-    confidence: new Prisma.Decimal(validatedData.confidenceLevel.toFixed(2)),
-    anomalyProbability: new Prisma.Decimal('0'),
-    isAnomaly: false,
-  }));
+  // IoTDBForecast has timestamp: Date, need to convert to number for storage then back to Date for Prisma
+  const forecasts = predictResult.forecasts.map((f) => {
+    const timestamp = f.timestamp instanceof Date ? f.timestamp.getTime() : (f.timestamp as number);
+    return {
+      modelId,
+      timeseriesId: model.timeseriesId,
+      timestamp: new Date(timestamp), // Prisma expects Date or string
+      predictedValue: new Prisma.Decimal(String(f.predictedValue ?? 0)),
+      lowerBound: new Prisma.Decimal(String(f.lowerBound ?? f.predictedValue ?? 0)),
+      upperBound: new Prisma.Decimal(String(f.upperBound ?? f.predictedValue ?? 0)),
+      confidence: new Prisma.Decimal(validatedData.confidenceLevel.toFixed(2)),
+      anomalyProbability: new Prisma.Decimal('0'),
+      isAnomaly: false,
+    };
+  });
 
   // Batch insert forecasts
   await prisma.forecast.createMany({

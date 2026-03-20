@@ -282,8 +282,14 @@ export class IoTDBClient {
     // Validate numeric parameters
     validateQueryParams(params);
 
-    // Build query
-    const sql = buildSelectQuery(params);
+    // Build query (ensure path is required for buildSelectQuery)
+    const sql = buildSelectQuery({
+      path: params.path || '*',
+      limit: params.limit,
+      offset: params.offset,
+      startTime: params.startTime,
+      endTime: params.endTime,
+    });
     logger.debug(`Executing query: ${sql.substring(0, 100)}...`);
     return this.query(sql);
   }

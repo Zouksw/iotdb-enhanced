@@ -13,6 +13,9 @@ export * from './api';
 // Re-export model types
 export * from './models';
 
+// Re-export IoTDB types
+export * from './iotdb';
+
 // ============================================================================
 // Legacy Domain Types (for backward compatibility)
 // ============================================================================
