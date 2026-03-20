@@ -30,13 +30,13 @@ module.exports = {
       name: 'iotdb-backend',
       script: './backend/dist/src/server.js',
       cwd: PROJECT_ROOT,
-      instances: 'max', // Use all CPU cores for production
-      exec_mode: 'cluster', // Cluster mode for better performance
+      instances: 1, // Use single instance (cluster mode has issues with CommonJS)
+      exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: 'development',
         PORT: 8000,
       },
       env_development: {
@@ -56,12 +56,11 @@ module.exports = {
       merge_logs: true,
       // Graceful shutdown
       kill_timeout: 5000,
-      wait_ready: true,
       listen_timeout: 10000,
       // Health check
       min_uptime: '10s',
       max_restarts: 10,
-      restart_delay: 4000,
+      restart_delay: 1000,
       // Additional options
       pmx: true, // Enable PM2 monitoring
       automation: false, // Disable auto-deployment
@@ -78,7 +77,7 @@ module.exports = {
       watch: false,
       max_memory_restart: '512M',
       env: {
-        NODE_ENV: 'production',
+        NODE_ENV: 'development',
         PORT: 3000,
       },
       env_development: {
@@ -98,12 +97,11 @@ module.exports = {
       merge_logs: true,
       // Graceful shutdown
       kill_timeout: 5000,
-      wait_ready: true,
       listen_timeout: 10000,
       // Health check
       min_uptime: '10s',
       max_restarts: 10,
-      restart_delay: 4000,
+      restart_delay: 1000,
       // Additional options
       pmx: true,
       automation: false,
