@@ -17,30 +17,8 @@ export * from './models';
 export * from './iotdb';
 
 // ============================================================================
-// Legacy Domain Types (for backward compatibility)
+// Domain Types
 // ============================================================================
-
-/**
- * @deprecated Use IoTDBDataPoint from './api' instead
- * Time series data point from IoTDB
- */
-export interface IoTDBDataPoint {
-  timestamp: number;
-  value: unknown;
-}
-
-/**
- * @deprecated Use BatchResult from './api' instead
- * Batch insert result
- */
-export interface BatchResult {
-  success: boolean;
-  count: number;
-  errors?: Array<{
-    index: number;
-    error: string;
-  }>;
-}
 
 /**
  * Query parameters with time range
@@ -50,33 +28,6 @@ export interface TimeRangeQuery {
   endTime?: string;
   limit?: number;
   aggregation?: string;
-}
-
-/**
- * @deprecated Use DatasetResponse from './api' instead
- * Dataset serialization format
- */
-export interface SerializedDataset {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string | null;
-  storageFormat: string;
-  isPublic: boolean;
-  isImported: boolean;
-  organizationId?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  _count?: {
-    timeseries: number;
-  };
-  sizeBytes?: string;
-  rowsCount?: number;
-  owner?: {
-    id: string;
-    email: string;
-    name?: string | null;
-  };
 }
 
 /**
@@ -90,16 +41,6 @@ export interface ParsedImportData<T = Record<string, unknown>> {
 }
 
 /**
- * @deprecated Use IoTDBQueryResult from './api' instead
- * IoTDB query result
- */
-export interface IoTDBQueryResult {
-  timeseries: string;
-  dataPoints: IoTDBDataPoint[];
-  count: number;
-}
-
-/**
  * AI Model training result
  */
 export interface ModelTrainingResult {
@@ -108,32 +49,6 @@ export interface ModelTrainingResult {
   message: string;
   accuracy?: number;
   trainingTime?: number;
-}
-
-/**
- * @deprecated Use AnomalyDetectionResult from './api' instead
- * Anomaly detection result
- */
-export interface AnomalyDetectionResult {
-  timestamp: number;
-  value: number;
-  isAnomaly: boolean;
-  score: number;
-  threshold: number;
-}
-
-/**
- * @deprecated Use PredictionResult from './api' instead
- * Forecast prediction result
- */
-export interface ForecastResult {
-  timestamps: number[];
-  predictedValues: number[];
-  confidenceIntervals?: {
-    lower: number[];
-    upper: number[];
-  };
-  model: string;
 }
 
 /**
@@ -164,17 +79,6 @@ export interface AuthenticatedRequest {
     email: string;
     role: 'ADMIN' | 'EDITOR' | 'VIEWER';
   };
-}
-
-/**
- * @deprecated Use PaginationParams from './api' instead
- * Pagination parameters
- */
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  order?: 'asc' | 'desc';
 }
 
 /**

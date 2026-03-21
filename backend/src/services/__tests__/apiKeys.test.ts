@@ -12,8 +12,8 @@ import {
   revokeApiKey,
   deleteApiKey,
   updateApiKeyExpiration,
-} from '../apiKeys';
-import { prisma } from '../../lib';
+} from '@/services/apiKeys';
+import { prisma } from '@/lib';
 
 // Mock Prisma
 jest.mock('../../lib', () => ({

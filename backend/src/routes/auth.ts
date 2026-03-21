@@ -1,13 +1,13 @@
 import { Router, Request, Response } from 'express';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { registrationRateLimiter, authRateLimiter } from '../middleware/rateLimiter';
-import { validate, validationSchemas } from '../middleware/security';
-import { asyncHandler, UnauthorizedError, NotFoundError, BadRequestError, ConflictError } from '../middleware/errorHandler';
-import { prisma, jwtUtils, config } from '../lib';
-import { blacklistToken, isTokenBlacklisted } from '../services/tokenBlacklist';
-import { generateCsrfToken, revokeCsrfToken } from '../middleware/csrf';
-import { success, successWithMessage } from '../lib/response';
+import { registrationRateLimiter, authRateLimiter } from '@/middleware/rateLimiter';
+import { validate, validationSchemas } from '@/middleware/security';
+import { asyncHandler, UnauthorizedError, NotFoundError, BadRequestError, ConflictError } from '@/middleware/errorHandler';
+import { prisma, jwtUtils, config } from '@/lib';
+import { blacklistToken, isTokenBlacklisted } from '@/services/tokenBlacklist';
+import { generateCsrfToken, revokeCsrfToken } from '@/middleware/csrf';
+import { success, successWithMessage } from '@/lib/response';
 
 const router = Router();
 

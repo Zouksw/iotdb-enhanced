@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { IoTDBClient } from '../client';
-import { logger } from '../../../utils/logger';
+import { IoTDBClient } from '@/services/iotdb/client';
+import { logger } from '@/utils/logger';
 
 // Set environment before importing the module
 process.env.IOTDB_HOST = 'localhost';

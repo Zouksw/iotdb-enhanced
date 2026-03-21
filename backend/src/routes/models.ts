@@ -1,13 +1,13 @@
-import { success, paginated, successWithMessage } from '../lib/response';
+import { success, paginated, successWithMessage } from '@/lib/response';
 import { Router } from 'express';
 import { z } from 'zod';
 import { Prisma, ModelAlgorithm } from '@prisma/client';
-import { prisma, logger } from '../lib';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import { checkAIAccess } from '../middleware/aiAccess';
-import { asyncHandler, NotFoundError, BadRequestError } from '../middleware/errorHandler';
-import { getPagination, paginationSchema, limitSchema } from '../schemas/common';
-import { modelsQuerySchema, trainModelSchema, predictSchema, forecastsQuerySchema } from '../schemas/models';
+import { prisma, logger } from '@/lib';
+import { authenticate, AuthRequest } from '@/middleware/auth';
+import { checkAIAccess } from '@/middleware/aiAccess';
+import { asyncHandler, NotFoundError, BadRequestError } from '@/middleware/errorHandler';
+import { getPagination, paginationSchema, limitSchema } from '@/schemas/common';
+import { modelsQuerySchema, trainModelSchema, predictSchema, forecastsQuerySchema } from '@/schemas/models';
 import { getIoTDBClient } from '../../config/iotdb';
 
 const router = Router();
@@ -230,7 +230,7 @@ router.post('/:modelId/predict', authenticate, checkAIAccess, asyncHandler(async
 
   // Convert AINode forecasts to database format
   // IoTDBForecast has timestamp: Date, need to convert to number for storage then back to Date for Prisma
-  const forecasts = predictResult.forecasts.map((f) => {
+  const forecasts = predictResult.forecasts.map((f: { timestamp: Date | number; predictedValue?: number; lowerBound?: number; upperBound?: number }) => {
     const timestamp = f.timestamp instanceof Date ? f.timestamp.getTime() : (f.timestamp as number);
     return {
       modelId,

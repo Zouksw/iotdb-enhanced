@@ -33,7 +33,7 @@ import {
   metricsEndpoint,
   metrics,
   healthWithMetrics,
-} from '../prometheus';
+} from '@/middleware/prometheus';
 
 describe('Prometheus Middleware', () => {
   let mockReq: Partial<Request>;

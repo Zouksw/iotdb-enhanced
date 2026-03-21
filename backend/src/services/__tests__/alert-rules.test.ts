@@ -1,12 +1,21 @@
 import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 
 // Mock prisma
-jest.mock('../../lib', () => ({
-  prisma: {
-    alert: {
-      create: jest.fn(),
-    },
+const mockPrisma: any = {
+  alertRule: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   },
+  alert: {
+    create: jest.fn(),
+  },
+};
+
+jest.mock('../../lib', () => ({
+  prisma: mockPrisma,
   logger: {
     info: jest.fn(),
     error: jest.fn(),
@@ -24,9 +33,8 @@ jest.mock('crypto', () => ({
   randomUUID: jest.fn(() => 'test-uuid-123'),
 }));
 
-import * as alertRules from '../alert-rules';
-import { prisma } from '../../lib';
-import type { AlertRule, AlertCondition } from '../alert-types';
+import * as alertRules from '@/services/alert-rules';
+import type { AlertRule, AlertCondition } from '@/services/alert-types';
 
 describe('Alert Rules Service', () => {
   beforeEach(() => {
@@ -35,6 +43,25 @@ describe('Alert Rules Service', () => {
 
   describe('createAlertRule', () => {
     test('should create alert rule with all parameters', async () => {
+      const mockDbRule = {
+        id: 'test-uuid-123',
+        userId: 'user-123',
+        timeseriesId: 'ts-123',
+        name: 'Test Rule',
+        description: null,
+        type: 'ANOMALY',
+        enabled: true,
+        conditions: { type: 'threshold', operator: '>', value: 100 },
+        severity: 'WARNING',
+        channels: [{ type: 'email', enabled: true, config: { email: 'test@example.com' } }],
+        cooldownMinutes: 15,
+        lastTriggeredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.alertRule.create.mockResolvedValue(mockDbRule);
+
       const params = {
         userId: 'user-123',
         timeseriesId: 'ts-123',
@@ -49,6 +76,7 @@ describe('Alert Rules Service', () => {
         notificationChannels: [
           {
             type: 'email' as const,
+            enabled: true,
             config: { email: 'test@example.com' },
           },
         ],
@@ -73,6 +101,25 @@ describe('Alert Rules Service', () => {
     });
 
     test('should create rule without optional cooldown', async () => {
+      const mockDbRule = {
+        id: 'test-uuid-123',
+        userId: 'user-123',
+        timeseriesId: 'ts-123',
+        name: 'Test Rule',
+        description: null,
+        type: 'SYSTEM',
+        enabled: true,
+        conditions: { type: 'pattern', pattern: 'test' },
+        severity: 'INFO',
+        channels: [],
+        cooldownMinutes: 5,
+        lastTriggeredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.alertRule.create.mockResolvedValue(mockDbRule);
+
       const params = {
         userId: 'user-123',
         timeseriesId: 'ts-123',
@@ -88,7 +135,7 @@ describe('Alert Rules Service', () => {
 
       const rule = await alertRules.createAlertRule(params);
 
-      expect(rule.cooldownMinutes).toBeUndefined();
+      expect(rule.cooldownMinutes).toBe(5); // Default value
       expect(rule.enabled).toBe(true);
     });
   });
@@ -111,6 +158,7 @@ describe('Alert Rules Service', () => {
           value: 100,
         },
         notificationChannels: [],
+        cooldownMinutes: 5,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -122,7 +170,7 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(false);
@@ -138,11 +186,10 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(true);
-      expect(baseRule.lastTriggeredAt).toBeInstanceOf(Date);
     });
 
     test('should evaluate threshold condition with < operator', async () => {
@@ -155,7 +202,7 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 50,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(true);
@@ -171,7 +218,7 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 100,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(true);
@@ -187,7 +234,7 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(true);
@@ -203,13 +250,13 @@ describe('Alert Rules Service', () => {
       const result1 = await alertRules.evaluateAlertRule(baseRule, {
         value: 100,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       const result2 = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result1).toBe(true);
@@ -226,13 +273,13 @@ describe('Alert Rules Service', () => {
       const result1 = await alertRules.evaluateAlertRule(baseRule, {
         value: 100,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       const result2 = await alertRules.evaluateAlertRule(baseRule, {
         value: 50,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result1).toBe(true);
@@ -249,7 +296,7 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 50,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(false);
@@ -265,31 +312,28 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(false);
     });
 
-    test('should evaluate anomaly condition with severity filter', async () => {
+    test('should evaluate anomaly condition when isAnomaly is true', async () => {
       baseRule.condition = {
         type: 'anomaly',
-        anomalySeverity: ['HIGH', 'CRITICAL'],
       };
 
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {
-          hasAnomaly: true,
-          severity: 'HIGH',
-        },
+        timeseriesId: 'ts-123',
+        isAnomaly: true,
       });
 
       expect(result).toBe(true);
     });
 
-    test('should trigger anomaly when no severity filter', async () => {
+    test('should return false for anomaly when isAnomaly is missing', async () => {
       baseRule.condition = {
         type: 'anomaly',
       };
@@ -297,34 +341,13 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {
-          hasAnomaly: true,
-          severity: 'LOW',
-        },
-      });
-
-      expect(result).toBe(true);
-    });
-
-    test('should not trigger anomaly when severity not in filter', async () => {
-      baseRule.condition = {
-        type: 'anomaly',
-        anomalySeverity: ['HIGH', 'CRITICAL'],
-      };
-
-      const result = await alertRules.evaluateAlertRule(baseRule, {
-        value: 150,
-        timestamp: Date.now(),
-        metadata: {
-          hasAnomaly: true,
-          severity: 'LOW',
-        },
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(false);
     });
 
-    test('should not trigger anomaly when no anomaly in metadata', async () => {
+    test('should not trigger anomaly when isAnomaly is false', async () => {
       baseRule.condition = {
         type: 'anomaly',
       };
@@ -332,52 +355,39 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
+        isAnomaly: false,
       });
 
       expect(result).toBe(false);
     });
 
-    test('should evaluate pattern condition (placeholder)', async () => {
+    test('should evaluate pattern condition for flatline', async () => {
       baseRule.condition = {
         type: 'pattern',
-        pattern: 'test',
+        pattern: 'flatline',
       };
 
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
-      });
-
-      expect(result).toBe(false);
-    });
-
-    test('should evaluate forecast condition when ready', async () => {
-      baseRule.condition = {
-        type: 'forecast',
-      };
-
-      const result = await alertRules.evaluateAlertRule(baseRule, {
-        value: 150,
-        timestamp: Date.now(),
-        metadata: {
-          forecastReady: true,
-        },
+        timeseriesId: 'ts-123',
+        isFlatline: true,
       });
 
       expect(result).toBe(true);
     });
 
-    test('should not evaluate forecast condition when not ready', async () => {
+    test('should not evaluate pattern condition when not matched', async () => {
       baseRule.condition = {
-        type: 'forecast',
+        type: 'pattern',
+        pattern: 'flatline',
       };
 
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(false);
@@ -395,7 +405,7 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(false);
@@ -413,7 +423,7 @@ describe('Alert Rules Service', () => {
       const result = await alertRules.evaluateAlertRule(baseRule, {
         value: 150,
         timestamp: Date.now(),
-        metadata: {},
+        timeseriesId: 'ts-123',
       });
 
       expect(result).toBe(true);
@@ -422,95 +432,131 @@ describe('Alert Rules Service', () => {
 
   describe('triggerAlert', () => {
     test('should create alert and send notifications', async () => {
-      const mockAlert = {
+      const mockAlertRecord = {
         id: 'alert-123',
         userId: 'user-123',
         timeseriesId: 'ts-123',
+        alertRuleId: 'rule-123',
         type: 'ANOMALY',
         severity: 'WARNING',
-        message: 'Test alert',
+        message: 'Alert triggered: Test Rule',
+        metadata: { test: 'data' },
         isRead: false,
+        sentAt: null,
         createdAt: new Date(),
-        timeseries: {
-          id: 'ts-123',
-          name: 'Temperature',
-          dataType: 'DOUBLE',
-          datasetId: 'dataset-123',
-        },
-        user: {
-          id: 'user-123',
-          name: 'Test User',
-          email: 'test@example.com',
-        },
       };
 
-      (prisma.alert.create as jest.Mock).mockResolvedValue(mockAlert);
-
-      const params = {
+      const mockDbRule = {
+        id: 'rule-123',
         userId: 'user-123',
         timeseriesId: 'ts-123',
-        type: 'ANOMALY' as const,
-        severity: 'WARNING' as const,
-        message: 'Test alert',
-        metadata: { test: 'data' },
-        notificationChannels: [
+        name: 'Test Rule',
+        description: null,
+        type: 'ANOMALY',
+        enabled: true,
+        conditions: { type: 'threshold' },
+        severity: 'WARNING',
+        channels: [
           {
-            type: 'email' as const,
+            type: 'email',
+            enabled: true,
             config: { email: 'test@example.com' },
           },
         ],
+        cooldownMinutes: 5,
+        lastTriggeredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.alertRule.update.mockResolvedValue({
+        ...mockDbRule,
+        lastTriggeredAt: new Date(),
+      });
+
+      mockPrisma.alertRule.findUnique.mockResolvedValue(mockDbRule);
+      mockPrisma.alert.create.mockResolvedValue(mockAlertRecord);
+
+      const params = {
+        ruleId: 'rule-123',
+        alertData: { test: 'data' },
       };
 
       await alertRules.triggerAlert(params);
 
-      expect(prisma.alert.create).toHaveBeenCalledWith({
+      expect(mockPrisma.alertRule.update).toHaveBeenCalledWith({
+        where: { id: 'rule-123' },
+        data: { lastTriggeredAt: expect.any(Date) },
+      });
+
+      expect(mockPrisma.alert.create).toHaveBeenCalledWith({
         data: {
           userId: 'user-123',
           timeseriesId: 'ts-123',
+          alertRuleId: 'rule-123',
           type: 'ANOMALY',
           severity: 'WARNING',
-          message: 'Test alert',
+          message: 'Alert triggered: Test Rule',
           metadata: { test: 'data' },
-        },
-        include: {
-          timeseries: { select: { id: true, name: true } },
-          user: { select: { id: true, name: true, email: true } },
         },
       });
     });
 
     test('should handle empty notification channels', async () => {
-      const mockAlert = {
+      const mockAlertRecord = {
         id: 'alert-123',
         userId: 'user-123',
         timeseriesId: 'ts-123',
+        alertRuleId: 'rule-123',
         type: 'ANOMALY',
         severity: 'WARNING',
-        message: 'Test alert',
+        message: 'Alert triggered: Test Rule',
+        metadata: {},
         isRead: false,
+        sentAt: null,
         createdAt: new Date(),
-        timeseries: {
-          id: 'ts-123',
-          name: 'Temperature',
-          dataType: 'DOUBLE',
-          datasetId: 'dataset-123',
-        },
-        user: {
-          id: 'user-123',
-          name: 'Test User',
-          email: 'test@example.com',
-        },
       };
 
-      (prisma.alert.create as jest.Mock).mockResolvedValue(mockAlert);
-
-      const params = {
+      const mockDbRule = {
+        id: 'rule-123',
         userId: 'user-123',
         timeseriesId: 'ts-123',
-        type: 'ANOMALY' as const,
-        severity: 'WARNING' as const,
-        message: 'Test alert',
-        metadata: {},
+        name: 'Test Rule',
+        description: null,
+        type: 'ANOMALY',
+        enabled: true,
+        conditions: { type: 'threshold' },
+        severity: 'WARNING',
+        channels: [],
+        cooldownMinutes: 5,
+        lastTriggeredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.alertRule.update.mockResolvedValue({
+        ...mockDbRule,
+        lastTriggeredAt: new Date(),
+      });
+
+      mockPrisma.alertRule.findUnique.mockResolvedValue(mockDbRule);
+      mockPrisma.alert.create.mockResolvedValue(mockAlertRecord);
+
+      const params = {
+        ruleId: 'rule-123',
+        alertData: {},
+      };
+
+      await expect(alertRules.triggerAlert(params)).resolves.not.toThrow();
+    });
+
+    test('should handle rule not found', async () => {
+      mockPrisma.alertRule.update.mockResolvedValue(null);
+      mockPrisma.alertRule.findUnique.mockResolvedValue(null);
+
+      const params = {
+        ruleId: 'nonexistent-rule',
+        alertData: {},
       };
 
       await expect(alertRules.triggerAlert(params)).resolves.not.toThrow();

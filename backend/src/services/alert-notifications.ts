@@ -5,7 +5,7 @@
  */
 
 import nodemailer from 'nodemailer';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 import type {
   NotificationChannel,
   AlertWithMetadata,
@@ -19,15 +19,16 @@ export async function sendNotification(
   alert: AlertWithMetadata
 ): Promise<void> {
   try {
+    const config = channel.config || {};
     switch (channel.type) {
       case 'email':
-        await sendEmailNotification(channel.config.email!, alert);
+        await sendEmailNotification(config.email!, alert);
         break;
       case 'webhook':
-        await sendWebhookNotification(channel.config.webhookUrl!, alert);
+        await sendWebhookNotification(config.webhookUrl!, alert);
         break;
       case 'slack':
-        await sendSlackNotification(channel.config.slackWebhookUrl!, alert);
+        await sendSlackNotification(config.slackWebhookUrl!, alert);
         break;
     }
   } catch (error) {
@@ -69,7 +70,7 @@ async function sendEmailNotification(
         </h2>
         <p><strong>Severity:</strong> ${alert.severity}</p>
         <p><strong>Message:</strong> ${alert.message}</p>
-        ${alert.timeseries ? `<p><strong>Time Series:</strong> ${alert.timeseries.name}</p>` : ''}
+        ${alert.timeseriesId ? `<p><strong>Time Series:</strong> ${alert.timeseriesId}</p>` : ''}
         <p><strong>Time:</strong> ${new Date(alert.createdAt).toLocaleString()}</p>
         ${alert.metadata && typeof alert.metadata === 'object' && !Array.isArray(alert.metadata)
           ? `<pre style="background: #f5f5f5; padding: 10px; overflow: auto;">${JSON.stringify(alert.metadata, null, 2)}</pre>`

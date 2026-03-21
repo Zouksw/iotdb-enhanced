@@ -3,32 +3,29 @@ import {
   datasetsQuerySchema,
   createDatasetSchema,
   updateDatasetSchema,
-} from '../datasets';
+} from '@/schemas/datasets';
 import {
   timeseriesQuerySchema,
   timeseriesDataQuerySchema,
   createTimeseriesSchema,
   updateTimeseriesSchema,
   createDataPointSchema,
-} from '../timeseries';
+} from '@/schemas/timeseries';
 import {
   alertsQuerySchema,
   createAlertSchema,
   updateAlertSchema,
   resolveAlertSchema,
-} from '../alerts';
+} from '@/schemas/alerts';
 import {
-  anomaliesQuerySchema,
-  detectAnomaliesSchema,
-  updateAnomalySchema,
-  bulkResolveSchema,
-} from '../anomalies';
+  anomaliesQuerySchema as iotdbAnomaliesQuerySchema,
+} from '@/routes/anomalies';
 import {
   modelsQuerySchema,
   trainModelSchema,
   predictSchema,
   forecastsQuerySchema,
-} from '../models';
+} from '@/schemas/models';
 import {
   sqlQuerySchema,
   createTimeseriesSchema as iotdbCreateTimeseriesSchema,
@@ -38,8 +35,13 @@ import {
   aggregateSchema,
   predictSchema as iotdbPredictSchema,
   batchPredictSchema,
-  detectAnomaliesSchema as iotdbDetectAnomaliesSchema,
-} from '../iotdb';
+} from '@/schemas/iotdb';
+import {
+  anomaliesQuerySchema,
+  detectAnomaliesSchema,
+  updateAnomalySchema,
+  bulkResolveSchema,
+} from '@/schemas/anomalies';
 
 describe('Dataset Schemas', () => {
   describe('datasetsQuerySchema', () => {
@@ -725,21 +727,21 @@ describe('IoTDB Schemas', () => {
   describe('detectAnomaliesSchema', () => {
     test('should accept valid anomaly detection request', () => {
       const data = {
-        timeseries: 'root.device1.temperature',
-        method: 'statistical' as const,
+        timeseriesId: '123e4567-e89b-12d3-a456-426614174000',
+        method: 'STATISTICAL' as const,
         threshold: 0.95,
         windowSize: 100,
       };
-      const result = iotdbDetectAnomaliesSchema.parse(data);
-      expect(result.timeseries).toBe('root.device1.temperature');
+      const result = detectAnomaliesSchema.parse(data);
+      expect(result.timeseriesId).toBe('123e4567-e89b-12d3-a456-426614174000');
     });
 
     test('should reject invalid threshold', () => {
       const data = {
-        timeseries: 'root.device1.temperature',
+        timeseriesId: '123e4567-e89b-12d3-a456-426614174000',
         threshold: 1.5,
       };
-      expect(() => iotdbDetectAnomaliesSchema.parse(data)).toThrow();
+      expect(() => detectAnomaliesSchema.parse(data)).toThrow();
     });
   });
 });

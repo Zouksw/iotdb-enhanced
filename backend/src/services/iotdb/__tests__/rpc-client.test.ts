@@ -16,7 +16,7 @@ jest.mock('../client', () => ({
 }));
 
 import { spawn } from 'child_process';
-import * as RpcClientModule from '../rpc-client';
+import * as RpcClientModule from '@/services/iotdb/rpc-client';
 
 const spawnMock = spawn as jest.Mock;
 

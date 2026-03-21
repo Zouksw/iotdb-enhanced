@@ -7,7 +7,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import { authRouter } from '../../routes/auth';
+import { authRouter } from '@/routes/auth';
 
 describe('Auth Integration Tests', () => {
   let app: Express;

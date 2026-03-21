@@ -6,10 +6,10 @@
 
 import { Router, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { logger } from '../lib/logger';
-import { AuthRequest } from '../middleware/auth';
-import { asyncHandler } from '../middleware/errorHandler';
-import { error, success, successWithMessage, unauthorized, forbidden } from '../lib/response';
+import { logger } from '@/lib/logger';
+import { AuthRequest } from '@/middleware/auth';
+import { asyncHandler } from '@/middleware/errorHandler';
+import { error, success, successWithMessage, unauthorized, forbidden } from '@/lib/response';
 
 const router = Router();
 const prisma = new PrismaClient();

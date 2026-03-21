@@ -7,7 +7,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import securityRouter from '../../routes/security';
+import securityRouter from '@/routes/security';
 
 describe('Security API Integration Tests', () => {
   let app: Express;

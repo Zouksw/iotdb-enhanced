@@ -8,10 +8,10 @@
 import { describe, test, expect, beforeAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import { authRouter } from '../../routes/auth';
-import { getRedisClient } from '../../lib/redis';
-import { recordFailedLogin, checkAccountLockout, clearFailedLoginAttempts } from '../../services/authLockout';
-import { blacklistToken, isTokenBlacklisted, getBlacklistStats, removeFromBlacklist } from '../../services/tokenBlacklist';
+import { authRouter } from '@/routes/auth';
+import { getRedisClient } from '@/lib/redis';
+import { recordFailedLogin, checkAccountLockout, clearFailedLoginAttempts } from '@/services/authLockout';
+import { blacklistToken, isTokenBlacklisted, getBlacklistStats, removeFromBlacklist } from '@/services/tokenBlacklist';
 
 describe('Concurrent Operations Integration Tests', () => {
   let app: Express;

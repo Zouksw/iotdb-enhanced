@@ -4,9 +4,9 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { prisma } from '../lib';
-import { asyncHandler } from '../middleware/errorHandler';
-import { success, error } from '../lib/response';
+import { prisma } from '@/lib';
+import { asyncHandler } from '@/middleware/errorHandler';
+import { success, error } from '@/lib/response';
 
 const router = Router();
 

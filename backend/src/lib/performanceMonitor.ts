@@ -7,6 +7,7 @@
  * - Memory and CPU usage monitoring
  * - Custom metric collection
  * - Alert thresholds and notifications
+ * - Automatic cleanup to prevent memory leaks
  */
 
 import { logger } from './logger';
@@ -74,14 +75,25 @@ interface RequestTiming {
 
 /**
  * Performance Monitor Class
+ * 
+ * Includes automatic cleanup to prevent memory leaks:
+ * - LRU eviction for metrics
+ * - Size limits per metric
+ * - Periodic global cleanup
  */
 export class PerformanceMonitor {
   private metrics: Map<string, MetricData[]> = new Map();
   private requestTimings: RequestTiming[] = [];
   private alertConfigs: Map<string, AlertConfig> = new Map();
   private isRunning = false;
+  
+  // Cleanup configuration
   private metricsRetentionMs = 3600000; // 1 hour
-  private maxRequestTimings = 10000;
+  private maxRequestTimings = 10000; // Max 10k request timings
+  private maxMetricsPerName = 1000; // Max 1000 metrics per name
+  private maxMetricNames = 100; // Max 100 different metric names
+  private cleanupIntervalMs = 300000; // Cleanup every 5 minutes
+  private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     this.setupDefaultAlerts();
@@ -134,7 +146,7 @@ export class PerformanceMonitor {
   }
 
   /**
-   * Record a metric value
+   * Record a metric value with LRU eviction
    */
   recordMetric(name: string, value: number, unit: MetricData['unit'] = 'ms', tags?: Record<string, string>): void {
     const metric: MetricData = {
@@ -147,16 +159,50 @@ export class PerformanceMonitor {
 
     if (!this.metrics.has(name)) {
       this.metrics.set(name, []);
+      
+      // Check total number of metric names
+      if (this.metrics.size > this.maxMetricNames) {
+        this.evictOldestMetricName();
+      }
     }
 
     const metrics = this.metrics.get(name)!;
     metrics.push(metric);
+
+    // Enforce per-metric size limit (LRU eviction)
+    if (metrics.length > this.maxMetricsPerName) {
+      // Remove oldest metric
+      metrics.shift();
+    }
 
     // Cleanup old metrics
     this.cleanupMetrics(name);
 
     // Check alerts
     this.checkAlerts(name, value);
+  }
+
+  /**
+   * Evict the oldest metric name to free memory
+   */
+  private evictOldestMetricName(): void {
+    let oldestName: string | null = null;
+    let oldestTime = Infinity;
+
+    for (const [name, metrics] of this.metrics.entries()) {
+      if (metrics.length > 0) {
+        const oldestMetric = metrics[0];
+        if (oldestMetric && oldestMetric.timestamp < oldestTime) {
+          oldestTime = oldestMetric.timestamp;
+          oldestName = name;
+        }
+      }
+    }
+
+    if (oldestName) {
+      this.metrics.delete(oldestName);
+      logger.debug(`[PERF] Evicted metric: ${oldestName}`);
+    }
   }
 
   /**
@@ -175,9 +221,11 @@ export class PerformanceMonitor {
 
     this.requestTimings.push(timing);
 
-    // Cleanup old timings
+    // Enforce size limit with LRU eviction
     if (this.requestTimings.length > this.maxRequestTimings) {
-      this.requestTimings = this.requestTimings.slice(-this.maxRequestTimings);
+      // Remove oldest 10% of timings
+      const removeCount = Math.floor(this.maxRequestTimings * 0.1);
+      this.requestTimings = this.requestTimings.slice(removeCount);
     }
 
     // Record response time metric
@@ -240,16 +288,61 @@ export class PerformanceMonitor {
   }
 
   /**
-   * Cleanup old metrics
+   * Cleanup old metrics for a specific name
    */
   private cleanupMetrics(metricName: string): void {
     const metrics = this.metrics.get(metricName);
     if (!metrics) return;
 
     const cutoff = Date.now() - this.metricsRetentionMs;
-    const filtered = metrics.filter(m => m.timestamp > cutoff);
+    
+    // Filter in place to avoid creating new arrays
+    let writeIndex = 0;
+    for (let i = 0; i < metrics.length; i++) {
+      if (metrics[i].timestamp > cutoff) {
+        if (writeIndex !== i) {
+          metrics[writeIndex] = metrics[i];
+        }
+        writeIndex++;
+      }
+    }
+    
+    // Truncate array
+    metrics.length = writeIndex;
+  }
 
-    this.metrics.set(metricName, filtered);
+  /**
+   * Global cleanup to prevent memory leaks
+   */
+  private performGlobalCleanup(): void {
+    const now = Date.now();
+    let totalMetrics = 0;
+    let totalEvicted = 0;
+
+    for (const [name, metrics] of this.metrics.entries()) {
+      const beforeLength = metrics.length;
+      
+      // Remove old metrics
+      this.cleanupMetrics(name);
+      
+      // If still too many, remove oldest
+      if (metrics.length > this.maxMetricsPerName) {
+        const removeCount = metrics.length - this.maxMetricsPerName;
+        metrics.splice(0, removeCount);
+        totalEvicted += removeCount;
+      }
+      
+      totalMetrics += metrics.length;
+    }
+
+    // Cleanup request timings
+    if (this.requestTimings.length > this.maxRequestTimings) {
+      const removeCount = this.requestTimings.length - this.maxRequestTimings;
+      this.requestTimings = this.requestTimings.slice(removeCount);
+      totalEvicted += removeCount;
+    }
+
+    logger.debug(`[PERF] Cleanup: ${totalMetrics} metrics, ${totalEvicted} evicted`);
   }
 
   /**
@@ -313,6 +406,26 @@ export class PerformanceMonitor {
   }
 
   /**
+   * Get memory usage statistics
+   */
+  getMemoryUsage(): {
+    metricsCount: number;
+    requestTimingsCount: number;
+    totalMetrics: number;
+  } {
+    let totalMetrics = 0;
+    for (const metrics of this.metrics.values()) {
+      totalMetrics += metrics.length;
+    }
+
+    return {
+      metricsCount: this.metrics.size,
+      requestTimingsCount: this.requestTimings.length,
+      totalMetrics,
+    };
+  }
+
+  /**
    * Clear all metrics
    */
   clearMetrics(): void {
@@ -321,7 +434,7 @@ export class PerformanceMonitor {
   }
 
   /**
-   * Start monitoring
+   * Start monitoring with periodic cleanup
    */
   start(): void {
     if (this.isRunning) return;
@@ -333,7 +446,12 @@ export class PerformanceMonitor {
       this.collectSystemMetrics();
     }, 60000); // Every minute
 
-    logger.info('Performance monitoring started');
+    // Start periodic cleanup
+    this.cleanupInterval = setInterval(() => {
+      this.performGlobalCleanup();
+    }, this.cleanupIntervalMs);
+
+    logger.info('Performance monitoring started with periodic cleanup');
   }
 
   /**
@@ -347,6 +465,11 @@ export class PerformanceMonitor {
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = null;
+    }
+
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
     }
 
     logger.info('Performance monitoring stopped');
@@ -377,6 +500,11 @@ export class PerformanceMonitor {
     // Error rate
     const stats = this.getStats();
     this.recordMetric('error_rate', stats.errorRate, 'percent');
+    
+    // Memory usage stats for monitoring
+    const memStats = this.getMemoryUsage();
+    this.recordMetric('perf_metrics_count', memStats.metricsCount, 'count');
+    this.recordMetric('perf_total_metrics', memStats.totalMetrics, 'count');
   }
 
   private monitoringInterval: NodeJS.Timeout | null = null;
@@ -428,7 +556,7 @@ export function performanceMiddleware(req: any, res: any, next: any) {
 
 // ============================================================================
 // Convenience Functions
-// ============================================================================>
+// ============================================================================
 
 /**
  * Record a custom metric

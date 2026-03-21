@@ -14,7 +14,7 @@ import {
   conflict,
   paginated,
   responseUtils,
-} from '../response';
+} from '@/lib/response';
 
 // Mock Express Response
 const createMockResponse = (): jest.Mocked<Response> => {

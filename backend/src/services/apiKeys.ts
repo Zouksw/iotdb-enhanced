@@ -3,7 +3,7 @@
  * Handles creation, validation, revocation, and usage tracking of API keys
  */
 
-import { prisma } from '../lib';
+import { prisma } from '@/lib';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { z } from 'zod';

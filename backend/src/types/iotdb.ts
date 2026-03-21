@@ -30,8 +30,9 @@ export type IoTDBQueryRow = Record<string, unknown>;
 /**
  * IoTDB query result with metadata
  * This represents the raw response from IoTDB REST API
+ * Renamed from IoTDBQueryResult to avoid conflict with types/api.ts
  */
-export interface IoTDBQueryResult {
+export interface IoTDBInternalQueryResult {
   expressions?: string[] | null;
   column_names?: string[] | null;
   timestamps?: number[] | null;

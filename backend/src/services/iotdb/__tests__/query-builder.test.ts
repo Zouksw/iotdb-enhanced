@@ -10,7 +10,7 @@ import {
   buildDeleteSQL,
   validateQueryParams,
   type IoTDBInsertRecord,
-} from '../query-builder';
+} from '@/services/iotdb/query-builder';
 
 describe('IoTDB Query Builder - buildCreateTimeseriesSQL', () => {
   test('should build CREATE TIMESERIES SQL without compressor', () => {

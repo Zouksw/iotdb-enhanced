@@ -9,7 +9,7 @@ import {
   cacheConfigs,
   cacheControl,
   etag,
-} from '../cache';
+} from '@/middleware/cache';
 
 // Mock cache service
 jest.mock('../../services/cache', () => ({
@@ -32,8 +32,8 @@ jest.mock('../../lib/logger', () => ({
   },
 }));
 
-import { get, set, delPattern, cacheKeys } from '../../services/cache';
-import { logger } from '../../lib/logger';
+import { get, set, delPattern, cacheKeys } from '@/services/cache';
+import { logger } from '@/lib/logger';
 
 describe('Cache Middleware', () => {
   let mockReq: Partial<Request>;

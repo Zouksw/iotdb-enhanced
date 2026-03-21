@@ -7,7 +7,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import apiKeysRouter from '../../routes/apiKeys';
+import apiKeysRouter from '@/routes/apiKeys';
 
 describe('API Keys Integration Tests', () => {
   let app: Express;

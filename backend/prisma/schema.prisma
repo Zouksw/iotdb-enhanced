@@ -23,6 +23,7 @@ model User {
   failedLoginAttempts  Int?                   @default(0) @map("failed_login_attempts")
   lockedUntil          DateTime?              @map("locked_until") @db.Timestamp(6)
   alerts               Alert[]
+  alertRules           AlertRule[]
   apiKeys              ApiKey[]
   auditLogs            AuditLog[]
   datasets             Dataset[]
@@ -177,6 +178,7 @@ model Alert {
   id           String        @id @default(uuid())
   userId       String        @map("user_id")
   timeseriesId String        @map("timeseries_id")
+  alertRuleId  String?       @map("alert_rule_id")
   type         AlertType
   severity     AlertSeverity
   message      String
@@ -186,12 +188,39 @@ model Alert {
   createdAt    DateTime      @default(now()) @map("created_at")
   timeseries   Timeseries    @relation(fields: [timeseriesId], references: [id], onDelete: Cascade)
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alertRule    AlertRule?    @relation(fields: [alertRuleId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([timeseriesId])
+  @@index([alertRuleId])
   @@index([userId, isRead])
   @@index([userId, createdAt(sort: Desc)])
   @@map("alerts")
+}
+
+model AlertRule {
+  id                String              @id @default(uuid())
+  userId            String              @map("user_id")
+  timeseriesId      String              @map("timeseries_id")
+  name              String
+  description       String?
+  type              String              @default("ANOMALY")
+  enabled           Boolean             @default(true)
+  conditions        Json                @map("conditions")
+  severity          String              @default("WARNING")
+  channels          Json                @map("channels")
+  cooldownMinutes   Int                 @default(5) @map("cooldown_minutes")
+  lastTriggeredAt   DateTime?           @map("last_triggered_at")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime?           @updatedAt @map("updated_at")
+  alerts            Alert[]
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([timeseriesId])
+  @@index([enabled])
+  @@index([userId, enabled])
+  @@map("alert_rules")
 }
 
 model ApiKey {

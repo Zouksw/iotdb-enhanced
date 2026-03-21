@@ -4,8 +4,8 @@
  * Prevents brute force attacks by locking accounts after multiple failed login attempts
  */
 
-import { redis } from '../lib/redis';
-import { logger } from '../lib';
+import { redis } from '@/lib/redis';
+import { logger } from '@/lib';
 
 const LOCKOUT_PREFIX = 'auth:lockout:';
 const ATTEMPTS_PREFIX = 'auth:attempts:';

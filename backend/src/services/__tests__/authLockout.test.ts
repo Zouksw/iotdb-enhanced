@@ -8,8 +8,8 @@ import {
   recordFailedLogin,
   clearFailedLoginAttempts,
   formatLockoutTime,
-} from '../authLockout';
-import { redis } from '../../lib/redis';
+} from '@/services/authLockout';
+import { redis } from '@/lib/redis';
 
 // Mock Redis
 jest.mock('../../lib/redis');

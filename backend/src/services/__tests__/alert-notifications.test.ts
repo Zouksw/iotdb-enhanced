@@ -19,8 +19,8 @@ jest.mock('../../utils/logger', () => ({
 }));
 
 import nodemailer from 'nodemailer';
-import { sendNotification } from '../alert-notifications';
-import type { AlertWithMetadata } from '../alert-types';
+import { sendNotification } from '@/services/alert-notifications';
+import type { AlertWithMetadata } from '@/services/alert-types';
 
 const createTransportMock = (nodemailer as any).default?.createTransport as jest.Mock || nodemailer.createTransport as jest.Mock;
 

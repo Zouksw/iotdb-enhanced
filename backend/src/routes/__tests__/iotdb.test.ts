@@ -50,10 +50,10 @@ jest.mock('../../middleware/rateLimiter', () => ({
   aiRateLimiter: (_req: any, _res: any, next: any) => next(),
 }));
 
-import { iotdbClient, iotdbRPCClient, iotdbAIService } from '../../services/iotdb';
-import * as cacheService from '../../services/cache';
-import { iotdbRouter } from '../../routes/iotdb';
-import { errorHandler } from '../../middleware/errorHandler';
+import { iotdbClient, iotdbRPCClient, iotdbAIService } from '@/services/iotdb';
+import * as cacheService from '@/services/cache';
+import { iotdbRouter } from '@/routes/iotdb';
+import { errorHandler } from '@/middleware/errorHandler';
 
 // Get typed mocks
 const mockIoTDBClient = iotdbClient as any;

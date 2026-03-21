@@ -5,7 +5,7 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import healthRouter from '../health';
+import healthRouter from '@/routes/health';
 
 // Mock the dependencies
 jest.mock('../../lib/database', () => ({
@@ -14,7 +14,7 @@ jest.mock('../../lib/database', () => ({
   },
 }));
 
-import { prisma } from '../../lib/database';
+import { prisma } from '@/lib/database';
 
 describe('Health Routes', () => {
   let app: Express;

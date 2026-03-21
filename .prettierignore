@@ -1,0 +1,18 @@
+# Backend
+node_modules/
+dist/
+coverage/
+*.min.js
+
+# Frontend
+.next/
+out/
+*.min.js
+
+# Other
+.git/
+logs/
+*.log
+.env*
+pnpm-lock.yaml
+package-lock.json

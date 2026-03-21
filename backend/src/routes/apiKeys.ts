@@ -4,9 +4,9 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import { apiKeyCreationLimiter } from '../middleware/rateLimiter';
-import { asyncHandler, UnauthorizedError } from '../middleware/errorHandler';
+import { authenticate, AuthRequest } from '@/middleware/auth';
+import { apiKeyCreationLimiter } from '@/middleware/rateLimiter';
+import { asyncHandler, UnauthorizedError } from '@/middleware/errorHandler';
 import {
   createApiKey,
   validateApiKey,
@@ -15,9 +15,9 @@ import {
   deleteApiKey,
   updateApiKeyExpiration,
   apiKeysSchemas,
-} from '../services/apiKeys';
-import { validate } from '../middleware/security';
-import { success } from '../lib/response';
+} from '@/services/apiKeys';
+import { validate } from '@/middleware/security';
+import { success } from '@/lib/response';
 
 const router = Router();
 

@@ -3,7 +3,7 @@
  * Validates environment variables at startup
  */
 
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
 
 // Default secrets that should NOT be used in production
 const DEFAULT_SECRETS = [

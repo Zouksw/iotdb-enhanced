@@ -7,7 +7,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import { anomaliesRouter } from '../../routes/anomalies';
+import { anomaliesRouter } from '@/routes/anomalies';
 
 describe('Anomalies Integration Tests', () => {
   let app: Express;

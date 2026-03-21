@@ -24,7 +24,7 @@ jest.mock('../../utils/logger', () => ({
 }));
 
 import { createClient } from 'redis';
-import * as cacheService from '../cache';
+import * as cacheService from '@/services/cache';
 
 // ============================================================================
 // Test Utilities

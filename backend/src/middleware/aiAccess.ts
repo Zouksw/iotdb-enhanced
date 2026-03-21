@@ -11,7 +11,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthRequest } from './auth';
 import { ForbiddenError, ServiceUnavailableError } from './errorHandler';
-import { logger } from '../lib';
+import { logger } from '@/lib';
 
 /**
  * Configured IP whitelist (optional)

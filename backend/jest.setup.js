@@ -53,9 +53,6 @@ jest.mock('winston', () => ({
   },
 }));
 
-// Mock node-fetch
-jest.mock('node-fetch', () => jest.fn());
-
 // Mock crypto for tests - generate unique values each time
 let cryptoCounter = 0;
 jest.mock('crypto', () => {

@@ -7,7 +7,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import alertsRouter from '../../routes/alerts';
+import alertsRouter from '@/routes/alerts';
 
 describe('Alerts Integration Tests', () => {
   let app: Express;

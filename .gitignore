@@ -13,6 +13,8 @@ out/
 .env.local
 .env.production
 .env.*.local
+.env.gpg
+*.gpg
 
 # Logs
 logs/
@@ -58,6 +60,10 @@ apache-iotdb-*.zip
 *.bak
 *.backup
 *.old
+
+# Debug/development files
+debug-*.cjs
+debug-*.js
 
 # System and user files (root directory)
 .bash_history

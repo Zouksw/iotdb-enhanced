@@ -7,7 +7,7 @@
 import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import healthRouter from '../../routes/health';
+import healthRouter from '@/routes/health';
 
 describe('Health API Integration Tests', () => {
   let app: Express;

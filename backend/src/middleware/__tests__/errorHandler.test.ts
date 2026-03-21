@@ -17,11 +17,11 @@ import {
   ConflictError,
   ValidationError,
   ServiceUnavailableError,
-} from '../errorHandler';
-import { logger } from '../../utils/logger';
+} from '@/middleware/errorHandler';
+import { logger } from '@/utils/logger';
 
 // Mock logger
-jest.mock('../../utils/logger', () => ({
+jest.mock('@/utils/logger', () => ({
   logger: {
     error: jest.fn(),
     info: jest.fn(),

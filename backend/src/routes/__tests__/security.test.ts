@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import securityRouter from '../security';
+import securityRouter from '@/routes/security';
 
 // Mock Prisma Client
 jest.mock('@prisma/client', () => {
@@ -25,7 +25,7 @@ jest.mock('../../lib/logger', () => ({
 }));
 
 import { PrismaClient } from '@prisma/client';
-import { logger } from '../../lib/logger';
+import { logger } from '@/lib/logger';
 
 describe('Security Routes', () => {
   let app: Express;

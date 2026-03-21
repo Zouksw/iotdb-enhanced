@@ -7,7 +7,7 @@
 import { describe, test, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
-import { datasetsRouter } from '../../routes/datasets';
+import { datasetsRouter } from '@/routes/datasets';
 
 describe('Datasets Integration Tests', () => {
   let app: Express;

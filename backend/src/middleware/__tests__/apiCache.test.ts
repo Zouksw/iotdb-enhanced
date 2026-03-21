@@ -5,14 +5,14 @@
 
 import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import { Request, Response, NextFunction } from 'express';
-import { ApiCacheMiddleware } from '../apiCache';
+import { ApiCacheMiddleware } from '@/middleware/apiCache';
 
 // Mock the redisPool module
 jest.mock('../../lib/redisPool', () => ({
   getRedisClient: jest.fn(),
 }));
 
-import { getRedisClient } from '../../lib/redisPool';
+import { getRedisClient } from '@/lib/redisPool';
 
 describe('ApiCacheMiddleware', () => {
   let mockRedis: any;

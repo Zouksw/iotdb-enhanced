@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { AnomalySeverity, DetectionMethod, AlertSeverity, AlertType, Prisma } from '@prisma/client';
-import { prisma, logger } from '../lib';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import { asyncHandler, NotFoundError, BadRequestError } from '../middleware/errorHandler';
-import { getPagination, paginationSchema } from '../schemas/common';
-import { anomaliesQuerySchema, detectAnomaliesSchema, updateAnomalySchema, bulkResolveSchema } from '../schemas/anomalies';
-import { success, paginated, successWithMessage } from '../lib/response';
+import { prisma, logger } from '@/lib';
+import { authenticate, AuthRequest } from '@/middleware/auth';
+import { asyncHandler, NotFoundError, BadRequestError } from '@/middleware/errorHandler';
+import { getPagination, paginationSchema } from '@/schemas/common';
+import { anomaliesQuerySchema, detectAnomaliesSchema, updateAnomalySchema, bulkResolveSchema } from '@/schemas/anomalies';
+import { success, paginated, successWithMessage } from '@/lib/response';
 
 const router = Router();
 

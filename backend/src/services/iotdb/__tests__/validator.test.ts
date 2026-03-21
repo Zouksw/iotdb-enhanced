@@ -6,7 +6,7 @@ import {
   validateEncoding,
   validateDeviceName,
   validateMeasurement,
-} from '../validator';
+} from '@/services/iotdb/validator';
 
 describe('IoTDB Validator - escapeId', () => {
   test('should escape simple identifier', () => {

@@ -13,7 +13,7 @@ import {
   passwordResetRateLimiter,
   registrationRateLimiter,
   apiKeyCreationLimiter,
-} from '../rateLimiter';
+} from '@/middleware/rateLimiter';
 
 // Mock express-rate-limit
 jest.mock('express-rate-limit', () => {

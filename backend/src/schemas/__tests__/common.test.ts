@@ -4,7 +4,7 @@ import {
   limitSchema,
   getPagination,
   type PaginationParams,
-} from '../common';
+} from '@/schemas/common';
 
 describe('Common Schemas', () => {
   describe('paginationSchema', () => {

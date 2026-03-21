@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { prisma } from '../lib';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import { asyncHandler, NotFoundError, ForbiddenError, BadRequestError } from '../middleware/errorHandler';
-import { getPagination, paginationSchema } from '../schemas/common';
-import { createDatasetSchema as newCreateDatasetSchema, updateDatasetSchema as newUpdateDatasetSchema } from '../schemas/datasets';
+import { prisma } from '@/lib';
+import { authenticate, AuthRequest } from '@/middleware/auth';
+import { asyncHandler, NotFoundError, ForbiddenError, BadRequestError } from '@/middleware/errorHandler';
+import { getPagination, paginationSchema } from '@/schemas/common';
+import { createDatasetSchema as newCreateDatasetSchema, updateDatasetSchema as newUpdateDatasetSchema } from '@/schemas/datasets';
 import Papa from 'papaparse';
 
 const router = Router();

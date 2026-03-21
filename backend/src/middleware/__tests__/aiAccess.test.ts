@@ -3,8 +3,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { checkAIAccess, checkAIEnabled } from '../aiAccess';
-import { AuthRequest } from '../auth';
+import { checkAIAccess, checkAIEnabled } from '@/middleware/aiAccess';
+import { AuthRequest } from '@/middleware/auth';
 
 // Mock logger
 jest.mock('../../lib/logger', () => ({
@@ -14,7 +14,7 @@ jest.mock('../../lib/logger', () => ({
   },
 }));
 
-import { logger } from '../../lib/logger';
+import { logger } from '@/lib/logger';
 
 describe('AI Access Control Middleware', () => {
   let mockReq: Partial<AuthRequest>;

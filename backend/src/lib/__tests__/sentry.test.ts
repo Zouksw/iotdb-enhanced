@@ -35,7 +35,7 @@ jest.mock('@sentry/profiling-node', () => ({
 }));
 
 // Mock logger
-jest.mock('../logger', () => ({
+jest.mock('@/utils/logger', () => ({
   logger: {
     info: jest.fn(),
     warn: jest.fn(),
@@ -45,7 +45,7 @@ jest.mock('../logger', () => ({
 
 import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
-import { logger } from '../logger';
+import { logger } from '@/utils/logger';
 import {
   initSentry,
   captureError,
@@ -53,7 +53,7 @@ import {
   captureMessage,
   captureTransaction,
   captureApiRequest,
-} from '../sentry';
+} from '@/lib/sentry';
 
 describe('Sentry Error Tracking', () => {
   const originalEnv = process.env;

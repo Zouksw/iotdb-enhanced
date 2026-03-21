@@ -11,7 +11,7 @@ import {
   revokeCsrfToken,
   getCsrfConfig,
   type CsrfRequest,
-} from '../csrf';
+} from '@/middleware/csrf';
 
 // Mock crypto with factory function
 const mockRandomBytes = jest.fn();

@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { prisma, logger } from '../lib';
-import { authenticate, AuthRequest } from '../middleware/auth';
+import { prisma, logger } from '@/lib';
+import { authenticate, AuthRequest } from '@/middleware/auth';
 import { getIoTDBClient } from '../../config/iotdb';
-import { asyncHandler, NotFoundError } from '../middleware/errorHandler';
-import { getPagination, paginationSchema, limitSchema } from '../schemas/common';
-import { success, paginated } from '../lib/response';
-import type { IoTDBQueryRow, QueryConditions } from '../types';
+import { asyncHandler, NotFoundError } from '@/middleware/errorHandler';
+import { getPagination, paginationSchema, limitSchema } from '@/schemas/common';
+import { success, paginated } from '@/lib/response';
+import type { IoTDBQueryRow, QueryConditions } from '@/types';
 import type { Timeseries } from '@prisma/client';
 
 const router = Router();

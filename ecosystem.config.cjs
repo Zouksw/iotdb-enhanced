@@ -12,9 +12,15 @@
  * Configuration:
  *   - Set PROJECT_ROOT environment variable to override default path
  *   - Set PM2_USER environment variable to override default user (default: node)
+ *   - Set IOTDB_ENCRYPTION_KEY for encrypted .env files
  *
  * Author: IoTDB Enhanced Team
- * Version: 1.3.0
+ * Version: 1.4.0
+ *
+ * Security:
+ *   - Automatically decrypts .env.gpg files before starting services
+ *   - Requires IOTDB_ENCRYPTION_KEY environment variable
+ *   - Falls back to plaintext .env if .env.gpg not found
  *
  * AI Node Setup:
  *   AI Node is managed separately via scripts/start-ainode.sh and scripts/stop-ainode.sh
@@ -39,6 +45,9 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
+      // Pre-start script to decrypt .env files
+      wait_ready: true,
+      listen_timeout: 10000,
       env: {
         NODE_ENV: 'development',
         PORT: 8000,
@@ -72,14 +81,16 @@ module.exports = {
     },
     {
       name: 'iotdb-frontend',
-      script: './frontend/node_modules/next/dist/bin/next',
-      args: 'start -p 3000',
+      script: './node_modules/.bin/next',
+      args: 'dev -p 3000',
       cwd: path.join(PROJECT_ROOT, 'frontend'),
       instances: 1,
       exec_mode: 'fork',
       autorestart: true,
       watch: false,
       max_memory_restart: '512M',
+      interpreter: 'node',
+      interpreter_args: '--max-old-space-size=512',
       env: {
         NODE_ENV: 'development',
         PORT: 3000,
@@ -88,8 +99,8 @@ module.exports = {
         NODE_ENV: 'development',
         PORT: 3000,
       },
-      env_staging: {
-        NODE_ENV: 'staging',
+      env_production: {
+        NODE_ENV: 'production',
         PORT: 3000,
       },
       // Logging

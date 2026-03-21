@@ -15,7 +15,7 @@ jest.mock('../logger', () => ({
 }));
 
 import { createClient } from 'redis';
-import * as redisModule from '../redis';
+import * as redisModule from '@/lib/redis';
 
 const createClientMock = createClient as jest.Mock;
 

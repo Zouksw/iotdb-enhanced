@@ -4,9 +4,9 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import { asyncHandler, UnauthorizedError } from '../middleware/errorHandler';
-import { limitSchema } from '../schemas/common';
+import { authenticate, AuthRequest } from '@/middleware/auth';
+import { asyncHandler, UnauthorizedError } from '@/middleware/errorHandler';
+import { limitSchema } from '@/schemas/common';
 import {
   createAlertRule,
   listAlerts,
@@ -15,9 +15,9 @@ import {
   deleteAlert,
   getAlertStats,
   alertSchemas,
-} from '../services/alerts';
-import { validate } from '../middleware/security';
-import { success } from '../lib/response';
+} from '@/services/alerts';
+import { validate } from '@/middleware/security';
+import { success } from '@/lib/response';
 
 const router = Router();
 

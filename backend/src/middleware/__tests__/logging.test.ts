@@ -15,7 +15,7 @@ import {
   dbLogger,
   iotdbLogger,
   aiLogger,
-} from '../logging';
+} from '@/middleware/logging';
 
 // Mock logger
 jest.mock('../../lib/logger', () => ({

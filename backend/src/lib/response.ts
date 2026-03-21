@@ -4,8 +4,8 @@
  */
 
 import { Response } from 'express';
-import { ApiError } from '../middleware/errorHandler';
-import type { ErrorDetail } from '../types/api';
+import { ApiError } from '@/middleware/errorHandler';
+import type { ErrorDetail } from '@/types/api';
 
 /**
  * Standard success response structure

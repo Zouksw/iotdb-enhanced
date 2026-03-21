@@ -11,7 +11,7 @@ import {
   extractToken,
   decodeToken,
   jwtUtils,
-} from '../jwt';
+} from '@/lib/jwt';
 
 // Mock config
 jest.mock('../config', () => ({

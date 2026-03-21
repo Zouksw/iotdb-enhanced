@@ -10,7 +10,7 @@ import {
   extractErrorMessage,
   createApiError,
   withErrorHandling,
-} from '../errorHandler';
+} from '@/utils/errorHandler';
 
 // Mock logger
 jest.mock('../logger', () => ({

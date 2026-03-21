@@ -1,7 +1,7 @@
 // IoTDB REST API Client
 // Uses Apache IoTDB REST API V2
 // Documentation: https://iotdb.apache.org/UserGuide/latest/API/RestServiceV2.html
-import fetch from 'node-fetch';
+// Note: Node.js 18+ has built-in fetch, no need for node-fetch
 const iotdbConfig = {
     host: process.env.IOTDB_HOST || 'localhost',
     port: parseInt(process.env.IOTDB_PORT || '18080'),
@@ -13,7 +13,7 @@ const iotdbConfig = {
  * Validate IoTDB credentials for security
  * Throws an error if default credentials are detected in production
  */
-export function validateIoTDBCredentials() {
+function validateIoTDBCredentials() {
     if (process.env.NODE_ENV === 'production') {
         const defaultUsernames = ['root', 'admin', 'change_this_username'];
         const defaultPasswords = ['root', 'admin', 'password', 'change_this_secure_password', '123456'];
@@ -387,7 +387,7 @@ class IoTDBRESTClient {
 // 全局客户端实例
 let iotdbClientInstance = null;
 // 获取 IoTDB 客户端实例
-export async function getIoTDBClient() {
+async function getIoTDBClient() {
     if (!iotdbClientInstance) {
         // Validate credentials before initializing client in production
         validateIoTDBCredentials();
@@ -406,7 +406,7 @@ export async function getIoTDBClient() {
     return iotdbClientInstance;
 }
 // 测试 IoTDB 连接
-export async function checkIoTDBConnection() {
+async function checkIoTDBConnection() {
     try {
         const client = await getIoTDBClient();
         const isConnected = await client.ping();
@@ -427,8 +427,15 @@ export async function checkIoTDBConnection() {
     }
 }
 // 获取连接状态
-export function getConnectionStatus() {
+function getConnectionStatus() {
     return connectionStatus;
 }
-// 导出配置
-export { iotdbConfig };
+// 导出配置和函数
+module.exports = {
+    iotdbConfig,
+    getIoTDBClient,
+    checkIoTDBConnection,
+    getConnectionStatus,
+    validateIoTDBCredentials,
+    IoTDBRESTClient,
+};

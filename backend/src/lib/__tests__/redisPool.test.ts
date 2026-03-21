@@ -7,7 +7,7 @@ import {
   withRedis,
   getRedisClient,
   type RedisPoolConfig,
-} from '../redisPool';
+} from '@/lib/redisPool';
 
 // Mock the redis module
 jest.mock('redis', () => ({

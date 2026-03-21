@@ -12,7 +12,7 @@ import {
   limitRequestSize,
   sanitizeHtml,
   validationSchemas,
-} from '../security';
+} from '@/middleware/security';
 
 describe('Security Middleware', () => {
   let mockReq: Partial<Request>;

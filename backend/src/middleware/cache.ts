@@ -4,8 +4,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { get, set, cacheKeys } from '../services/cache';
-import { logger } from '../lib/logger';
+import { get, set, cacheKeys } from '@/services/cache';
+import { logger } from '@/lib/logger';
 
 interface CachedRequest extends Request {
   cacheKey?: string;

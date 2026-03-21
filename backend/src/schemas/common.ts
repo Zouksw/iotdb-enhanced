@@ -32,8 +32,9 @@ export type PaginationParams = z.infer<typeof paginationSchema>;
  * @param query - Request query object
  * @returns Object with skip and take properties
  */
-export const getPagination = (query: any): { skip: number; take: number } => {
-  const params = paginationSchema.parse(query);
+export const getPagination = (query: unknown): { skip: number; take: number } => {
+  const safeQuery = typeof query === 'object' && query !== null ? query : {};
+  const params = paginationSchema.parse(safeQuery);
   return {
     skip: (params.page - 1) * params.limit,
     take: params.limit,

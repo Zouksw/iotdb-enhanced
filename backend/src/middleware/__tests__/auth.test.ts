@@ -9,7 +9,7 @@ import {
   optionalAuth,
   authorize,
   type AuthRequest,
-} from '../auth';
+} from '@/middleware/auth';
 
 // Mock dependencies
 const mockVerifyToken = jest.fn();

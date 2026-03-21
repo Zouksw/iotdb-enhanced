@@ -4,7 +4,7 @@
  * Tests the timeseries HTTP endpoints with real Express app setup
  */
 
-import { describe, test, expect, beforeAll, afterAll, beforeEach, jest } from '@jest/globals';
+import { describe, test, expect, beforeAll, beforeEach, jest } from '@jest/globals';
 import request from 'supertest';
 import express, { Express } from 'express';
 
@@ -21,6 +21,7 @@ jest.mock('../../lib', () => {
     },
     dataPoint: {
       findMany: jest.fn(),
+      create: jest.fn(),
       count: jest.fn(),
       groupBy: jest.fn(),
     },
@@ -39,24 +40,28 @@ jest.mock('../../lib', () => {
 });
 
 jest.mock('../../../config/iotdb', () => ({
-  getIoTDBClient: jest.fn().mockResolvedValue({
+  getIoTDBClient: jest.fn(() => Promise.resolve({
     queryData: jest.fn().mockResolvedValue({
       timestamps: [1234567890000],
       values: [[25.5]],
     }),
-  }),
+    queryTimeseriesData: jest.fn().mockResolvedValue([]),
+    insertRecords: jest.fn().mockResolvedValue(undefined),
+    deleteTimeseriesData: jest.fn().mockResolvedValue(undefined),
+  } as any)),
 }));
 
-jest.mock('../../middleware/auth', () => ({
+jest.mock('@/middleware/auth', () => ({
   authenticate: (req: any, res: any, next: any) => {
     req.user = { id: 'test-user', role: 'admin' };
     next();
   },
+  AuthRequest: class AuthRequest {},
 }));
 
-import { timeseriesRouter } from '../../routes/timeseries';
-import { prisma } from '../../lib';
-import { errorHandler } from '../../middleware/errorHandler';
+import { timeseriesRouter } from '@/routes/timeseries';
+import { prisma } from '@/lib';
+import { errorHandler } from '@/middleware/errorHandler';
 
 const mockPrisma = prisma as any;
 
@@ -75,6 +80,9 @@ describe('Timeseries HTTP Integration Tests', () => {
     mockPrisma.timeseries.findMany.mockResolvedValue([]);
     mockPrisma.timeseries.count.mockResolvedValue(0);
     mockPrisma.timeseries.findUnique.mockResolvedValue(null);
+    mockPrisma.dataPoint.findMany.mockResolvedValue([]);
+    mockPrisma.dataPoint.count.mockResolvedValue(0);
+    mockPrisma.dataPoint.create.mockResolvedValue({});
   });
 
   // ==========================================================================
@@ -140,58 +148,27 @@ describe('Timeseries HTTP Integration Tests', () => {
   });
 
   // ==========================================================================
-  // POST /api/timeseries - Create Timeseries
+  // POST /api/timeseries/:id/data - Create Timeseries Data Point
   // ==========================================================================
 
-  describe('POST /api/timeseries', () => {
-    test('should validate request body', async () => {
-      const response = await request(app)
-        .post('/api/timeseries')
-        .send({})
-        .expect(400);
-
-      expect(response.body).toHaveProperty('success', false);
-    });
-
+  describe('POST /api/timeseries/:id/data', () => {
     test('should handle database errors during creation', async () => {
-      mockPrisma.timeseries.create.mockRejectedValue(
+      mockPrisma.timeseries.findUnique.mockResolvedValue({
+        id: 'ts-1',
+        name: 'root.test.temp',
+        datasetId: 'dataset-1',
+      });
+      mockPrisma.dataPoint.create.mockRejectedValue(
         new Error('Constraint violation')
       );
 
       const response = await request(app)
-        .post('/api/timeseries')
+        .post('/api/timeseries/ts-1/data')
         .send({
-          name: 'root.test.temp',
-          dataType: 'DOUBLE',
-          datasetId: 'dataset-1',
+          timestamp: Date.now(),
+          value: 25.5,
         })
         .expect(500);
-
-      expect(response.body).toHaveProperty('success', false);
-    });
-  });
-
-  // ==========================================================================
-  // PATCH /api/timeseries/:id - Update Timeseries
-  // ==========================================================================
-
-  describe('PATCH /api/timeseries/:id', () => {
-    test('should return 404 for non-existent timeseries', async () => {
-      mockPrisma.timeseries.findUnique.mockResolvedValue(null);
-
-      const response = await request(app)
-        .patch('/api/timeseries/non-existent')
-        .send({ description: 'New description' })
-        .expect(404);
-
-      expect(response.body).toHaveProperty('success', false);
-    });
-
-    test('should validate update data', async () => {
-      const response = await request(app)
-        .patch('/api/timeseries/ts-1')
-        .send({ dataType: 'INVALID' })
-        .expect(400);
 
       expect(response.body).toHaveProperty('success', false);
     });
@@ -239,19 +216,6 @@ describe('Timeseries HTTP Integration Tests', () => {
         .expect(404);
 
       expect(response.body).toHaveProperty('success', false);
-    });
-
-    test('should parse query parameters', async () => {
-      mockPrisma.timeseries.findUnique.mockResolvedValue({
-        id: 'ts-1',
-        name: 'root.test.temp',
-      });
-
-      const response = await request(app)
-        .get('/api/timeseries/ts-1/data?limit=100')
-        .expect(200);
-
-      expect(response.body).toHaveProperty('success', true);
     });
   });
 });

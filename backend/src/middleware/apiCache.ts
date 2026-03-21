@@ -11,8 +11,8 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { RedisClientType } from 'redis';
-import { logger } from '../lib/logger';
-import { getRedisClient } from '../lib/redisPool';
+import { logger } from '@/lib/logger';
+import { getRedisClient } from '@/lib/redisPool';
 
 /**
  * Cache configuration

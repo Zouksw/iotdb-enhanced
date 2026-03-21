@@ -11,9 +11,9 @@
  * - Security incident requires token invalidation
  */
 
-import { redis } from '../lib/redis';
-import { jwtUtils } from '../lib/jwt';
-import { logger } from '../lib/logger';
+import { redis } from '@/lib/redis';
+import { jwtUtils } from '@/lib/jwt';
+import { logger } from '@/lib/logger';
 
 // Blacklist key prefix
 const BLACKLIST_PREFIX = 'token:blacklist:';

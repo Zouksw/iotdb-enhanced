@@ -11,7 +11,7 @@ import {
   getBlacklistStats,
   clearBlacklist,
   checkTokenBlacklist,
-} from '../tokenBlacklist';
+} from '@/services/tokenBlacklist';
 
 // Mock Redis with factory function
 const mockRedisSetEx = jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<any>;

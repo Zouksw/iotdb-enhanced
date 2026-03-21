@@ -5,26 +5,26 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { authRouter } from './routes/auth';
-import { datasetsRouter } from './routes/datasets';
-import { timeseriesRouter } from './routes/timeseries';
-import { modelsRouter } from './routes/models';
-import { anomaliesRouter } from './routes/anomalies';
-import { iotdbRouter } from './routes/iotdb';
-import apiKeysRouter from './routes/apiKeys';
-import alertsRouter from './routes/alerts';
-import healthRouter from './routes/health';
-import securityRouter from './routes/security';
-import { errorHandler } from './middleware/errorHandler';
-import { logger } from './utils/logger';
-import { securityHeaders } from './middleware/security';
-import { csrfProtection, generateCsrfToken } from './middleware/csrf';
+import { authRouter } from '@/routes/auth';
+import { datasetsRouter } from '@/routes/datasets';
+import { timeseriesRouter } from '@/routes/timeseries';
+import { modelsRouter } from '@/routes/models';
+import { anomaliesRouter } from '@/routes/anomalies';
+import { iotdbRouter } from '@/routes/iotdb';
+import apiKeysRouter from '@/routes/apiKeys';
+import alertsRouter from '@/routes/alerts';
+import healthRouter from '@/routes/health';
+import securityRouter from '@/routes/security';
+import { errorHandler } from '@/middleware/errorHandler';
+import { logger } from '@/utils/logger';
+import { securityHeaders } from '@/middleware/security';
+import { csrfProtection, generateCsrfToken } from '@/middleware/csrf';
 import {
   authRateLimiter,
   apiRateLimiter,
   apiKeyCreationLimiter,
-} from './middleware/rateLimiter';
-import { optionalAuth } from './middleware/auth';
+} from '@/middleware/rateLimiter';
+import { optionalAuth } from '@/middleware/auth';
 import { config } from './lib';
 
 dotenv.config();

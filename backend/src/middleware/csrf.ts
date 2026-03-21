@@ -10,8 +10,8 @@
 
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
-import { redis } from '../lib/redis';
-import { logger } from '../lib/logger';
+import { redis } from '@/lib/redis';
+import { logger } from '@/lib/logger';
 
 // Configuration
 const CSRF_CONFIG = {

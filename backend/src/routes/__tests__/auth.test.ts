@@ -4,8 +4,8 @@
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
-// Mock bcrypt
-jest.mock('bcrypt', () => ({
+// Mock bcryptjs
+jest.mock('bcryptjs', () => ({
   hash: jest.fn().mockResolvedValue('$2b$12$hashedpasswordvalue'),
   compare: jest.fn().mockResolvedValue(true),
 }));
@@ -40,7 +40,7 @@ describe('Auth Route Logic Tests', () => {
 
   describe('Password handling', () => {
     it('should hash password with bcrypt', async () => {
-      const bcrypt = require('bcrypt');
+      const bcrypt = require('bcryptjs');
       const password = 'TestPassword123!';
       const hash = await bcrypt.hash(password, 12);
 
@@ -49,7 +49,7 @@ describe('Auth Route Logic Tests', () => {
     });
 
     it('should compare password correctly', async () => {
-      const bcrypt = require('bcrypt');
+      const bcrypt = require('bcryptjs');
       const password = 'TestPassword123!';
 
       const isValid = await bcrypt.compare(password, 'hash');
@@ -60,7 +60,7 @@ describe('Auth Route Logic Tests', () => {
     });
 
     it('should hash with specified rounds for security', async () => {
-      const bcrypt = require('bcrypt');
+      const bcrypt = require('bcryptjs');
       const password = 'TestPassword123!';
       const hash = await bcrypt.hash(password, 4);
 
