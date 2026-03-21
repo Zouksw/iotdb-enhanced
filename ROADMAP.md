@@ -73,9 +73,12 @@ The IoTDB Enhanced Platform is currently at **v1.1.0** with Phase 1 (Infrastruct
 - [x] Core infrastructure tests (logging, security, cache, AI access)
 - [x] Error handling utilities (100% coverage)
 - [x] JWT and response utilities (100% coverage)
-- [x] 575 tests passing, 34.46% coverage
-- [ ] IoTDB service tests (core business logic)
-- [ ] Route integration tests with real database
+- [x] **1369 tests passing, 70.22% line coverage** ✅ (Achieved 2026-03-21)
+- [x] All integration tests passing (53/53 test suites)
+- [x] Fixed 50 failing integration tests
+- [x] Created unit tests for all missing route files (apiKeys, alerts, anomalies, models)
+- [x] Added 41 new unit tests for routes
+- [ ] IoTDB service tests (core business logic) - Partially complete
 
 ### Documentation Maintenance
 - [ ] Update SECURITY.md with latest security improvements
@@ -92,17 +95,21 @@ The IoTDB Enhanced Platform is currently at **v1.1.0** with Phase 1 (Infrastruct
 **Timeline**: Months 3-4
 **Priority**: High
 
-- [ ] **Distributed Tracing**
+- [x] **Advanced Metrics** ✅ Completed 2026-03-21
+  - [x] Prometheus metrics endpoint (`/metrics`)
+  - [x] Custom business metrics (HTTP, DB, Cache, IoTDB, AI, Alerts, Sessions)
+  - [x] Grafana dashboard templates (overview dashboard with provisioning)
+  - [x] Alert rule templates (API, DB, IoTDB, AI alerts)
+  - [x] Prisma middleware for automatic DB query instrumentation
+  - [x] 10% sampling strategy for performance optimization
+  - [x] systemd-based deployment (Docker-free)
+  - [x] Service management scripts (start/stop/check)
+
+- [ ] **Distributed Tracing** (Deferred to Phase 3.2)
   - OpenTelemetry integration
   - Trace context propagation
   - Jaeger/Zipkin exporter
   - Service dependency mapping
-
-- [ ] **Advanced Metrics**
-  - Prometheus metrics endpoint (`/metrics`)
-  - Custom business metrics
-  - Grafana dashboard templates
-  - Alert rule templates
 
 - [ ] **Log Aggregation**
   - ElasticSearch integration

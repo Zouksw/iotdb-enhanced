@@ -38,6 +38,130 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2026-03-21
+
+### Added - Phase 3.1: Observability & Monitoring
+
+#### Prometheus Metrics
+- **Metrics Endpoint** - `/metrics` endpoint for Prometheus scraping
+  - Available in both production and development modes
+  - Exposes system and application metrics
+- **HTTP Metrics** - Request tracking with labels
+  - Request counter (by method, route, status)
+  - Response time histogram (by method, route)
+  - Active requests gauge
+- **Database Metrics** - PostgreSQL query tracking via Prisma middleware
+  - Query counter (by operation, model)
+  - Query duration histogram
+  - 10% sampling to minimize performance impact
+- **Cache Metrics** - Redis cache performance
+  - Cache hit counter (by provider)
+  - Cache miss counter (by provider)
+- **IoTDB Metrics** - Time-series database operations
+  - Query counter (by type: select, insert, error)
+  - Query duration histogram
+  - Data point counter (by series)
+- **AI Metrics** - AI model operations
+  - Prediction counter (by algorithm, type)
+  - Prediction duration histogram
+  - Anomaly detection counter
+- **Alert Metrics** - Alert system monitoring
+  - Alert triggered counter (by severity, type)
+  - Alert resolved counter
+- **Session Metrics** - Active user sessions
+  - 1% sampling for efficiency
+  - 15-minute active window tracking
+
+#### Grafana Dashboards
+- **Overview Dashboard** - Complete monitoring dashboard
+  - Request rate and error rate panels
+  - Response time distribution (P50, P95, P99)
+  - Active user sessions gauge
+  - Database query performance
+  - Cache hit/miss ratio
+  - IoTDB query metrics
+  - AI prediction metrics
+  - Alert status overview
+- **Automatic Provisioning** - Zero-setup Grafana deployment
+  - Datasource provisioning (Prometheus)
+  - Dashboard provisioning (auto-import)
+  - Configuration in `grafana/provisioning/`
+
+#### AlertManager
+- **Email Notifications** - Alert routing via email
+  - SMTP configuration support
+  - Alert grouping and deduplication
+  - Configurable notification templates
+- **Alert Rules** - Pre-configured Prometheus alert rules
+  - High error rate alerts (>5% for 5 minutes)
+  - Slow API response alerts (>1s for 5 minutes)
+  - Database connection loss alerts
+  - IoTDB connection failure alerts
+  - AI model failure alerts
+  - High memory usage alerts (>80% for 10 minutes)
+
+#### Systemd Services (Docker-Free Deployment)
+- **Service Units** - Complete systemd service configuration
+  - `iotdb-postgres.service` - PostgreSQL database
+  - `iotdb-redis.service` - Redis cache
+  - `iotdb-backend.service` - Backend API (PM2)
+  - `iotdb-frontend.service` - Frontend (PM2)
+  - `prometheus.service` - Metrics collection
+  - `alertmanager.service` - Alert routing
+- **Management Scripts** - Easy service management
+  - `scripts/systemd/start-all-services.sh` - Start all services in order
+  - `scripts/systemd/stop-all-services.sh` - Stop in reverse order
+  - `scripts/systemd/check-services.sh` - Status monitoring
+- **Automatic Features**
+  - Auto-start on boot
+  - Auto-restart on failure
+  - Centralized logging (journald)
+  - Service dependency management
+- **Log Rotation** - Automated log management
+  - Daily rotation with 14-day retention
+  - Compression enabled
+  - PM2 reload on rotation
+- **Backup Integration** - Cron-based automated backups
+  - Daily PostgreSQL backups (2 AM)
+  - Weekly full backups
+  - Hourly Redis saves
+  - Daily Redis backups
+
+#### Documentation
+- **Observability Design** - `docs/observability-design.md`
+  - Complete system architecture
+  - Component designs
+  - Implementation phases (3.1-3.4)
+  - 1044 lines of detailed planning
+- **Systemd Services Guide** - `docs/systemd-services.md`
+  - Service configuration reference
+  - Management scripts documentation
+  - Log management setup
+  - Backup integration guide
+  - Migration guide from Docker
+- **Monitoring Deployment** - `docs/monitoring-deployment-no-docker.md`
+  - Binary installation guide
+  - Systemd service setup
+  - Configuration management
+  - Troubleshooting section
+
+### Changed
+- **server.ts** - Enable metrics endpoint in development mode
+- **database.ts** - Add Prisma middleware for query metrics
+- **auth.ts** - Add active session tracking (1% sampling)
+- **cache.ts** - Add cache hit/miss metrics (10% sampling)
+- **iotdb/client.ts** - Add query and datapoint metrics
+- **routes/iotdb.ts** - Add AI prediction metrics
+- **services/alert-rules.ts** - Add alert triggered metrics
+- **services/alerts.ts** - Add alert resolved metrics
+
+### Performance
+- **Sampling Strategy** - 10% sampling for most metrics to minimize performance impact
+- **Active Sessions** - 1% sampling for session counting
+- **Prisma Middleware** - Efficient query instrumentation
+
+---
+
 ## [1.2.0] - 2026-03-04
 
 ### Added - Phase 3: AI 功能启用与安全隔离
@@ -374,6 +498,95 @@ curl -X POST http://localhost:8000/api/iotdb/ai/predict \
 ---
 
 ## [Unreleased]
+
+### Removed - Documentation & Code Cleanup (2026-03-21)
+
+#### Security Improvements
+- **Deleted security-critical file** - `.secrets.tmp` contained plaintext secrets
+  - Removed JWT secrets, database credentials, and passwords from disk
+  - Eliminated security vulnerability from temporary plaintext file
+
+#### Documentation Cleanup
+- **Removed phase completion reports** (6 files, ~32KB)
+  - `.phase1-completed.md`, `.phase1.5-completed.md`, `.phase1-final-summary.md`
+  - `.phase1-security-summary.md`, `.phase2-completed.md`, `.final-completion-summary.md`
+  - Superseded by current documentation and CHANGELOG.md
+- **Cleaned archive documentation** (10 files, ~128KB)
+  - Removed historical review documents from `docs/archive/reviews/`
+  - Old testing reports, code quality reviews, and evaluations
+  - Information now reflected in current codebase and documentation
+
+#### Backup Cleanup
+- **Removed old backup files** (6 files, ~20KB)
+  - `backend/.env.backup-20260321-004458` - superseded by GPG encryption
+  - 5 old `.claude.json.backup.*` files from previous configurations
+  - Current backup system is sufficient
+
+#### Results
+- **Total files removed**: 17+ files
+- **Space recovered**: ~180KB
+- **Security improved**: Removed plaintext secrets exposure
+- **Documentation clarified**: Eliminated duplicate and obsolete files
+- **Project structure cleaner**: Only current, relevant documentation remains
+
+### Added - Project Structure Cleanup (2026-03-21)
+
+#### Developer Experience
+- **ESLint Configuration** - Code quality linting for backend and frontend
+  - TypeScript-aware linting rules
+  - Auto-fix capabilities with `npm run lint:fix`
+  - Custom rules for project standards
+- **Prettier Configuration** - Consistent code formatting
+  - Shared configuration for backend and frontend
+  - 100 character line width
+  - Single quotes, trailing commas
+  - Format scripts: `npm run format`
+- **Pre-commit Hooks** - Automated code quality checks
+  - Husky + lint-staged integration
+  - Runs ESLint and Prettier on staged files
+  - Blocks commits with failing checks
+- **Comprehensive Documentation** - Developer onboarding resources
+  - CONTRIBUTING.md - Contribution guidelines and workflow
+  - docs/DEVELOPER_GUIDE.md - Comprehensive developer guide
+  - Architecture overview and project structure
+  - Common tasks and debugging guides
+
+#### Project Organization
+- **Centralized Configuration** - `/config/` directory for all config templates
+  - `backend.env.example` - Backend environment template
+  - `frontend.env.example` - Frontend environment template
+  - `.env.production.template` - Production environment template
+  - Symlinks for backward compatibility
+- **Cleaned Directory Structure** - Removed duplicate and obsolete files
+  - Removed duplicate `/root/iotdb-enhanced/` project directory
+  - Cleaned up 4+ Claude worktrees (~10MB storage recovered)
+  - Removed 9 unused dependencies across projects
+
+#### Dependency Management
+- **Removed Unused Dependencies**
+  - Backend: multer, qrcode, node-fetch, sqlstring
+  - Frontend: dompurify, html2canvas
+  - Root: swagger-jsdoc, swagger-ui-express, bcrypt, jsonwebtoken
+- **Resolved Duplicate Dependencies**
+  - Removed jsonwebtoken from root (kept in backend)
+  - Removed bcrypt from root (using bcryptjs in backend)
+- **Security Fixes**
+  - Fixed minimatch vulnerability (GHSA-23c5-xmqv-rm74)
+  - Applied pnpm override for minimatch >=3.1.4
+
+#### Code Quality Scripts
+```bash
+# Lint code
+npm run lint
+npm run lint:fix
+
+# Format code
+npm run format
+npm run format:check
+
+# Run tests
+npm test
+```
 
 ### Changed - Breaking Changes (2026-03-19)
 
