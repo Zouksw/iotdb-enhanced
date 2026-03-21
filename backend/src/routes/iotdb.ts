@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { iotdbClient, iotdbRPCClient, iotdbAIService } from '../services/iotdb';
-import { aiRateLimiter } from '../middleware/rateLimiter';
-import { asyncHandler, BadRequestError } from '../middleware/errorHandler';
+import { iotdbClient, iotdbRPCClient, iotdbAIService } from '@/services/iotdb';
+import { aiRateLimiter } from '@/middleware/rateLimiter';
+import { asyncHandler, BadRequestError } from '@/middleware/errorHandler';
+import { metrics } from '@/middleware/prometheus';
+import { logger } from '@/utils/logger';
 import {
   sqlQuerySchema,
   createTimeseriesSchema,
@@ -13,8 +15,8 @@ import {
   batchPredictSchema,
   detectAnomaliesSchema,
   visualizePredictSchema,
-} from '../schemas/iotdb';
-import { get as cacheGet, set as cacheSet, mget, cacheKeys } from '../services/cache';
+} from '@/schemas/iotdb';
+import { get as cacheGet, set as cacheSet, mget, cacheKeys } from '@/services/cache';
 
 const router = Router();
 
@@ -170,6 +172,7 @@ router.post('/aggregate', asyncHandler(async (req: Request, res: Response) => {
  * Predict future values using AI
  */
 router.post('/ai/predict', aiRateLimiter, asyncHandler(async (req: Request, res: Response) => {
+  const startTime = Date.now();
   const { timeseries, horizon, algorithm, confidenceLevel } = predictSchema.parse(req.body);
 
   // Normalize algorithm (prophet -> timer_xl for IoTDB compatibility)
@@ -186,18 +189,33 @@ router.post('/ai/predict', aiRateLimiter, asyncHandler(async (req: Request, res:
     });
   }
 
-  // Generate prediction
-  const result = await iotdbAIService.predict({
-    timeseries,
-    horizon,
-    algorithm: normalizedAlgorithm as any,
-    confidenceLevel,
-  });
+  try {
+    // Generate prediction
+    const result = await iotdbAIService.predict({
+      timeseries,
+      horizon,
+      algorithm: normalizedAlgorithm as any,
+      confidenceLevel,
+    });
 
-  // Cache the result for 15 minutes
-  await cacheSet(cacheKey, result, 900);
+    const duration = (Date.now() - startTime) / 1000;
 
-  res.json({ ...result, cached: false });
+    // Record prediction metrics (10% sampling for performance)
+    if (Math.random() < 0.1) {
+      metrics.recordPrediction(normalizedAlgorithm, 'forecast', duration, true);
+    }
+
+    // Cache the result for 15 minutes
+    await cacheSet(cacheKey, result, 900);
+
+    res.json({ ...result, cached: false });
+  } catch (error) {
+    // Record error metrics (always record errors)
+    const duration = (Date.now() - startTime) / 1000;
+    metrics.recordPrediction(normalizedAlgorithm, 'forecast', duration, false);
+    logger.error(`AI prediction failed for ${timeseries}: ${error}`);
+    throw error;
+  }
 }));
 
 /**
@@ -303,18 +321,34 @@ router.post('/ai/predict/visualize', aiRateLimiter, asyncHandler(async (req: Req
  * Detect anomalies using AI
  */
 router.post('/ai/anomalies', asyncHandler(async (req: Request, res: Response) => {
+  const startTime = Date.now();
   const validatedData = detectAnomaliesSchema.parse(req.body);
 
-  const result = await iotdbAIService.detectAnomalies({
-    timeseries: validatedData.timeseries,
-    method: validatedData.method || 'ml',
-    threshold: validatedData.threshold,
-    windowSize: validatedData.windowSize,
-    startTime: validatedData.startTime,
-    endTime: validatedData.endTime,
-  });
+  try {
+    const result = await iotdbAIService.detectAnomalies({
+      timeseries: validatedData.timeseries,
+      method: validatedData.method || 'ml',
+      threshold: validatedData.threshold,
+      windowSize: validatedData.windowSize,
+      startTime: validatedData.startTime,
+      endTime: validatedData.endTime,
+    });
 
-  res.json(result);
+    const duration = (Date.now() - startTime) / 1000;
+
+    // Record anomaly detection metrics (10% sampling for performance)
+    if (Math.random() < 0.1) {
+      metrics.recordPrediction(validatedData.method || 'ml', 'anomaly_detection', duration, true);
+    }
+
+    res.json(result);
+  } catch (error) {
+    // Record error metrics (always record errors)
+    const duration = (Date.now() - startTime) / 1000;
+    metrics.recordPrediction(validatedData.method || 'ml', 'anomaly_detection', duration, false);
+    logger.error(`AI anomaly detection failed for ${validatedData.timeseries}: ${error}`);
+    throw error;
+  }
 }));
 
 /**

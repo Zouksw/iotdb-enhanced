@@ -2,14 +2,12 @@
  * Alert Rules Service
  *
  * Manages alert rule creation, evaluation, and updates.
- *
- * NOTE: AlertRule database model needs to be added to schema.prisma
- * for full functionality. Currently uses Alert model for basic operations.
+ * Uses AlertRule model from Prisma schema for persistent storage.
  */
 
-import { prisma, logger } from '../lib';
+import { prisma, logger } from '@/lib';
 import type { Prisma } from '@prisma/client';
-import * as crypto from 'crypto';
+import { metrics } from '@/middleware/prometheus';
 import { sendNotification } from './alert-notifications';
 import type {
   AlertRule,
@@ -22,50 +20,186 @@ import type {
 
 /**
  * Create a new alert rule
- *
- * NOTE: Requires AlertRule model in schema.prisma. Currently throws error.
  */
 export async function createAlertRule(params: {
   userId: string;
   timeseriesId: string;
   name: string;
-  type: 'ANOMALY' | 'FORECAST_READY' | 'SYSTEM';
+  type?: 'ANOMALY' | 'FORECAST_READY' | 'SYSTEM';
   condition: AlertCondition;
-  severity: 'INFO' | 'WARNING' | 'ERROR';
+  severity?: 'INFO' | 'WARNING' | 'ERROR';
   notificationChannels: NotificationChannel[];
   cooldownMinutes?: number;
+  description?: string;
 }): Promise<AlertRule> {
-  // TODO: Add AlertRule model to schema.prisma
-  // For now, create a mock rule object
   const {
     userId,
     timeseriesId,
     name,
-    type,
+    type = 'ANOMALY',
     condition,
-    severity,
+    severity = 'WARNING',
     notificationChannels,
-    cooldownMinutes,
+    cooldownMinutes = 5,
+    description,
   } = params;
 
-  const rule: AlertRule = {
-    id: crypto.randomUUID(),
-    userId,
-    timeseriesId,
-    name,
-    type,
-    condition,
-    severity,
-    enabled: true,
-    notificationChannels,
-    cooldownMinutes,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+  const rule = await prisma.alertRule.create({
+    data: {
+      userId,
+      timeseriesId,
+      name,
+      description,
+      type,
+      enabled: true,
+      conditions: condition as any,
+      severity,
+      channels: notificationChannels as any,
+      cooldownMinutes,
+    },
+  });
+
+  logger.info(`[ALERT_RULE] Created alert rule ${rule.id} for user ${userId}`);
+
+  return {
+    id: rule.id,
+    userId: rule.userId,
+    timeseriesId: rule.timeseriesId,
+    name: rule.name,
+    description: rule.description || undefined,
+    type: rule.type as any,
+    condition: rule.conditions as any,
+    severity: rule.severity as any,
+    enabled: rule.enabled,
+    notificationChannels: rule.channels as any,
+    cooldownMinutes: rule.cooldownMinutes,
+    lastTriggeredAt: rule.lastTriggeredAt || undefined,
+    createdAt: rule.createdAt,
+    updatedAt: rule.updatedAt || rule.createdAt,
   };
+}
 
-  logger.info(`[ALERT_RULE] Created alert rule ${rule.id} for user ${userId} (in-memory)`);
+/**
+ * Get alert rule by ID
+ */
+export async function getAlertRule(id: string): Promise<AlertRule | null> {
+  const rule = await prisma.alertRule.findUnique({
+    where: { id },
+  });
 
-  return rule;
+  if (!rule) return null;
+
+  return {
+    id: rule.id,
+    userId: rule.userId,
+    timeseriesId: rule.timeseriesId,
+    name: rule.name,
+    description: rule.description || undefined,
+    type: rule.type as any,
+    condition: rule.conditions as any,
+    severity: rule.severity as any,
+    enabled: rule.enabled,
+    notificationChannels: rule.channels as any,
+    cooldownMinutes: rule.cooldownMinutes,
+    lastTriggeredAt: rule.lastTriggeredAt || undefined,
+    createdAt: rule.createdAt,
+    updatedAt: rule.updatedAt || rule.createdAt,
+  };
+}
+
+/**
+ * List alert rules for a user
+ */
+export async function listAlertRules(userId: string, options?: {
+  enabled?: boolean;
+  timeseriesId?: string;
+}): Promise<AlertRule[]> {
+  const where: Prisma.AlertRuleWhereInput = { userId };
+  
+  if (options?.enabled !== undefined) {
+    where.enabled = options.enabled;
+  }
+  
+  if (options?.timeseriesId) {
+    where.timeseriesId = options.timeseriesId;
+  }
+
+  const rules = await prisma.alertRule.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return rules.map(rule => ({
+    id: rule.id,
+    userId: rule.userId,
+    timeseriesId: rule.timeseriesId,
+    name: rule.name,
+    description: rule.description || undefined,
+    type: rule.type as any,
+    condition: rule.conditions as any,
+    severity: rule.severity as any,
+    enabled: rule.enabled,
+    notificationChannels: rule.channels as any,
+    cooldownMinutes: rule.cooldownMinutes,
+    lastTriggeredAt: rule.lastTriggeredAt || undefined,
+    createdAt: rule.createdAt,
+    updatedAt: rule.updatedAt || rule.createdAt,
+  }));
+}
+
+/**
+ * Update alert rule
+ */
+export async function updateAlertRule(
+  id: string,
+  updates: Partial<Omit<AlertRule, 'id' | 'userId' | 'timeseriesId' | 'createdAt'>>
+): Promise<AlertRule> {
+  const data: any = {};
+  
+  if (updates.name !== undefined) data.name = updates.name;
+  if (updates.description !== undefined) data.description = updates.description;
+  if (updates.type !== undefined) data.type = updates.type;
+  if (updates.condition !== undefined) data.conditions = updates.condition as any;
+  if (updates.severity !== undefined) data.severity = updates.severity;
+  if (updates.enabled !== undefined) data.enabled = updates.enabled;
+  if (updates.notificationChannels !== undefined) data.channels = updates.notificationChannels as any;
+  if (updates.cooldownMinutes !== undefined) data.cooldownMinutes = updates.cooldownMinutes;
+  if (updates.lastTriggeredAt !== undefined) data.lastTriggeredAt = updates.lastTriggeredAt;
+  
+  data.updatedAt = new Date();
+
+  const rule = await prisma.alertRule.update({
+    where: { id },
+    data,
+  });
+
+  return {
+    id: rule.id,
+    userId: rule.userId,
+    timeseriesId: rule.timeseriesId,
+    name: rule.name,
+    description: rule.description || undefined,
+    type: rule.type as any,
+    condition: rule.conditions as any,
+    severity: rule.severity as any,
+    enabled: rule.enabled,
+    notificationChannels: rule.channels as any,
+    cooldownMinutes: rule.cooldownMinutes,
+    lastTriggeredAt: rule.lastTriggeredAt || undefined,
+    createdAt: rule.createdAt,
+    updatedAt: rule.updatedAt || rule.createdAt,
+  };
+}
+
+/**
+ * Delete alert rule
+ */
+export async function deleteAlertRule(id: string): Promise<void> {
+  await prisma.alertRule.delete({
+    where: { id },
+  });
+
+  logger.info(`[ALERT_RULE] Deleted alert rule ${id}`);
 }
 
 /**
@@ -98,35 +232,20 @@ export async function evaluateAlertRule(
       break;
 
     case 'anomaly':
-      // Anomaly detection would be handled by the anomaly detection service
-      // This checks if the metadata contains anomaly information
-      if (data.metadata?.hasAnomaly) {
-        if (condition.anomalySeverity && condition.anomalySeverity.length > 0) {
-          shouldTrigger = condition.anomalySeverity.includes(
-            data.metadata.severity as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-          );
-        } else {
-          shouldTrigger = true;
-        }
+      if (data.isAnomaly) {
+        shouldTrigger = true;
       }
       break;
 
     case 'pattern':
-      // Pattern matching would require more complex analysis
-      // For now, this is a placeholder
-      break;
-
-    case 'forecast':
-      // Forecast alerts would be triggered when a forecast is ready
-      if (data.metadata?.forecastReady) {
+      // Pattern-based detection (e.g., flatline, sudden change)
+      if (condition.pattern === 'flatline' && data.isFlatline) {
         shouldTrigger = true;
       }
       break;
-  }
 
-  if (shouldTrigger) {
-    // Update last triggered time (in-memory only, requires AlertRule model)
-    rule.lastTriggeredAt = new Date();
+    default:
+      logger.warn(`[ALERT_RULE] Unknown condition type: ${(condition as any).type}`);
   }
 
   return shouldTrigger;
@@ -145,54 +264,126 @@ function evaluateThreshold(
       return value > threshold;
     case '<':
       return value < threshold;
-    case '=':
-      return value === threshold;
-    case '!=':
-      return value !== threshold;
     case '>=':
       return value >= threshold;
     case '<=':
       return value <= threshold;
+    case '=':
+    case '==':
+      return value === threshold;
+    case '!=':
+      return value !== threshold;
     default:
       return false;
   }
 }
 
 /**
- * Trigger an alert
+ * Trigger an alert based on a rule
  */
 export async function triggerAlert(params: TriggerAlertParams): Promise<void> {
-  const {
-    userId,
-    timeseriesId,
-    type,
-    severity,
-    message,
-    metadata,
-    notificationChannels = [],
-  } = params;
+  const { ruleId, alertData } = params;
 
-  // Create alert in database
-  const alert = await prisma.alert.create({
+  // Get rule details first (for metrics)
+  const rule = await getAlertRule(ruleId);
+  if (!rule) {
+    logger.error(`[ALERT_RULE] Rule ${ruleId} not found`);
+    return;
+  }
+
+  // Update last triggered time
+  await prisma.alertRule.update({
+    where: { id: ruleId },
+    data: { lastTriggeredAt: new Date() },
+  });
+
+  // Create alert
+  const alertRecord = await prisma.alert.create({
     data: {
-      userId,
-      timeseriesId,
-      type,
-      severity,
-      message,
-      metadata: metadata as Prisma.InputJsonValue,
-    },
-    include: {
-      timeseries: { select: { id: true, name: true } },
-      user: { select: { id: true, name: true, email: true } },
+      userId: rule.userId,
+      timeseriesId: rule.timeseriesId,
+      alertRuleId: ruleId,
+      type: rule.type as any,
+      severity: rule.severity as any,
+      message: `Alert triggered: ${rule.name}`,
+      metadata: alertData as any,
     },
   });
 
-  // Send notifications
-  const notificationPromises = notificationChannels.map((channel) =>
-    sendNotification(channel, alert as AlertWithMetadata)
-  );
-  await Promise.allSettled(notificationPromises);
+  // Record alert triggered metrics (10% sampling for performance)
+  if (Math.random() < 0.1) {
+    metrics.recordAlertTriggered(rule.severity, rule.type);
+  }
 
-  logger.info(`[ALERT] Triggered alert ${alert.id} for user ${userId}`);
+  // Convert to AlertWithMetadata format
+  const alert: AlertWithMetadata = {
+    id: alertRecord.id,
+    userId: alertRecord.userId,
+    timeseriesId: alertRecord.timeseriesId,
+    type: alertRecord.type,
+    severity: alertRecord.severity,
+    message: alertRecord.message,
+    metadata: alertRecord.metadata as Record<string, any> | null,
+    isRead: alertRecord.isRead,
+    sentAt: alertRecord.sentAt || undefined,
+    createdAt: alertRecord.createdAt,
+    rule: {
+      id: rule.id,
+      name: rule.name,
+    },
+  };
+
+  // Send notifications
+  for (const channel of rule.notificationChannels) {
+    if (channel.enabled) {
+      await sendNotification(channel, alert);
+    }
+  }
+
+  logger.info(`[ALERT_RULE] Triggered alert ${alert.id} for rule ${ruleId}`);
+}
+
+/**
+ * Get alert rules for evaluation
+ */
+export async function getActiveAlertRules(
+  timeseriesId?: string
+): Promise<AlertRule[]> {
+  const where: Prisma.AlertRuleWhereInput = {
+    enabled: true,
+  };
+
+  if (timeseriesId) {
+    where.timeseriesId = timeseriesId;
+  }
+
+  const rules = await prisma.alertRule.findMany({
+    where,
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  return rules.map(rule => ({
+    id: rule.id,
+    userId: rule.userId,
+    timeseriesId: rule.timeseriesId,
+    name: rule.name,
+    description: rule.description || undefined,
+    type: rule.type as any,
+    condition: rule.conditions as any,
+    severity: rule.severity as any,
+    enabled: rule.enabled,
+    notificationChannels: rule.channels as any,
+    cooldownMinutes: rule.cooldownMinutes,
+    lastTriggeredAt: rule.lastTriggeredAt || undefined,
+    createdAt: rule.createdAt,
+    updatedAt: rule.updatedAt || rule.createdAt,
+  }));
 }

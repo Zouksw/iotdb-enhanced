@@ -4,7 +4,8 @@
  */
 
 import { createClient, RedisClientType } from 'redis';
-import { logger } from '../utils/logger';
+import { logger } from '@/utils/logger';
+import { metrics } from '@/middleware/prometheus';
 
 let redisClient: RedisClientType | null = null;
 
@@ -65,7 +66,16 @@ export async function get<T>(key: string): Promise<T | null> {
     const data = await redisClient.get(key);
 
     if (!data) {
+      // Record cache miss (10% sampling for performance)
+      if (Math.random() < 0.1) {
+        metrics.recordCacheMiss('redis');
+      }
       return null;
+    }
+
+    // Record cache hit (10% sampling for performance)
+    if (Math.random() < 0.1) {
+      metrics.recordCacheHit('redis');
     }
 
     return JSON.parse(data) as T;

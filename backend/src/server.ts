@@ -3,21 +3,21 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { authRouter } from './routes/auth';
-import { datasetsRouter } from './routes/datasets';
-import { timeseriesRouter } from './routes/timeseries';
-import { modelsRouter } from './routes/models';
-import { anomaliesRouter } from './routes/anomalies';
-import { iotdbRouter } from './routes/iotdb';
-import apiKeysRouter from './routes/apiKeys';
-import alertsRouter from './routes/alerts';
-import healthRouter from './routes/health';
-import { errorHandler } from './middleware/errorHandler';
-import { logger } from './utils/logger';
-import { securityHeaders } from './middleware/security';
+import { authRouter } from '@/routes/auth';
+import { datasetsRouter } from '@/routes/datasets';
+import { timeseriesRouter } from '@/routes/timeseries';
+import { modelsRouter } from '@/routes/models';
+import { anomaliesRouter } from '@/routes/anomalies';
+import { iotdbRouter } from '@/routes/iotdb';
+import apiKeysRouter from '@/routes/apiKeys';
+import alertsRouter from '@/routes/alerts';
+import healthRouter from '@/routes/health';
+import { errorHandler } from '@/middleware/errorHandler';
+import { logger } from '@/utils/logger';
+import { securityHeaders } from '@/middleware/security';
 import { config } from './lib';
-import { prometheusMiddleware, metricsEndpoint, healthWithMetrics } from './middleware/prometheus';
-import { loggingMiddleware, errorLoggingMiddleware } from './middleware/logging';
+import { prometheusMiddleware, metricsEndpoint, healthWithMetrics } from '@/middleware/prometheus';
+import { loggingMiddleware, errorLoggingMiddleware } from '@/middleware/logging';
 
 dotenv.config();
 
@@ -80,6 +80,10 @@ if (config.server.nodeEnv === 'production') {
 
   // Enhanced logging middleware
   app.use(...loggingMiddleware);
+} else {
+  // Development: enable Prometheus middleware for testing
+  app.use(prometheusMiddleware);
+  logger.info('📊 Prometheus middleware enabled for development testing');
 }
 
 // Error logging middleware
@@ -104,6 +108,11 @@ if (config.server.nodeEnv === 'production') {
   app.get('/metrics', metricsEndpoint);
   // Enhanced health check with metrics
   app.get('/health/metrics', healthWithMetrics);
+} else {
+  // Development: enable metrics endpoint for testing
+  app.get('/metrics', metricsEndpoint);
+  app.get('/health/metrics', healthWithMetrics);
+  logger.info('📊 Metrics endpoint enabled for development testing');
 }
 
 // API routes
