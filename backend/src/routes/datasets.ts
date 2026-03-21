@@ -5,6 +5,7 @@ import { authenticate, AuthRequest } from '@/middleware/auth';
 import { asyncHandler, NotFoundError, ForbiddenError, BadRequestError } from '@/middleware/errorHandler';
 import { getPagination, paginationSchema } from '@/schemas/common';
 import { createDatasetSchema as newCreateDatasetSchema, updateDatasetSchema as newUpdateDatasetSchema } from '@/schemas/datasets';
+import { cacheRoute, invalidateCache } from '@/middleware/cacheDecorator';
 import Papa from 'papaparse';
 
 const router = Router();
@@ -38,7 +39,8 @@ const serializeDatasets = (datasets: any[]) =>
   });
 
 // GET /api/datasets - Get all datasets (public access)
-router.get('/', asyncHandler(async (req, res) => {
+// Cache for 5 minutes - datasets list changes infrequently
+router.get('/', cacheRoute('datasets:list', 300), asyncHandler(async (req, res) => {
   const { search } = req.query;
   const { skip, take } = getPagination(req.query);
   const params = paginationSchema.parse(req.query);
@@ -153,6 +155,9 @@ router.post('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
     },
   });
 
+  // Invalidate cache after creating a dataset
+  invalidateCache('datasets:*').catch((err) => console.error('Failed to invalidate cache:', err));
+
   res.status(201).json({ dataset: serializeDataset(dataset) });
 }));
 
@@ -185,6 +190,9 @@ router.patch('/:id', authenticate, asyncHandler(async (req: AuthRequest, res) =>
     },
   });
 
+  // Invalidate cache after updating a dataset
+  invalidateCache('datasets:*').catch((err) => console.error('Failed to invalidate cache:', err));
+
   res.json({ dataset: serializeDataset(updatedDataset) });
 }));
 
@@ -208,6 +216,9 @@ router.delete('/:id', authenticate, asyncHandler(async (req: AuthRequest, res) =
   await prisma.dataset.delete({
     where: { id: req.params.id },
   });
+
+  // Invalidate cache after deleting a dataset
+  invalidateCache('datasets:*').catch((err) => console.error('Failed to invalidate cache:', err));
 
   res.json({ success: true, message: 'Dataset deleted successfully' });
 }));
