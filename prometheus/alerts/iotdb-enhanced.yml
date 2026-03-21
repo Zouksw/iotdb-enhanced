@@ -1,0 +1,167 @@
+# IoTDB Enhanced Alert Rules
+groups:
+  # API Performance Alerts
+  - name: api_performance
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_errors_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+
+      - alert: CriticalErrorRate
+        expr: rate(http_errors_total[5m]) > 0.20
+        for: 2m
+        labels:
+          severity: critical
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "Critical error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} for the last 2 minutes"
+
+      - alert: SlowAPIResponse
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 10m
+        labels:
+          severity: warning
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "95th percentile latency > 1s"
+          description: "P95 latency is {{ $value }}s"
+
+      - alert: VerySlowAPIResponse
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "95th percentile latency > 5s"
+          description: "P95 latency is {{ $value }}s"
+
+  # Database Health Alerts
+  - name: database_health
+    interval: 30s
+    rules:
+      - alert: HighCacheMissRate
+        expr: |
+          rate(cache_misses_total[5m])
+          /
+          (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m]))
+          > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "Cache miss rate > 50%"
+          description: "Cache miss rate is {{ $value | humanizePercentage }}"
+
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "95th percentile DB query latency > 500ms"
+          description: "P95 DB query latency is {{ $value }}s"
+
+  # IoTDB Health Alerts
+  - name: iotdb_health
+    interval: 30s
+    rules:
+      - alert: IoTDBConnectionLost
+        expr: iotdb_connections_active == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "IoTDB connection lost"
+          description: "No active IoTDB connections for 2 minutes"
+
+      - alert: HighIoTDBQueryLatency
+        expr: histogram_quantile(0.95, rate(iotdb_query_duration_seconds_bucket[5m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "95th percentile IoTDB query latency > 5s"
+          description: "P95 IoTDB query latency is {{ $value }}s"
+
+  # AI Model Alerts
+  - name: ai_model_health
+    interval: 30s
+    rules:
+      - alert: AIModelHighErrorRate
+        expr: |
+          rate(ai_model_predictions_total{status="error"}[5m])
+          /
+          rate(ai_model_predictions_total[5m])
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "AI model error rate > 10%"
+          description: "AI model {{ $labels.model_name }} error rate is {{ $value | humanizePercentage }}"
+
+      - alert: AIModelVeryHighErrorRate
+        expr: |
+          rate(ai_model_predictions_total{status="error"}[5m])
+          /
+          rate(ai_model_predictions_total[5m])
+          > 0.3
+        for: 2m
+        labels:
+          severity: critical
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "AI model error rate > 30%"
+          description: "AI model {{ $labels.model_name }} error rate is {{ $value | humanizePercentage }}"
+
+      - alert: SlowAIPredictions
+        expr: histogram_quantile(0.95, rate(ai_model_prediction_duration_seconds_bucket[5m])) > 30
+        for: 10m
+        labels:
+          severity: warning
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "95th percentile AI prediction latency > 30s"
+          description: "P95 AI prediction latency is {{ $value }}s"
+
+  # Alert System Health
+  - name: alert_system
+    interval: 30s
+    rules:
+      - alert: HighAlertRate
+        expr: rate(alerts_triggered_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "High alert triggering rate"
+          description: "Alerts are triggering at {{ $value }}/sec"
+
+  # Service Availability
+  - name: service_availability
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up{job="iotdb-enhanced-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: iotdb-enhanced-backend
+        annotations:
+          summary: "Service is down"
+          description: "IoTDB Enhanced backend has been down for 2 minutes"
