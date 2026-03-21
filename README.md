@@ -1,8 +1,8 @@
 ---
 title: "IoTDB Enhanced Platform"
 en_title: "IoTDB Enhanced Platform"
-version: "1.2.0"
-last_updated: "2026-03-13"
+version: "1.3.0"
+last_updated: "2026-03-21"
 status: "stable"
 maintainer: "IoTDB Enhanced Team"
 reviewers:
@@ -12,12 +12,18 @@ tags:
   - "getting-started"
 target_audience: "所有用户、开发者、运维工程师"
 related_docs:
+  - "Systemd 服务配置": "docs/systemd-services.md"
+  - "监控部署指南": "docs/monitoring-deployment-no-docker.md"
   - "使用指南": "docs/GUIDE.md"
   - "部署指南": "docs/DEPLOYMENT.md"
   - "安全配置": "docs/SECURITY.md"
   - "API 参考": "docs/API.md"
   - "部署后配置": "docs/POST-DEPLOYMENT.md"
 changes:
+  - version: "1.3.0"
+    date: "2026-03-21"
+    author: "IoTDB Enhanced Team"
+    changes: "Phase 3.1 - 监控与可观测性、Systemd 部署、Docker 替换"
   - version: "1.2.0"
     date: "2026-03-04"
     author: "IoTDB Enhanced Team"
@@ -30,11 +36,11 @@ changes:
     date: "2026-03-03"
     author: "IoTDB Enhanced Team"
     changes: "初始版本 - 文档整合与规范化"
-next_review: "2026-09-04"
+next_review: "2026-09-21"
 approval:
   status: "approved"
   reviewed_by: "Project Maintainer"
-  approved_date: "2026-03-04"
+  approved_date: "2026-03-21"
 ---
 
 # IoTDB Enhanced Platform
@@ -43,14 +49,22 @@ approval:
 
 提供完整的时序数据存储、查询和 AI 预测分析功能。
 
-[![Tests](https://img.shields.io/badge/tests-575%20passed-success)](backend/src/__tests__)
+[![Tests](https://img.shields.io/badge/tests-1369%20passed-success)](backend/src/__tests__)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green)](https://nodejs.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
 
 ---
 
-## 🎉 最新更新 (v1.2.0)
+## 🎉 最新更新 (v1.3.0)
+
+### Phase 3.1 - 监控与可观测性 (已完成 ✅)
+- **Prometheus 指标** - 完整的监控指标系统（HTTP、DB、缓存、IoTDB、AI、告警、会话）
+- **Grafana 仪表板** - 自动配置的可视化监控面板
+- **AlertManager** - 邮件告警通知系统
+- **Systemd 服务** - Docker 部署替换为 systemd（更低资源占用）
+- **Prisma 中间件** - 自动数据库查询监控
+- **采样策略** - 10% 采样优化性能
 
 ### Phase 3 - AI 功能启用与安全隔离 (已完成 ✅)
 - **AI 功能启用** - 预测分析、异常检测、模型管理
@@ -79,6 +93,39 @@ approval:
 
 ## 快速开始
 
+### 生产部署（Systemd - 推荐）
+
+```bash
+# 克隆项目
+git clone https://github.com/Zouksw/iotdb-enhanced.git
+cd iotdb-enhanced
+
+# 安装依赖
+sudo apt install -y postgresql redis-server nginx
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm install -g pm2
+
+# 配置环境变量
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
+# 编辑环境变量...
+
+# 安装 systemd 服务
+sudo cp config/systemd/*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+
+# 启动所有服务
+./scripts/systemd/start-all-services.sh
+
+# 查看状态
+./scripts/systemd/check-services.sh
+```
+
+**详细部署指南**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | [docs/systemd-services.md](docs/systemd-services.md)
+
+### 开发/快速启动（PM2 脚本）
+
 ```bash
 # 克隆项目
 git clone https://github.com/Zouksw/iotdb-enhanced.git
@@ -104,6 +151,9 @@ cd iotdb-enhanced
 | 后端 API | http://localhost:8000 | RESTful API |
 | API 文档 | http://localhost:8000/api-docs | Swagger 文档 |
 | IoTDB REST | http://localhost:18080 | IoTDB 原生 API |
+| **Prometheus** | http://localhost:9090 | 监控指标 |
+| **Grafana** | http://localhost:3001 | 监控面板 |
+| **AlertManager** | http://localhost:9093 | 告警管理 |
 
 ---
 
@@ -166,15 +216,21 @@ iotdb-enhanced/
 │   └── src/
 │       ├── app/       # 页面组件
 │       └── components/ # 可复用组件
-├── scripts/           # 运维脚本 (8 个)
+├── scripts/           # 运维脚本
+│   ├── systemd/      # Systemd 服务管理脚本
 │   ├── auto-backup.sh           # 自动备份
 │   ├── optimize-database.sh     # 数据库优化
 │   ├── deploy-zero-downtime.sh  # 零停机部署
 │   ├── rollback.sh              # 部署回滚
 │   ├── health-check.sh          # 健康检查
 │   ├── monitoring.sh            # 性能监控
-│   ├── user-management.sh       # 用户管理
-│   └── migrate-db.sh            # 数据库迁移
+│   └── user-management.sh       # 用户管理
+├── config/            # 配置文件
+│   ├── systemd/      # Systemd 服务单元文件
+│   ├── logrotate/    # 日志轮转配置
+│   └── cron/         # Cron 任务配置
+├── prometheus/        # Prometheus 配置
+├── grafana/           # Grafana 配置和仪表板
 ├── docs/              # 项目文档
 └── nginx/             # Nginx 配置
 ```
@@ -185,15 +241,16 @@ iotdb-enhanced/
 
 | 文档 | 说明 | 链接 |
 |------|------|------|
+| **部署指南** | Systemd 生产部署、Docker 可选、监控维护 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| **Systemd 服务** | 完整的 systemd 服务配置和管理 | [docs/systemd-services.md](docs/systemd-services.md) |
+| **监控部署** | Prometheus + Grafana + AlertManager 部署 | [docs/monitoring-deployment-no-docker.md](docs/monitoring-deployment-no-docker.md) |
+| **可观测性设计** | 监控系统架构和实现规划 | [docs/observability-design.md](docs/observability-design.md) |
 | **使用指南** | 完整的功能使用说明、服务管理、故障排查 | [docs/GUIDE.md](docs/GUIDE.md) |
-| **部署指南** | 生产环境部署、版本迁移、监控维护 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 | **部署后配置** | 部署后配置步骤、监控设置、运维脚本 | [docs/POST-DEPLOYMENT.md](docs/POST-DEPLOYMENT.md) |
 | **安全配置** | 密钥管理、安全加固、应急响应 | [docs/SECURITY.md](docs/SECURITY.md) |
 | **API 参考** | 完整的 RESTful API 接口文档 | [docs/API.md](docs/API.md) |
+| **开发者指南** | 开发环境设置、代码规范、贡献指南 | [docs/DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) |
 | **运行模式** | 开发/生产/预发布模式详解与切换 | [docs/RUNNING_MODES.md](docs/RUNNING_MODES.md) |
-| **脚本使用** | 全部项目脚本的使用说明 | [docs/SCRIPTS_GUIDE.md](docs/SCRIPTS_GUIDE.md) |
-| **脚本索引** | 所有脚本的快速查找与分类 | [docs/SCRIPTS_INDEX.md](docs/SCRIPTS_INDEX.md) |
-| **文档规范** | 文档编写和维护的元数据规范 | [docs/DOCUMENTATION_METADATA.md](docs/DOCUMENTATION_METADATA.md) |
 
 ---
 
@@ -233,17 +290,29 @@ curl http://localhost:8000/api/iotdb/ai/models
 - **认证**: HttpOnly Cookie + CSRF Token
 
 ### 基础设施
-- **容器**: Docker + Docker Compose
+- **进程管理**: Systemd（生产）/ PM2（开发）
+- **容器**: Docker + Docker Compose（可选）
 - **反向代理**: Nginx
 - **CI/CD**: GitHub Actions
-- **日志**: Winston + Daily Rotate File
-- **监控**: Sentry + 自定义监控脚本
+- **日志**: Winston + Daily Rotate File + journald
+- **监控**: Prometheus + Grafana + AlertManager + Sentry
 
 ---
 
 ## 管理命令
 
-### 服务管理
+### Systemd 服务管理（生产环境推荐）
+```bash
+./scripts/systemd/start-all-services.sh  # 启动所有服务
+./scripts/systemd/stop-all-services.sh   # 停止所有服务
+./scripts/systemd/check-services.sh      # 查看服务状态
+
+sudo systemctl status iotdb-backend      # 查看后端服务
+sudo journalctl -u iotdb-backend -f      # 查看后端日志
+sudo systemctl restart iotdb-backend     # 重启后端服务
+```
+
+### PM2 服务管理（开发环境）
 ```bash
 ./start.sh    # 启动所有服务
 ./stop.sh     # 停止所有服务
@@ -292,7 +361,7 @@ npm run test:coverage
 npm run test:watch
 ```
 
-**当前状态**: 575 个测试全部通过 ✅ (34.46% 覆盖率)
+**当前状态**: 1369 个测试全部通过 ✅ (70.22% 覆盖率)
 
 ---
 
