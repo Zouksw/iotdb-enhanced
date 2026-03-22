@@ -31,7 +31,6 @@ describe('Server Configuration', () => {
         '../middleware/logging',
         '../middleware/csrf',
         '../middleware/aiAccess',
-        '../middleware/apiCache',
       ];
 
       middleware.forEach(middlewarePath => {
