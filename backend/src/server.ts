@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
@@ -72,6 +73,22 @@ app.use(cors(corsOptions));
 
 // Security middleware
 app.use(securityHeaders);
+
+// Response compression middleware
+// Compresses all responses > 1KB using gzip (level 6 for balance)
+// Skips compression for small responses where overhead outweighs benefit
+app.use(compression({
+  threshold: 1024, // Only compress responses larger than 1KB
+  level: 6, // Compression level (1-9, 6 is best balance)
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      // Don't compress if client explicitly requests no compression
+      return false;
+    }
+    // Use compression for all requests except when explicitly disabled
+    return compression.filter(req, res);
+  },
+}));
 
 // Production monitoring middleware (only in production)
 if (config.server.nodeEnv === 'production') {
