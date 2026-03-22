@@ -6,7 +6,6 @@ import { validate, validationSchemas } from '@/middleware/security';
 import { asyncHandler, UnauthorizedError, NotFoundError, BadRequestError, ConflictError } from '@/middleware/errorHandler';
 import { prisma, jwtUtils, config } from '@/lib';
 import { blacklistToken, isTokenBlacklisted } from '@/services/tokenBlacklist';
-import { generateCsrfToken, revokeCsrfToken } from '@/middleware/csrf';
 import { success, successWithMessage } from '@/lib/response';
 
 const router = Router();
@@ -210,9 +209,6 @@ router.post('/logout', asyncHandler(async (req: Request, res: Response) => {
     await blacklistToken(token, 'logout');
   }
 
-  // Revoke CSRF token
-  await revokeCsrfToken(userId);
-
   // Invalidate all sessions for this user
   await prisma.session.updateMany({
     where: { userId, isActive: true },
@@ -226,9 +222,6 @@ router.post('/logout', asyncHandler(async (req: Request, res: Response) => {
     secure: req.secure,
     sameSite: 'strict',
   });
-
-  // Clear CSRF cookie
-  res.clearCookie('csrf_token');
 
   // Log logout
   await prisma.auditLog.create({
@@ -414,26 +407,6 @@ router.post('/change-password', asyncHandler(async (req: Request, res: Response)
   });
 
   return successWithMessage(res, {}, 'Password changed successfully. Please login again.');
-}));
-
-// GET /api/auth/csrf-token - Get CSRF token
-router.get('/csrf-token', asyncHandler(async (req: Request, res: Response) => {
-  const userId = await getUserIdFromToken(req.headers.authorization);
-
-  // Generate CSRF token
-  const token = await generateCsrfToken(userId || undefined);
-
-  // Set token as cookie
-  res.cookie('csrf_token', token, {
-    httpOnly: true,
-    secure: req.secure,
-    sameSite: 'strict',
-    maxAge: 86400000, // 24 hours
-  });
-
-  // Also return in response for AJAX requests
-  res.setHeader('x-csrf-token', token);
-  return success(res, { csrfToken: token });
 }));
 
 // GET /api/auth/verify - Verify current token

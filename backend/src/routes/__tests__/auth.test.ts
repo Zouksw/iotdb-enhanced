@@ -16,7 +16,6 @@ const mockRecordFailedLogin = jest.fn();
 const mockClearFailedLoginAttempts = jest.fn();
 const mockFormatLockoutTime = jest.fn();
 const mockBlacklistToken = jest.fn();
-const mockRevokeCsrfToken = jest.fn();
 
 jest.mock('../../services/authLockout', () => ({
   checkAccountLockout: (...args: any[]) => mockCheckAccountLockout(...args),
@@ -27,10 +26,6 @@ jest.mock('../../services/authLockout', () => ({
 
 jest.mock('../../services/tokenBlacklist', () => ({
   blacklistToken: (...args: any[]) => mockBlacklistToken(...args),
-}));
-
-jest.mock('../../middleware/csrf', () => ({
-  revokeCsrfToken: (...args: any[]) => mockRevokeCsrfToken(...args),
 }));
 
 describe('Auth Route Logic Tests', () => {
@@ -119,14 +114,6 @@ describe('Auth Route Logic Tests', () => {
 
       expect(result).toBe(true);
       expect(mockBlacklistToken).toHaveBeenCalledWith('access-token', 'logout');
-    });
-
-    it('should revoke CSRF token on logout', async () => {
-      mockRevokeCsrfToken.mockResolvedValue();
-
-      await mockRevokeCsrfToken('user-123');
-
-      expect(mockRevokeCsrfToken).toHaveBeenCalledWith('user-123');
     });
   });
 

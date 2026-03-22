@@ -29,7 +29,6 @@ describe('Server Configuration', () => {
         '../middleware/cache',
         '../middleware/errorHandler',
         '../middleware/logging',
-        '../middleware/csrf',
         '../middleware/aiAccess',
       ];
 
@@ -85,12 +84,6 @@ describe('Server Configuration', () => {
       const { loggingMiddleware, errorLoggingMiddleware } = require('../middleware/logging');
       expect(loggingMiddleware).toBeDefined();
       expect(errorLoggingMiddleware).toBeDefined();
-    });
-
-    test('should have CSRF middleware', () => {
-      const csrf = require('../middleware/csrf');
-      expect(csrf).toBeDefined();
-      expect(typeof csrf.generateCsrfToken).toBe('function');
     });
 
     test('should have cache middleware', () => {
@@ -195,11 +188,6 @@ describe('Server Configuration', () => {
       expect(jwt.verifyToken).toBeDefined();
     });
 
-    test('should have CSRF protection', () => {
-      const csrf = require('../middleware/csrf');
-      expect(csrf).toBeDefined();
-    });
-
     test('should have rate limiting utilities', () => {
       const rateLimiter = require('../middleware/rateLimiter');
       expect(rateLimiter).toBeDefined();
@@ -261,7 +249,6 @@ describe('Server Configuration Validation', () => {
       { path: '../routes/health', name: 'Health Routes' },
       { path: '../routes/security', name: 'Security Routes' },
       { path: '../middleware/errorHandler', name: 'Error Handler' },
-      { path: '../middleware/csrf', name: 'CSRF Middleware' },
       { path: '../lib/config', name: 'Config' },
       { path: '../lib/logger', name: 'Logger' },
       { path: '../lib/jwt', name: 'JWT' },
