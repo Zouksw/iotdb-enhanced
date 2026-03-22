@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '@/lib';
+import { logger } from '@/utils/logger';
 import { authenticate, AuthRequest } from '@/middleware/auth';
 import { asyncHandler, NotFoundError, ForbiddenError, BadRequestError } from '@/middleware/errorHandler';
 import { getPagination, paginationSchema } from '@/schemas/common';
@@ -156,7 +157,7 @@ router.post('/', authenticate, asyncHandler(async (req: AuthRequest, res) => {
   });
 
   // Invalidate cache after creating a dataset
-  invalidateCache('datasets:*').catch((err) => console.error('Failed to invalidate cache:', err));
+  invalidateCache('datasets:*').catch((err) => logger.error('Failed to invalidate cache:', err));
 
   res.status(201).json({ dataset: serializeDataset(dataset) });
 }));
