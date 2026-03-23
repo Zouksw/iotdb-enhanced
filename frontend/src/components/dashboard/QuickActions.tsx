@@ -24,11 +24,11 @@ interface QuickAction {
 
 const quickActions: QuickAction[] = [
   {
-    key: "create-dataset",
-    title: "New Dataset",
-    description: "Create a new dataset",
+    key: "create-timeseries",
+    title: "New Time Series",
+    description: "Create a new time series",
     icon: <DatabaseOutlined />,
-    path: "/datasets/create",
+    path: "/timeseries",
     type: "primary",
   },
   {
@@ -52,7 +52,7 @@ const quickActions: QuickAction[] = [
     title: "Detect Anomalies",
     description: "Run anomaly detection",
     icon: <ExperimentOutlined />,
-    path: "/anomalies/create",
+    path: "/ai/anomalies",
     type: "default",
   },
 ];
@@ -66,8 +66,8 @@ export const QuickActions: React.FC = () => {
 
   return (
     <Card
-      bordered={false}
-      bodyStyle={{ padding: "16px" }}
+      variant="borderless"
+      styles={{ body: { padding: "16px" } }}
     >
       <Title level={5} style={{ marginBottom: 16 }}>
         Quick Actions
