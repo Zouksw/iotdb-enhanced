@@ -12,11 +12,11 @@ const nextConfig = {
 
   // API Proxy - Rewrite API requests to backend server
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     return [
       {
         source: '/api/:path*',
-        destination: `${apiUrl}/:path*`,
+        destination: `${apiUrl}/api/:path*`,
       },
     ];
   },
