@@ -20,11 +20,11 @@ export default function TimeseriesCreate() {
 
   return (
     <Create saveButtonProps={saveButtonProps} title="Create Time Series">
-      <ContentCard
-        title="Basic Information"
-        subtitle="Configure the basic properties of your time series"
-      >
-        <Form {...formProps} layout="vertical">
+      <Form {...formProps} layout="vertical">
+        <ContentCard
+          title="Basic Information"
+          subtitle="Configure the basic properties of your time series"
+        >
           <Row gutter={[24, 16]}>
             <Col xs={24} md={12}>
               <Form.Item
@@ -84,14 +84,13 @@ export default function TimeseriesCreate() {
               placeholder="Describe what this time series measures..."
             />
           </Form.Item>
-        </Form>
-      </ContentCard>
+        </ContentCard>
 
-      <ContentCard
-        title="Display Settings"
-        subtitle="Configure how this time series appears in visualizations"
-      >
-        <Form {...formProps} layout="vertical">
+        <ContentCard
+          title="Display Settings"
+          subtitle="Configure how this time series appears in visualizations"
+          style={{ marginTop: 24 }}
+        >
           <Row gutter={[24, 16]}>
             <Col xs={24} md={12}>
               <Form.Item
@@ -118,14 +117,13 @@ export default function TimeseriesCreate() {
               </Form.Item>
             </Col>
           </Row>
-        </Form>
-      </ContentCard>
+        </ContentCard>
 
-      <ContentCard
-        title="Advanced Options"
-        subtitle="Configure additional features for this time series"
-      >
-        <Form {...formProps} layout="vertical">
+        <ContentCard
+          title="Advanced Options"
+          subtitle="Configure additional features for this time series"
+          style={{ marginTop: 24 }}
+        >
           <Form.Item
             label={<span style={{ fontWeight: 500 }}>Anomaly Detection</span>}
             name="isAnomalyDetectionEnabled"
@@ -139,8 +137,8 @@ export default function TimeseriesCreate() {
           <Text type="secondary" style={{ fontSize: 12 }}>
             When enabled, the system will automatically analyze this time series for anomalies using machine learning algorithms.
           </Text>
-        </Form>
-      </ContentCard>
+        </ContentCard>
+      </Form>
     </Create>
   );
 }

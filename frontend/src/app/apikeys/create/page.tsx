@@ -12,11 +12,11 @@ export default function ApiKeyCreate() {
 
   return (
     <Create saveButtonProps={saveButtonProps} title="Create API Key">
-      <ContentCard
-        title="API Key Information"
-        subtitle="Configure your new API key"
-      >
-        <Form {...formProps} layout="vertical">
+      <Form {...formProps} layout="vertical">
+        <ContentCard
+          title="API Key Information"
+          subtitle="Configure your new API key"
+        >
           <Form.Item
             label={<span style={{ fontWeight: 500 }}>Key Name</span>}
             name="name"
@@ -43,14 +43,13 @@ export default function ApiKeyCreate() {
           <Text type="secondary" style={{ fontSize: 12 }}>
             Select the permissions this API key should have. You can add custom scopes by typing.
           </Text>
-        </Form>
-      </ContentCard>
+        </ContentCard>
 
-      <ContentCard
-        title="Security Settings"
-        subtitle="Configure expiration and access limits"
-      >
-        <Form {...formProps} layout="vertical">
+        <ContentCard
+          title="Security Settings"
+          subtitle="Configure expiration and access limits"
+          style={{ marginTop: 24 }}
+        >
           <Form.Item
             label={<span style={{ fontWeight: 500 }}>Expiration Date</span>}
             name="expiresAt"
@@ -66,8 +65,8 @@ export default function ApiKeyCreate() {
           <Text type="secondary" style={{ fontSize: 12 }}>
             API keys that expire provide better security. Consider setting an expiration date for production keys.
           </Text>
-        </Form>
-      </ContentCard>
+        </ContentCard>
+      </Form>
     </Create>
   );
 }
