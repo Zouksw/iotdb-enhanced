@@ -6,6 +6,7 @@ import routerProvider from "@refinedev/nextjs-router";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import React, { Suspense } from "react";
+import { App as AntdApp } from "antd";
 
 import { ColorModeContextProvider } from "@/contexts/color-mode";
 import { authProviderClient } from "@/providers/auth-provider/auth-provider.client";
@@ -104,16 +105,17 @@ export default function RootLayout({
         </a>
         <Suspense>
           <AntdRegistry>
-            <GitHubBanner />
-            <RefineKbarProvider>
-              <ColorModeContextProvider defaultMode={theme?.value}>
-                <DevtoolsProvider>
-                  <Refine
-                    routerProvider={routerProvider}
-                    dataProvider={dataProvider}
-                    notificationProvider={useNotificationProvider}
-                    authProvider={authProviderClient}
-                    resources={[
+            <AntdApp>
+              <GitHubBanner />
+              <RefineKbarProvider>
+                <ColorModeContextProvider defaultMode={theme?.value}>
+                  <DevtoolsProvider>
+                    <Refine
+                      routerProvider={routerProvider}
+                      dataProvider={dataProvider}
+                      notificationProvider={useNotificationProvider}
+                      authProvider={authProviderClient}
+                      resources={[
                       // Dashboard
                       {
                         name: "dashboard",
@@ -247,6 +249,7 @@ export default function RootLayout({
                 </DevtoolsProvider>
               </ColorModeContextProvider>
             </RefineKbarProvider>
+            </AntdApp>
           </AntdRegistry>
         </Suspense>
         {/* Initialize CSRF protection on client side */}
