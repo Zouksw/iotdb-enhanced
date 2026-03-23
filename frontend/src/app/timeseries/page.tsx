@@ -241,7 +241,7 @@ export default function TimeseriesList() {
             <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ marginBottom: "12px" }}>
                 <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Total Data Points
+                  Data Points
                 </Text>
               </div>
               <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
@@ -291,7 +291,7 @@ export default function TimeseriesList() {
                   <LineChartOutlined style={{ fontSize: "20px", color: "#fff" }} />
                 </div>
                 <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Storage Used
+                  Storage
                 </Text>
               </div>
               <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>

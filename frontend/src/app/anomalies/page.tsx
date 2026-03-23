@@ -205,7 +205,7 @@ export default function AnomalyList() {
             <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ marginBottom: "12px" }}>
                 <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Severity Breakdown
+                  Severity
                 </Text>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
