@@ -194,104 +194,83 @@ export default function TimeseriesList() {
           }
         />
 
-        {/* Statistics Cards with Glassmorphism */}
+        {/* Statistics - Varied Layout */}
         <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
-          <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+          {/* Featured metric - spans 2 columns on desktop */}
+          <Col xs={24} sm={24} md={12}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "20px" : "24px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
+                <div>
+                  <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500, display: "block", marginBottom: "8px" }}>
+                    Total Time Series
+                  </Text>
+                  <div style={{ fontSize: "36px", fontWeight: 700, color: "#111827", lineHeight: 1 }}>
+                    {totalTimeseries.toLocaleString()}
+                  </div>
+                </div>
                 <div
                   style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#0066CC",
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: 4,
+                    background: "rgba(0, 102, 204, 0.08)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    marginRight: "12px",
                   }}
                 >
-                  <LineChartOutlined style={{ fontSize: "20px", color: "#fff" }} />
+                  <LineChartOutlined style={{ fontSize: "24px", color: "#0066CC" }} />
                 </div>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Total Time Series
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Text
+                  type={timeseriesTrend >= 0 ? "success" : "danger"}
+                  style={{ fontSize: "13px", fontWeight: 600 }}
+                >
+                  {timeseriesTrend >= 0 ? "↑" : "↓"} {Math.abs(timeseriesTrend)}%
+                </Text>
+                <Text type="secondary" style={{ fontSize: "12px" }}>
+                  this month
                 </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
-                {totalTimeseries.toLocaleString()}
-              </div>
-              <Text
-                type={timeseriesTrend >= 0 ? "success" : "danger"}
-                style={{ fontSize: "12px", fontWeight: 500 }}
-              >
-                {timeseriesTrend >= 0 ? "+" : ""}
-                {timeseriesTrend}% this month
-              </Text>
             </GlassCard>
           </Col>
 
+          {/* Standard metrics - 2 columns on desktop */}
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#3B82F6",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
-                >
-                  <DatabaseOutlined style={{ fontSize: "20px", color: "#fff" }} />
-                </div>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
+              <div style={{ marginBottom: "12px" }}>
                 <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
                   Total Data Points
                 </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
                 {totalDataPoints.toLocaleString()}
               </div>
               <Text type="secondary" style={{ fontSize: "12px" }}>
-                Across all time series
+                Across all series
               </Text>
             </GlassCard>
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#0EA5E9",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
-                >
-                  <AlertOutlined style={{ fontSize: "20px", color: "#fff" }} />
-                </div>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
+              <div style={{ marginBottom: "12px" }}>
                 <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Detected Anomalies
+                  Anomalies
                 </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div style={{ fontSize: "28px", fontWeight: 700, color: totalAnomalies > 0 ? "#EF4444" : "#111827", marginBottom: "4px" }}>
                 {totalAnomalies}
               </div>
               <Text
                 type={anomaliesTrend < 0 ? "success" : "warning"}
                 style={{ fontSize: "12px", fontWeight: 500 }}
               >
-                {anomaliesTrend < 0 ? "↓ " : "↑ "}
-                {Math.abs(anomaliesTrend)}% this month
+                {anomaliesTrend < 0 ? "↓" : "↑"} {Math.abs(anomaliesTrend)}%
               </Text>
             </GlassCard>
+          </Col>
           </Col>
 
           <Col xs={12} sm={12} md={6}>
