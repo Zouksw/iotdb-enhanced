@@ -62,7 +62,7 @@ export function DetailPageLayout({
   if (loading) {
     return (
       <div style={{ padding: "24px", textAlign: "center", minHeight: "400px" }}>
-        <Spin size="large" tip="Loading..." />
+        <Spin size="large" tip="Loading…" />
       </div>
     );
   }
