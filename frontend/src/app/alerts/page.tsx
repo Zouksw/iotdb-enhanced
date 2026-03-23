@@ -390,123 +390,85 @@ export default function AlertList() {
         }
       />
 
-      {/* Statistics Cards */}
+      {/* Statistics - Varied Layout */}
       {stats && (
         <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
-          <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+          {/* Featured metric - spans 2 columns */}
+          <Col xs={24} sm={24} md={12}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "20px" : "24px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
+                <div>
+                  <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500, display: "block", marginBottom: "8px" }}>
+                    Total Alerts
+                  </Text>
+                  <div style={{ fontSize: "36px", fontWeight: 700, color: "#111827", lineHeight: 1 }}>
+                    {stats.total}
+                  </div>
+                </div>
                 <div
                   style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#0066CC",
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: 4,
+                    background: "rgba(0, 102, 204, 0.08)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    marginRight: "12px",
                   }}
                 >
-                  <BellOutlined style={{ fontSize: "20px", color: "#fff" }} />
+                  <BellOutlined style={{ fontSize: "24px", color: "#0066CC" }} />
                 </div>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Total Alerts
-                </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
-                {stats.total}
-              </div>
-              <Text type="secondary" style={{ fontSize: "12px" }}>
+              <Text type="secondary" style={{ fontSize: "13px" }}>
                 All notifications
               </Text>
             </GlassCard>
           </Col>
 
+          {/* Unread - highlighted if > 0 */}
           <Col xs={12} sm={12} md={6}>
             <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: stats.unread > 0 ? "#EF4444" : "#3B82F6",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
-                >
-                  <InfoCircleOutlined style={{ fontSize: "20px", color: "#fff" }} />
-                </div>
+              <div style={{ marginBottom: "12px" }}>
                 <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
                   Unread
                 </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
+              <div style={{ fontSize: "28px", fontWeight: 700, color: stats.unread > 0 ? "#EF4444" : "#111827", marginBottom: "4px" }}>
                 {stats.unread}
               </div>
               <Text
                 type={stats.unread > 0 ? "danger" : "success"}
-                style={{ fontSize: "12px" }}
+                style={{ fontSize: "12px", fontWeight: 500 }}
               >
                 {stats.unread > 0 ? "Need attention" : "All caught up"}
               </Text>
             </GlassCard>
           </Col>
 
+          {/* Errors & Warnings grouped */}
           <Col xs={12} sm={12} md={6}>
             <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#F59E0B",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
-                >
-                  <CloseCircleOutlined style={{ fontSize: "20px", color: "#fff" }} />
-                </div>
+              <div style={{ marginBottom: "12px" }}>
                 <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Errors
+                  Issues
                 </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
-                {stats.bySeverity.ERROR || 0}
+              <div style={{ display: "flex", gap: "16px" }}>
+                <div>
+                  <div style={{ fontSize: "20px", fontWeight: 700, color: "#EF4444" }}>
+                    {stats.bySeverity.ERROR || 0}
+                  </div>
+                  <Text type="secondary" style={{ fontSize: "11px" }}>Errors</Text>
+                </div>
+                <div>
+                  <div style={{ fontSize: "20px", fontWeight: 700, color: "#F59E0B" }}>
+                    {stats.bySeverity.WARNING || 0}
+                  </div>
+                  <Text type="secondary" style={{ fontSize: "11px" }}>Warnings</Text>
+                </div>
               </div>
-              <Text type="danger" style={{ fontSize: "12px" }}>
-                Critical issues
-              </Text>
             </GlassCard>
           </Col>
-
-          <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#F59E0B",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
-                >
-                  <WarningOutlined style={{ fontSize: "20px", color: "#fff" }} />
-                </div>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Warnings
-                </Text>
-              </div>
               <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
                 {stats.bySeverity.WARNING || 0}
               </div>
