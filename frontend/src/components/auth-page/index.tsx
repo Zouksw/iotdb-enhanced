@@ -122,40 +122,10 @@ export function AuthPage(props: AuthPageProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: `linear-gradient(135deg, #0066cc 0%, #0077e6 35%, #0088ff 70%, #00a8e8 100%)`,
+        background: "#F9FAFB",
         padding: token.paddingLG,
-        position: "relative",
-        overflow: "hidden",
       }}
     >
-      {/* Animated background elements */}
-      <div
-        style={{
-          position: "absolute",
-          width: 600,
-          height: 600,
-          borderRadius: "50%",
-          background: "rgba(255, 255, 255, 0.1)",
-          top: -200,
-          left: -200,
-          filter: "blur(80px)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          width: 500,
-          height: 500,
-          borderRadius: "50%",
-          background: "rgba(255, 255, 255, 0.08)",
-          bottom: -150,
-          right: -150,
-          filter: "blur(80px)",
-          pointerEvents: "none",
-        }}
-      />
-
       {/* Main Card */}
       <div
         style={{
@@ -166,47 +136,45 @@ export function AuthPage(props: AuthPageProps) {
         }}
       >
         <Card
+          variant="borderless"
           style={{
-            borderRadius: 24,
-            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25)",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            overflow: "hidden",
-            background: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
+            borderRadius: 6,
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+            border: "1px solid #E5E7EB",
+            background: "#FFFFFF",
           }}
         >
           {/* Header Section */}
           <div
             style={{
-              padding: "40px 40px 20px 40px",
+              padding: "32px 32px 16px 32px",
               textAlign: "center",
             }}
           >
             {/* Logo */}
             <div
               style={{
-                width: 80,
-                height: 80,
-                margin: "0 auto 24px",
-                borderRadius: 20,
-                background: "linear-gradient(135deg, #0066cc 0%, #00a8e8 100%)",
+                width: 64,
+                height: 64,
+                margin: "0 auto 20px",
+                borderRadius: 6,
+                background: "#0066CC",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 8px 24px rgba(0, 102, 204, 0.35)",
+                boxShadow: "0 2px 6px rgba(0, 102, 204, 0.2)",
               }}
             >
-              <DatabaseOutlined style={{ fontSize: 40, color: "#fff" }} />
+              <DatabaseOutlined style={{ fontSize: 32, color: "#fff" }} />
             </div>
 
             <Title
               level={2}
               style={{
                 margin: "0 0 8px 0",
-                fontWeight: 700,
-                color: token.colorText,
-                fontSize: 28,
+                fontWeight: 600,
+                color: "#111827",
+                fontSize: 24,
               }}
             >
               {getTitle(props.type)}
@@ -215,7 +183,7 @@ export function AuthPage(props: AuthPageProps) {
             <Text
               style={{
                 fontSize: 14,
-                color: token.colorTextSecondary,
+                color: "#6B7280",
                 display: "block",
               }}
             >
@@ -224,7 +192,7 @@ export function AuthPage(props: AuthPageProps) {
           </div>
 
           {/* Form Section */}
-          <div style={{ padding: "20px 40px 40px 40px" }}>
+          <div style={{ padding: "16px 32px 32px 32px" }}>
             {renderForm()}
             {renderFooter()}
           </div>
@@ -234,8 +202,8 @@ export function AuthPage(props: AuthPageProps) {
         <div
           style={{
             textAlign: "center",
-            marginTop: 24,
-            color: "rgba(255, 255, 255, 0.8)",
+            marginTop: 20,
+            color: "#9CA3AF",
             fontSize: 13,
           }}
         >

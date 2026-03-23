@@ -181,10 +181,10 @@ export default function TimeseriesList() {
           actions={
             <CreateButton
               style={{
-                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                background: "#0066CC",
                 border: "none",
                 height: "40px",
-                borderRadius: "10px",
+                borderRadius: 3,
                 fontWeight: 600,
               }}
               icon={<PlusOutlined />}
@@ -197,14 +197,14 @@ export default function TimeseriesList() {
         {/* Statistics Cards with Glassmorphism */}
         <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                    borderRadius: 3,
+                    background: "#0066CC",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -231,14 +231,14 @@ export default function TimeseriesList() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                    borderRadius: 3,
+                    background: "#3B82F6",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -261,14 +261,14 @@ export default function TimeseriesList() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                    borderRadius: 3,
+                    background: "#0EA5E9",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -295,14 +295,14 @@ export default function TimeseriesList() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                    borderRadius: 3,
+                    background: "#0066CC",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

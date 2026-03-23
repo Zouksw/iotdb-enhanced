@@ -93,10 +93,10 @@ const metrics = [
   { value: "10x", label: "Compression Ratio", icon: <DatabaseOutlined /> },
 ];
 
-const gradients = {
-  purple: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
-  blue: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-  sunset: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+const featureColors = {
+  purple: "#0066CC",
+  blue: "#3B82F6",
+  sunset: "#0EA5E9",
 };
 
 /**
@@ -237,8 +237,6 @@ export const Features: React.FC = () => {
             <Col xs={24} sm={12} lg={8} key={index}>
               <GlassCard
                 intensity="medium"
-                gradientBorder
-                gradient={feature.gradient}
                 style={{
                   height: "100%",
                   padding: "32px",
@@ -257,7 +255,7 @@ export const Features: React.FC = () => {
                     width: "56px",
                     height: "56px",
                     borderRadius: "14px",
-                    background: gradients[feature.gradient],
+                    background: featureColors[feature.gradient],
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

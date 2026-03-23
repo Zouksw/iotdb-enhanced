@@ -125,6 +125,8 @@ export const chartTooltipStyles = {
   padding: "12px",
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
   backdropFilter: "blur(8px)",
+  fontSize: 12,
+  color: chartColors.gray600,
 
   // Dark mode
   darkBackgroundColor: "rgba(31, 41, 55, 0.98)",
@@ -138,7 +140,7 @@ export const lineChartStyles = {
   dot: {
     r: 4,
     strokeWidth: 2,
-    fill: chartColors.white,
+    fill: "#FFFFFF",
   },
   activeDot: {
     r: 6,

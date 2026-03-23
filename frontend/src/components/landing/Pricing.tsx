@@ -79,10 +79,10 @@ const plans: PricingPlan[] = [
   },
 ];
 
-const gradients = {
-  purple: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
-  blue: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-  sunset: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+const planColors = {
+  purple: "#0066CC",
+  blue: "#3B82F6",
+  sunset: "#0EA5E9",
 };
 
 /**
@@ -139,8 +139,6 @@ export const Pricing: React.FC = () => {
             <Col xs={24} md={8} key={index}>
               <GlassCard
                 intensity={plan.popular ? "heavy" : "medium"}
-                gradientBorder={plan.popular}
-                gradient={plan.gradient}
                 style={{
                   height: "100%",
                   padding: plan.popular ? "40px 32px" : "32px",
@@ -156,7 +154,7 @@ export const Pricing: React.FC = () => {
                       top: "-12px",
                       left: "50%",
                       transform: "translateX(-50%)",
-                      background: gradients.purple,
+                      background: planColors.purple,
                       color: "#fff",
                       padding: "4px 16px",
                       borderRadius: "20px",
@@ -184,10 +182,7 @@ export const Pricing: React.FC = () => {
                     style={{
                       fontSize: "48px",
                       fontWeight: 700,
-                      background: gradients[plan.gradient],
-                      WebkitBackgroundClip: "text",
-                      WebkitTextFillColor: "transparent",
-                      backgroundClip: "text",
+                      color: planColors[plan.gradient],
                     }}
                   >
                     {plan.price}
@@ -226,7 +221,7 @@ export const Pricing: React.FC = () => {
                     borderRadius: "12px",
                     ...(plan.popular
                       ? {
-                          background: gradients.purple,
+                          background: planColors.purple,
                           border: "none",
                         }
                       : {}),

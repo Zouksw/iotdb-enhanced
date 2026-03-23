@@ -277,9 +277,9 @@ export default function AIPredictPage() {
                   block
                   icon={<RocketOutlined />}
                   style={{
-                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                    background: "#0066CC",
                     border: "none",
-                    borderRadius: "10px",
+                    borderRadius: 3,
                     fontWeight: 600,
                     height: "48px",
                   }}
@@ -293,8 +293,6 @@ export default function AIPredictPage() {
           {/* Model Info Card */}
           <GlassCard
             intensity="light"
-            gradientBorder
-            gradient="blue"
             style={{ marginTop: isMobile ? 16 : 24, padding: isMobile ? "16px" : "20px" }}
           >
             <div style={{ marginBottom: 16 }}>
@@ -388,7 +386,7 @@ export default function AIPredictPage() {
               </ContentCard>
 
               {/* Action Buttons */}
-              <Card style={{ marginTop: 24, borderRadius: 12 }}>
+              <Card style={{ marginTop: 24, borderRadius: 4 }}>
                 <Button
                   type="primary"
                   size="large"
@@ -412,7 +410,7 @@ export default function AIPredictPage() {
                   width: 80,
                   height: 80,
                   borderRadius: "50%",
-                  background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)",
+                  background: "#F3F4F6",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -425,7 +423,7 @@ export default function AIPredictPage() {
                 Ready to Predict
               </div>
               <div style={{ color: "#6b7280", fontSize: 13 }}>
-                Configure your prediction parameters and click "Generate Prediction" to start.
+                Configure your prediction parameters and click &quot;Generate Prediction&quot; to start.
               </div>
             </ContentCard>
           )}

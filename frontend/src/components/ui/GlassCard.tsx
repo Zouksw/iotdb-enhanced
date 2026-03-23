@@ -9,26 +9,7 @@ interface GlassCardProps extends CardProps {
    * @default "medium"
    */
   intensity?: "light" | "medium" | "heavy";
-
-  /**
-   * Whether to show a gradient border
-   * @default false
-   */
-  gradientBorder?: boolean;
-
-  /**
-   * Gradient to use for border (when gradientBorder is true)
-   * @default "purple"
-   */
-  gradient?: "purple" | "blue" | "sunset" | "success";
 }
-
-const gradients = {
-  purple: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
-  blue: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
-  sunset: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-  success: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-};
 
 const intensityStyles = {
   light: {
@@ -67,22 +48,21 @@ const darkIntensityStyles = {
 };
 
 /**
- * GlassCard - A modern glassmorphism card component
+ * GlassCard - A card component with subtle glassmorphism effect
  *
- * This component provides a frosted glass effect with blur, transparency,
- * and subtle borders. Perfect for modern SaaS interfaces.
+ * NOTE: Use sparingly. For most cases, use Ant Design Card with
+ * variant="borderless" instead. GlassCard is best for hero sections
+ * or special emphasis areas where visual distinction is needed.
  *
  * @example
  * ```tsx
- * <GlassCard intensity="medium" gradientBorder gradient="purple">
+ * <GlassCard intensity="medium">
  *   <p>Your content here</p>
  * </GlassCard>
  * ```
  */
 export const GlassCard: React.FC<GlassCardProps> = ({
   intensity = "medium",
-  gradientBorder = false,
-  gradient = "purple",
   children,
   className = "",
   style,
@@ -106,8 +86,6 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  const glassStyle = isDark ? darkIntensityStyles[intensity] : intensityStyles[intensity];
-
   const cardStyle: React.CSSProperties = {
     background: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(255, 255, 255, 0.8)",
     backdropFilter: "blur(10px)",
@@ -118,7 +96,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     borderRadius: 4,
     boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
     overflow: "hidden",
-    transition: "all 0.2s ease",
+    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
     ...style,
   };
 

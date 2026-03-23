@@ -377,9 +377,9 @@ export default function AlertList() {
                 onClick={handleMarkAllAsRead}
                 type="primary"
                 style={{
-                  background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                  background: "#0066CC",
                   border: "none",
-                  borderRadius: "10px",
+                  borderRadius: 3,
                   fontWeight: 600,
                 }}
               >
@@ -390,18 +390,18 @@ export default function AlertList() {
         }
       />
 
-      {/* Statistics Cards with Glassmorphism */}
+      {/* Statistics Cards */}
       {stats && (
         <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                    borderRadius: 3,
+                    background: "#0066CC",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -414,7 +414,7 @@ export default function AlertList() {
                   Total Alerts
                 </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
                 {stats.total}
               </div>
               <Text type="secondary" style={{ fontSize: "12px" }}>
@@ -424,16 +424,14 @@ export default function AlertList() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="blue" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
-                    borderRadius: "10px",
-                    background: stats.unread > 0
-                      ? "linear-gradient(135deg, #f5576c 0%, #f093fb 100%)"
-                      : "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                    borderRadius: 3,
+                    background: stats.unread > 0 ? "#EF4444" : "#3B82F6",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -446,7 +444,7 @@ export default function AlertList() {
                   Unread
                 </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
                 {stats.unread}
               </div>
               <Text
@@ -459,14 +457,14 @@ export default function AlertList() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="sunset" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+                    borderRadius: 3,
+                    background: "#F59E0B",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -479,7 +477,7 @@ export default function AlertList() {
                   Errors
                 </Text>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
                 {stats.bySeverity.ERROR || 0}
               </div>
               <Text type="danger" style={{ fontSize: "12px" }}>
@@ -489,14 +487,14 @@ export default function AlertList() {
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
               <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
                 <div
                   style={{
                     width: "40px",
                     height: "40px",
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                    borderRadius: 3,
+                    background: "#F59E0B",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

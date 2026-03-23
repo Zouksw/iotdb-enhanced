@@ -190,14 +190,14 @@ export default function AIModelsPage() {
       {/* Statistics Card */}
       <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
         <Col xs={24} sm={12}>
-          <GlassCard intensity="medium" gradientBorder gradient="purple" style={{ padding: isMobile ? "16px" : "20px" }}>
+          <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
             <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
               <div
                 style={{
                   width: "40px",
                   height: "40px",
-                  borderRadius: "10px",
-                  background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                  borderRadius: 3,
+                  background: "#0066CC",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
