@@ -20,6 +20,15 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
+import {
+  chartColors,
+  chartTooltipStyles,
+  chartGridStyles,
+  chartAxisStyles,
+  lineChartStyles,
+  referenceLineStyles,
+  chartAnimations,
+} from "@/lib/chart-config";
 
 const { Text } = Typography;
 const { useToken } = theme;
@@ -207,17 +216,18 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
       return (
         <div
           style={{
-            background: "rgba(255, 255, 255, 0.95)",
-            border: "1px solid #e5e7eb",
-            borderRadius: 8,
-            padding: "12px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            backgroundColor: chartTooltipStyles.backgroundColor,
+            border: chartTooltipStyles.border,
+            borderRadius: chartTooltipStyles.borderRadius,
+            padding: chartTooltipStyles.padding,
+            boxShadow: chartTooltipStyles.boxShadow,
+            backdropFilter: chartTooltipStyles.backdropFilter,
           }}
         >
-          <p style={{ margin: 0, fontSize: 12, color: "#6b7280" }}>
+          <p style={{ margin: 0, fontSize: chartTooltipStyles.fontSize, color: chartTooltipStyles.color }}>
             {formatTimestamp(payload[0].payload.timestamp)}
           </p>
-          <p style={{ margin: "4px 0 0 0", fontSize: 14, fontWeight: 600, color: "#1f2937" }}>
+          <p style={{ margin: "4px 0 0 0", fontSize: 14, fontWeight: 600, color: chartColors.gray900 }}>
             Value: {formatValue(payload[0].value)}
           </p>
         </div>
@@ -229,7 +239,7 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
   return (
     <Card
       variant="borderless"
-      style={{ borderRadius: 12 }}
+      style={{ borderRadius: 4 }}
       styles={{ body: { padding: "20px" } }}
     >
       {/* Header */}
@@ -323,52 +333,56 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
           <div
             style={{
               padding: "12px",
-              background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-              borderRadius: 8,
+              background: chartColors.warning,
+              borderRadius: 4,
               textAlign: "center",
+              opacity: 0.15,
             }}
           >
-            <div style={{ fontSize: 11, color: "#92400e", marginBottom: 4 }}>Current</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#78350f" }}>
+            <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Current</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
               {formatValue(statistics.last)}
             </div>
           </div>
           <div
             style={{
               padding: "12px",
-              background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
-              borderRadius: 8,
+              background: chartColors.success,
+              borderRadius: 4,
               textAlign: "center",
+              opacity: 0.15,
             }}
           >
-            <div style={{ fontSize: 11, color: "#065f46", marginBottom: 4 }}>Min</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#064e3b" }}>
+            <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Min</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
               {formatValue(statistics.min)}
             </div>
           </div>
           <div
             style={{
               padding: "12px",
-              background: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
-              borderRadius: 8,
+              background: chartColors.primary,
+              borderRadius: 4,
               textAlign: "center",
+              opacity: 0.15,
             }}
           >
-            <div style={{ fontSize: 11, color: "#1e40af", marginBottom: 4 }}>Max</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#1e3a8a" }}>
+            <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Max</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
               {formatValue(statistics.max)}
             </div>
           </div>
           <div
             style={{
               padding: "12px",
-              background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
-              borderRadius: 8,
+              background: chartColors.purple,
+              borderRadius: 4,
               textAlign: "center",
+              opacity: 0.15,
             }}
           >
-            <div style={{ fontSize: 11, color: "#3730a3", marginBottom: 4 }}>Mean</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#312e81" }}>
+            <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Mean</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
               {formatValue(statistics.mean)}
             </div>
           </div>
@@ -383,8 +397,8 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "#f9fafb",
-            borderRadius: 8,
+            background: chartColors.gray50,
+            borderRadius: 4,
           }}
         >
           <div style={{ textAlign: "center", color: "#9ca3af" }}>
@@ -397,48 +411,55 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
       ) : (
         <ResponsiveContainer width="100%" height={height}>
           <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid
+              strokeDasharray={chartGridStyles.strokeDasharray}
+              stroke={chartGridStyles.stroke}
+              strokeWidth={chartGridStyles.strokeWidth}
+            />
             <XAxis
               dataKey="timestamp"
               tickFormatter={formatTimestamp}
-              stroke="#6b7280"
-              tick={{ fontSize: 11 }}
+              stroke={chartAxisStyles.stroke}
+              tick={chartAxisStyles.tick}
             />
             <YAxis
               tickFormatter={formatValue}
-              stroke="#6b7280"
-              tick={{ fontSize: 11 }}
+              stroke={chartAxisStyles.stroke}
+              tick={chartAxisStyles.tick}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Line
               type="monotone"
               dataKey="value"
-              stroke={token.colorPrimary}
-              strokeWidth={2}
+              stroke={lineChartStyles.stroke}
+              strokeWidth={lineChartStyles.strokeWidth}
               dot={false}
-              activeDot={{ r: 6, fill: token.colorPrimary, stroke: token.colorBgElevated, strokeWidth: 2 }}
-              animationDuration={300}
+              activeDot={lineChartStyles.activeDot}
+              animationDuration={chartAnimations.duration}
             />
             {statistics && (
               <>
                 <ReferenceLine
                   y={statistics.mean}
-                  stroke="#8b5cf6"
-                  strokeDasharray="3 3"
-                  label={{ value: "Mean", fill: "#8b5cf6", fontSize: 11 }}
+                  stroke={referenceLineStyles.stroke}
+                  strokeDasharray={referenceLineStyles.strokeDasharray}
+                  strokeWidth={referenceLineStyles.strokeWidth}
+                  label={{ value: "Mean", fill: chartColors.purple, fontSize: referenceLineStyles.label.fontSize, fontWeight: referenceLineStyles.label.fontWeight }}
                 />
                 <ReferenceLine
                   y={statistics.mean + statistics.std}
-                  stroke="#f59e0b"
-                  strokeDasharray="3 3"
-                  label={{ value: "+1σ", fill: "#f59e0b", fontSize: 11 }}
+                  stroke={chartColors.warning}
+                  strokeDasharray={referenceLineStyles.strokeDasharray}
+                  strokeWidth={referenceLineStyles.strokeWidth}
+                  label={{ value: "+1σ", fill: chartColors.warning, fontSize: referenceLineStyles.label.fontSize, fontWeight: referenceLineStyles.label.fontWeight }}
                 />
                 <ReferenceLine
                   y={statistics.mean - statistics.std}
-                  stroke="#f59e0b"
-                  strokeDasharray="3 3"
-                  label={{ value: "-1σ", fill: "#f59e0b", fontSize: 11 }}
+                  stroke={chartColors.warning}
+                  strokeDasharray={referenceLineStyles.strokeDasharray}
+                  strokeWidth={referenceLineStyles.strokeWidth}
+                  label={{ value: "-1σ", fill: chartColors.warning, fontSize: referenceLineStyles.label.fontSize, fontWeight: referenceLineStyles.label.fontWeight }}
                 />
               </>
             )}

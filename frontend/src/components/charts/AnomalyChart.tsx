@@ -25,6 +25,14 @@ import {
     CompressOutlined,
     WarningOutlined,
 } from "@ant-design/icons";
+import {
+    chartColors,
+    chartTooltipStyles,
+    chartGridStyles,
+    chartAxisStyles,
+    lineChartStyles,
+    chartAnimations,
+} from "@/lib/chart-config";
 
 const { Text } = Typography;
 
@@ -54,17 +62,17 @@ interface AnomalyChartProps {
 }
 
 const severityColors = {
-    LOW: "#10B981",
-    MEDIUM: "#F59E0B",
-    HIGH: "#EF4444",
-    CRITICAL: "#8B5CF6",
+    LOW: chartColors.success,
+    MEDIUM: chartColors.warning,
+    HIGH: chartColors.error,
+    CRITICAL: chartColors.purple,
 };
 
 const severityFillColors = {
-    LOW: "rgba(16, 185, 129, 0.7)",
-    MEDIUM: "rgba(245, 158, 11, 0.7)",
-    HIGH: "rgba(239, 68, 68, 0.7)",
-    CRITICAL: "rgba(139, 92, 246, 0.7)",
+    LOW: `${chartColors.success}B3`, // 70% opacity
+    MEDIUM: `${chartColors.warning}B3`,
+    HIGH: `${chartColors.error}B3`,
+    CRITICAL: `${chartColors.purple}B3`,
 };
 
 export const AnomalyChart: React.FC<AnomalyChartProps> = ({
@@ -217,18 +225,19 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
             return (
                 <div
                     style={{
-                        background: "rgba(255, 255, 255, 0.98)",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 8,
-                        padding: "12px",
-                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                        backgroundColor: chartTooltipStyles.backgroundColor,
+                        border: chartTooltipStyles.border,
+                        borderRadius: chartTooltipStyles.borderRadius,
+                        padding: chartTooltipStyles.padding,
+                        boxShadow: chartTooltipStyles.boxShadow,
+                        backdropFilter: chartTooltipStyles.backdropFilter,
                         minWidth: 200,
                     }}
                 >
-                    <p style={{ margin: 0, fontSize: 12, color: "#6b7280", marginBottom: 8 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: chartColors.gray600, marginBottom: 8 }}>
                         {formatTimestamp(data.timestamp)}
                     </p>
-                    <p style={{ margin: "4px 0 0 0", fontSize: 14, fontWeight: 600, color: "#1f2937" }}>
+                    <p style={{ margin: "4px 0 0 0", fontSize: 14, fontWeight: 600, color: chartColors.gray900 }}>
                         Value: {formatValue(data.value)}
                     </p>
                     {data.isAnomaly && (
@@ -238,7 +247,7 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                                     {data.anomalySeverity} SEVERITY
                                 </Tag>
                             </p>
-                            <p style={{ margin: "4px 0 0 0", fontSize: 11, color: "#6b7280" }}>
+                            <p style={{ margin: "4px 0 0 0", fontSize: 11, color: chartColors.gray600 }}>
                                 Anomaly Score: {data.anomalyScore?.toFixed(4)}
                             </p>
                         </>
@@ -253,7 +262,7 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
         return (
             <Card
                 variant="borderless"
-                style={{ borderRadius: 12 }}
+                style={{ borderRadius: 4 }}
                 styles={{ body: { padding: "40px", textAlign: "center" } }}
             >
                 <Spin size="large" tip="Loading anomaly data..." />
@@ -265,7 +274,7 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
         <div ref={chartRef}>
             <Card
                 variant="borderless"
-                style={{ borderRadius: 12 }}
+                style={{ borderRadius: 4 }}
                 styles={{ body: { padding: expanded ? "24px" : "20px" } }}
             >
                 {/* Header */}
@@ -349,52 +358,56 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                         <div
                             style={{
                                 padding: "12px",
-                                background: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
-                                borderRadius: 8,
+                                background: chartColors.purple,
+                                borderRadius: 4,
                                 textAlign: "center",
+                                opacity: 0.15,
                             }}
                         >
-                            <div style={{ fontSize: 11, color: "#3730a3", marginBottom: 4 }}>Mean</div>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: "#312e81" }}>
+                            <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Mean</div>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
                                 {formatValue(stats.mean)}
                             </div>
                         </div>
                         <div
                             style={{
                                 padding: "12px",
-                                background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
-                                borderRadius: 8,
+                                background: chartColors.success,
+                                borderRadius: 4,
                                 textAlign: "center",
+                                opacity: 0.15,
                             }}
                         >
-                            <div style={{ fontSize: 11, color: "#065f46", marginBottom: 4 }}>Std Dev</div>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: "#064e3b" }}>
+                            <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Std Dev</div>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
                                 {formatValue(stats.std)}
                             </div>
                         </div>
                         <div
                             style={{
                                 padding: "12px",
-                                background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-                                borderRadius: 8,
+                                background: chartColors.warning,
+                                borderRadius: 4,
                                 textAlign: "center",
+                                opacity: 0.15,
                             }}
                         >
-                            <div style={{ fontSize: 11, color: "#92400e", marginBottom: 4 }}>Range</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: "#78350f" }}>
+                            <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Range</div>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: chartColors.gray900 }}>
                                 {formatValue(stats.min)} - {formatValue(stats.max)}
                             </div>
                         </div>
                         <div
                             style={{
                                 padding: "12px",
-                                background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
-                                borderRadius: 8,
+                                background: chartColors.error,
+                                borderRadius: 4,
                                 textAlign: "center",
+                                opacity: 0.15,
                             }}
                         >
-                            <div style={{ fontSize: 11, color: "#991b1b", marginBottom: 4 }}>Anomalies</div>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: "#7f1d1d" }}>
+                            <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Anomalies</div>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
                                 {anomalyStats.total}
                             </div>
                         </div>
@@ -404,17 +417,21 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                 {/* Chart */}
                 <ResponsiveContainer width="100%" height={expanded ? height * 1.5 : height}>
                     <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <CartesianGrid
+                            strokeDasharray={chartGridStyles.strokeDasharray}
+                            stroke={chartGridStyles.stroke}
+                            strokeWidth={chartGridStyles.strokeWidth}
+                        />
                         <XAxis
                             dataKey="timestamp"
                             tickFormatter={formatTimestamp}
-                            stroke="#6b7280"
-                            tick={{ fontSize: 11 }}
+                            stroke={chartAxisStyles.stroke}
+                            tick={chartAxisStyles.tick}
                         />
                         <YAxis
                             tickFormatter={formatValue}
-                            stroke="#6b7280"
-                            tick={{ fontSize: 11 }}
+                            stroke={chartAxisStyles.stroke}
+                            tick={chartAxisStyles.tick}
                         />
                         <Tooltip content={<CustomTooltip />} />
                         <Legend />
@@ -423,12 +440,12 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                         <Line
                             type="monotone"
                             dataKey="value"
-                            stroke="#3b82f6"
-                            strokeWidth={2}
+                            stroke={lineChartStyles.stroke}
+                            strokeWidth={lineChartStyles.strokeWidth}
                             dot={false}
-                            activeDot={{ r: 4, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+                            activeDot={lineChartStyles.activeDot}
                             isAnimationActive={true}
-                            animationDuration={500}
+                            animationDuration={chartAnimations.duration}
                             name="Time Series"
                         />
 
@@ -451,14 +468,14 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                 {/* Legend info */}
                 <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 24, fontSize: 12 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ width: 20, height: 3, background: "#3b82f6" }} />
-                        <span style={{ color: "#6b7280" }}>Time Series Data</span>
+                        <div style={{ width: 20, height: 3, background: lineChartStyles.stroke }} />
+                        <span style={{ color: chartColors.gray600 }}>Time Series Data</span>
                     </div>
                     {Object.entries(severityColors).map(([severity, color]) => (
                         anomalyStats.bySeverity[severity] > 0 && (
                             <div key={severity} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <div style={{ width: 12, height: 12, borderRadius: "50%", background: color }} />
-                                <span style={{ color: "#6b7280" }}>{severity} Severity</span>
+                                <span style={{ color: chartColors.gray600 }}>{severity} Severity</span>
                             </div>
                         )
                     )).filter(Boolean)}
