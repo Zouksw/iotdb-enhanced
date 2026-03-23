@@ -136,8 +136,8 @@ export default function DashboardPage() {
           <Col xs={24}>
             <div
               style={{
-                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #00a8e8 100%)",
-                borderRadius: 12,
+                background: "#0066CC",
+                borderRadius: 4,
                 padding: isMobile ? "16px 20px" : "20px 24px",
                 color: "white",
               }}
