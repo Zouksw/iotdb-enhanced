@@ -30,7 +30,7 @@ export function AuthPage(props: AuthPageProps) {
         return (
           <div style={{ textAlign: "center", marginTop: 16 }}>
             <Text style={{ fontSize: 14, color: token.colorTextSecondary }}>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 onClick={() => router.push("/register")}
                 style={{ cursor: "pointer", fontWeight: 500 }}

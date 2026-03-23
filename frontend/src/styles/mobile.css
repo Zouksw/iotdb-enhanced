@@ -1,0 +1,560 @@
+/**
+ * Mobile-Only Styles
+ *
+ * Enhanced experience for mobile users (below 1024px).
+ * Includes touch gestures, haptic feedback, and mobile-specific features.
+ */
+
+/* ==========================================================================
+   MOBILE NAVIGATION (Bottom Tab Bar)
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* Bottom tab bar */
+  .mobile-tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(56px + env(safe-area-inset-bottom));
+    background: #FFFFFF;
+    border-top: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding-top: 8px;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1000;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Tab bar item */
+  .mobile-tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    color: #6B7280;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-tab-item:active {
+    transform: scale(0.95);
+  }
+
+  .mobile-tab-item.active {
+    color: #0066CC;
+  }
+
+  .mobile-tab-item-icon {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  /* Main content padding for bottom tab bar */
+  .mobile-with-tab-bar {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom) + 16px);
+  }
+
+  /* Hide sidebar on mobile */
+  .desktop-sidebar {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   MOBILE HEADER
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* Mobile header */
+  .mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E5E7EB;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 56px;
+  }
+
+  /* Header title */
+  .mobile-header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  /* Header action button */
+  .mobile-header-action {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-header-action:active {
+    background: #F3F4F6;
+  }
+}
+
+/* ==========================================================================
+   MOBILE TOUCH INTERACTIONS
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* Remove tap highlight */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Touch feedback animation */
+  @keyframes touchRipple {
+    0% {
+      opacity: 0.3;
+      transform: scale(0.8);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(2);
+    }
+  }
+
+  .touch-feedback {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .touch-feedback::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100px;
+    height: 100px;
+    background: rgba(0, 102, 204, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+  }
+
+  .touch-feedback:active::after {
+    animation: touchRipple 0.4s ease-out;
+  }
+
+  /* Button touch optimization */
+  .ant-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Card swipe hint */
+  .mobile-swipeable {
+    position: relative;
+  }
+
+  .mobile-swipeable::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(
+      to right,
+      rgba(0, 102, 204, 0.3),
+      transparent
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .mobile-swipeable.swiping::before {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   MOBILE TABLE LAYOUT
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* Hide desktop table */
+  .desktop-table {
+    display: none;
+  }
+
+  /* Mobile card-based table */
+  .mobile-table-cards {
+    display: block;
+  }
+
+  /* Table card */
+  .mobile-table-card {
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Swipe actions container */
+  .mobile-table-card-actions {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+
+  .mobile-table-card.swiped .mobile-table-card-actions {
+    transform: translateX(0);
+  }
+
+  /* Action button */
+  .mobile-swipe-action {
+    width: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .mobile-swipe-action.delete {
+    background: #EF4444;
+  }
+
+  .mobile-swipe-action.edit {
+    background: #0066CC;
+  }
+}
+
+/* ==========================================================================
+   MOBILE FORM LAYOUT
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* Form input enhancement */
+  .ant-input,
+  .ant-select-selector {
+    min-height: 48px;
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
+  /* Form label */
+  .ant-form-item-label > label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  /* Submit button */
+  .ant-btn-primary {
+    height: 52px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* Form spacing */
+  .ant-form-item {
+    margin-bottom: 20px;
+  }
+}
+
+/* ==========================================================================
+   MOBILE MODAL & DRAWER
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* Full-screen modal on mobile */
+  .ant-modal {
+    max-width: 100%;
+    top: 0;
+    padding: 0;
+  }
+
+  .ant-modal-content {
+    border-radius: 0;
+    height: 100vh;
+  }
+
+  /* Bottom sheet */
+  .mobile-bottom-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #FFFFFF;
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1100;
+  }
+
+  .mobile-bottom-sheet.open {
+    transform: translateY(0);
+  }
+
+  /* Bottom sheet handle */
+  .mobile-bottom-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: #E5E7EB;
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  /* Backdrop */
+  .mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1050;
+  }
+
+  .mobile-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* ==========================================================================
+   MOBILE GESTURE INDICATORS
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* Swipe up indicator */
+  @keyframes swipeUpHint {
+    0%, 100% {
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+    50% {
+      transform: translateY(-8px);
+      opacity: 1;
+    }
+  }
+
+  .mobile-swipe-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    animation: swipeUpHint 2s ease-in-out infinite;
+  }
+
+  .mobile-swipe-hint-icon {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #6B7280;
+    border-radius: 50%;
+    position: relative;
+  }
+
+  .mobile-swipe-hint-icon::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 8px solid #6B7280;
+  }
+
+  .mobile-swipe-hint-text {
+    font-size: 12px;
+    color: #6B7280;
+  }
+}
+
+/* ==========================================================================
+   MOBILE PULL TO REFRESH
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  .mobile-pull-refresh {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mobile-pull-refresh-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F9FAFB;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .mobile-pull-refresh.loading .mobile-pull-refresh-indicator {
+    transform: translateY(0);
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .mobile-pull-refresh-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #E5E7EB;
+    border-top-color: #0066CC;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+/* ==========================================================================
+   MOBILE SAFE AREAS
+   ========================================================================== */
+
+/* Support for notched devices (iPhone X+, etc.) */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .mobile-safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .mobile-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Fixed elements with safe area */
+  .mobile-fixed-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ==========================================================================
+   MOBILE ORIENTATION OPTIMIZATIONS
+   ========================================================================== */
+
+/* Landscape mode */
+@media (max-width: 1023px) and (orientation: landscape) {
+  .mobile-tab-bar {
+    height: calc(48px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-header {
+    min-height: 48px;
+    padding: 8px 16px;
+  }
+
+  .mobile-header-title {
+    font-size: 16px;
+  }
+
+  /* Reduce padding in landscape */
+  .page-container {
+    padding: 12px 16px;
+  }
+}
+
+/* Portrait mode */
+@media (max-width: 1023px) and (orientation: portrait) {
+  /* Optimize for portrait */
+  .mobile-stats-card {
+    min-height: 120px;
+  }
+}
+
+/* ==========================================================================
+   MOBILE DARK MODE SUPPORT
+   ========================================================================== */
+
+@media (max-width: 1023px) and (prefers-color-scheme: dark) {
+  .mobile-tab-bar {
+    background: #1F2937;
+    border-top-color: #374151;
+  }
+
+  .mobile-header {
+    background: #1F2937;
+    border-bottom-color: #374151;
+  }
+
+  .mobile-table-card {
+    background: #1F2937;
+    border-color: #374151;
+  }
+}
+
+/* ==========================================================================
+   MOBILE ACCESSIBILITY
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-tab-item,
+    .touch-feedback::after,
+    .mobile-table-card-actions,
+    .mobile-bottom-sheet,
+    .mobile-backdrop,
+    .mobile-pull-refresh-indicator {
+      transition: none;
+      animation: none;
+    }
+
+    .mobile-swipe-hint {
+      animation: none;
+    }
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .mobile-tab-item {
+      border-bottom: 2px solid transparent;
+    }
+
+    .mobile-tab-item.active {
+      border-bottom-color: currentColor;
+    }
+  }
+}
