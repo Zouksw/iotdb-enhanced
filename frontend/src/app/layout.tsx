@@ -237,6 +237,7 @@ export default function RootLayout({
                     options={{
                       syncWithLocation: true,
                       warnWhenUnsavedChanges: true,
+                      disableTelemetry: true,
                     }}
                   >
                     <main id="main-content">
