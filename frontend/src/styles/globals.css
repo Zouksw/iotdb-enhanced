@@ -1068,6 +1068,49 @@ h1, h2, h3, h4, h5, h6 {
   text-wrap: balance;
 }
 
+/* Page Transition Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Apply fade-in animation to main content */
+.page-container,
+main,
+[data-page-container] {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fade in for cards */
+.ant-card {
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .page-container,
+  main,
+  [data-page-container],
+  .ant-card {
+    animation: none;
+  }
+}
+
 /* Smooth Scroll */
 html {
   scroll-behavior: smooth;
