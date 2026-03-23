@@ -245,11 +245,11 @@ export const spacing = {
 // ============================================================================
 
 export const borderRadius = {
-  XS: 4, // Small elements: tags, badges
-  SM: 6, // Inputs, buttons
-  MD: 8, // Cards, panels
-  LG: 12, // Large cards, modals
-  XL: 16, // Hero sections, special containers
+  XS: 2, // Small elements: tags, badges
+  SM: 3, // Inputs, buttons
+  MD: 4, // Cards, panels - reduced from 8 for more professional look
+  LG: 6, // Large cards, modals - reduced from 12
+  XL: 8, // Hero sections, special containers - reduced from 16
   Full: 9999, // Pills, avatar circles
 };
 
@@ -258,23 +258,23 @@ export const borderRadius = {
 // ============================================================================
 
 export const shadows = {
-  // Light shadows (subtle depth)
-  XS: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-  SM: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)",
-  MD: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
-  LG: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)",
-  XL: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+  // Light shadows (subtle depth) - lighter for cleaner look
+  XS: "0 1px 2px 0 rgba(0, 0, 0, 0.03)",
+  SM: "0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+  MD: "0 2px 4px 0 rgba(0, 0, 0, 0.08)",
+  LG: "0 4px 8px 0 rgba(0, 0, 0, 0.08)",
+  XL: "0 8px 16px 0 rgba(0, 0, 0, 0.08)",
 
   // Dark mode shadows (more opaque)
-  darkSM: "0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3)",
-  darkMD: "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3)",
-  darkLG: "0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3)",
+  darkSM: "0 1px 3px 0 rgba(0, 0, 0, 0.4)",
+  darkMD: "0 4px 6px -1px rgba(0, 0, 0, 0.4)",
+  darkLG: "0 10px 15px -3px rgba(0, 0, 0, 0.4)",
 
-  // Colored shadows for accents
-  primary: "0 4px 14px 0 rgba(0, 102, 204, 0.15)",
-  success: "0 4px 14px 0 rgba(16, 185, 129, 0.15)",
-  warning: "0 4px 14px 0 rgba(245, 158, 11, 0.15)",
-  error: "0 4px 14px 0 rgba(239, 68, 68, 0.15)",
+  // Colored shadows for accents - lighter
+  primary: "0 2px 8px 0 rgba(0, 102, 204, 0.12)",
+  success: "0 2px 8px 0 rgba(16, 185, 129, 0.12)",
+  warning: "0 2px 8px 0 rgba(245, 158, 11, 0.12)",
+  error: "0 2px 8px 0 rgba(239, 68, 68, 0.12)",
 };
 
 // ============================================================================
@@ -289,34 +289,34 @@ export const componentTokens = {
   buttonPaddingSM: "0.5rem 1rem",
   buttonPaddingMD: "0.625rem 1.25rem",
   buttonPaddingLG: "0.75rem 1.5rem",
-  buttonBorderRadius: 6,
+  buttonBorderRadius: 3, // Reduced from 6
 
   // Input
   inputHeightSM: 32,
   inputHeightMD: 40,
   inputHeightLG: 48,
   inputPadding: "0.625rem 0.875rem",
-  inputBorderRadius: 6,
+  inputBorderRadius: 3, // Reduced from 6
 
   // Card
   cardPadding: "1.5rem",
-  cardBorderRadius: 12,
+  cardBorderRadius: 4, // Reduced from 12
   cardMarginBottom: "1.5rem",
 
   // Table
   tableHeaderBg: "transparent",
   tableCellPadding: "1rem 1.25rem",
   tableRowHoverBg: "rgba(0, 102, 204, 0.04)",
-  tableBorderRadius: 8,
+  tableBorderRadius: 4, // Reduced from 8
 
   // Modal
-  modalBorderRadius: 12,
+  modalBorderRadius: 6, // Reduced from 12
   modalPadding: "1.5rem",
   modalHeaderPadding: "1.5rem 1.5rem 1rem",
   modalFooterPadding: "1rem 1.5rem 1.5rem",
 
   // Tag/Badge
-  tagBorderRadius: 4,
+  tagBorderRadius: 2, // Reduced from 4
   tagPaddingXS: "0.125rem 0.5rem",
   tagPaddingSM: "0.25rem 0.625rem",
   tagPaddingMD: "0.375rem 0.75rem",
