@@ -109,26 +109,18 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   const glassStyle = isDark ? darkIntensityStyles[intensity] : intensityStyles[intensity];
 
   const cardStyle: React.CSSProperties = {
-    ...glassStyle,
-    border: gradientBorder
-      ? "1px solid transparent"
-      : isDark
-        ? "1px solid rgba(255, 255, 255, 0.1)"
-        : "1px solid rgba(255, 255, 255, 0.3)",
-    borderRadius: "16px",
-    boxShadow: isDark
-      ? "0 8px 32px rgba(0, 0, 0, 0.3)"
-      : "0 8px 32px rgba(31, 38, 135, 0.1)",
+    background: isDark ? "rgba(30, 41, 59, 0.8)" : "rgba(255, 255, 255, 0.8)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    border: isDark
+      ? "1px solid rgba(255, 255, 255, 0.1)"
+      : "1px solid rgba(0, 0, 0, 0.06)",
+    borderRadius: 4,
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
     overflow: "hidden",
-    transition: "all 0.3s ease",
+    transition: "all 0.2s ease",
     ...style,
   };
-
-  if (gradientBorder) {
-    cardStyle.backgroundImage = gradients[gradient];
-    cardStyle.backgroundOrigin = "border-box";
-    cardStyle.backgroundClip = "padding-box, border-box";
-  }
 
   const cardClassName = `glass-card glass-card--${intensity} ${className}`.trim();
 

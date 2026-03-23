@@ -36,8 +36,8 @@ export const ContentCard: React.FC<ContentCardProps> = ({
   const { token } = theme.useToken();
 
   const cardStyle: React.CSSProperties = {
-    borderRadius: token.borderRadiusLG,
-    boxShadow: token.boxShadow,
+    borderRadius: 4,
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
     marginBottom: token.marginLG,
   };
 

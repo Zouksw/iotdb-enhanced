@@ -84,9 +84,9 @@ export const StatCard: React.FC<StatCardProps> = ({
   const colors = variantColors[variant];
 
   const cardStyle: React.CSSProperties = {
-    borderRadius: token.borderRadiusLG,
-    boxShadow: token.boxShadow,
-    borderLeft: `3px solid ${colors.border}`,
+    borderRadius: 4,
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
+    borderLeft: `2px solid ${colors.border}`,
     cursor: onClick ? "pointer" : "default",
     transition: "all 0.2s ease",
     height: "100%",
