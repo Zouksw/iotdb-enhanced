@@ -333,56 +333,56 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
           <div
             style={{
               padding: "12px",
-              background: chartColors.warning,
+              background: "#FFFFFF",
+              border: "1px solid #E5E7EB",
               borderRadius: 4,
               textAlign: "center",
-              opacity: 0.15,
             }}
           >
             <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Current</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.warning }}>
               {formatValue(statistics.last)}
             </div>
           </div>
           <div
             style={{
               padding: "12px",
-              background: chartColors.success,
+              background: "#FFFFFF",
+              border: "1px solid #E5E7EB",
               borderRadius: 4,
               textAlign: "center",
-              opacity: 0.15,
             }}
           >
             <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Min</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.success }}>
               {formatValue(statistics.min)}
             </div>
           </div>
           <div
             style={{
               padding: "12px",
-              background: chartColors.primary,
+              background: "#FFFFFF",
+              border: "1px solid #E5E7EB",
               borderRadius: 4,
               textAlign: "center",
-              opacity: 0.15,
             }}
           >
             <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Max</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.primary }}>
               {formatValue(statistics.max)}
             </div>
           </div>
           <div
             style={{
               padding: "12px",
-              background: chartColors.purple,
+              background: "#FFFFFF",
+              border: "1px solid #E5E7EB",
               borderRadius: 4,
               textAlign: "center",
-              opacity: 0.15,
             }}
           >
             <div style={{ fontSize: 11, color: chartColors.gray600, marginBottom: 4, fontWeight: 500 }}>Mean</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.gray900 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, color: chartColors.purple }}>
               {formatValue(statistics.mean)}
             </div>
           </div>
