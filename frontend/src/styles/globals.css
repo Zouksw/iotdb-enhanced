@@ -1126,3 +1126,39 @@ html {
   background: rgba(59, 130, 246, 0.3);
   color: inherit;
 }
+
+/* ==========================================================================
+   SKELETON SHIMMER ANIMATION
+   ========================================================================== */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Apply shimmer animation to skeleton components */
+.ant-skeleton-active {
+  background: linear-gradient(
+    90deg,
+    #F3F4F6 0%,
+    #E5E7EB 20%,
+    #F3F4F6 40%,
+    #E5E7EB 60%,
+    #F3F4F6 80%,
+    #E5E7EB 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Respect prefers-reduced-motion for skeleton animations */
+@media (prefers-reduced-motion: reduce) {
+  .ant-skeleton-active {
+    animation: none;
+    background: #E5E7EB;
+  }
+}
