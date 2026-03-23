@@ -108,7 +108,9 @@ export default function AnomalyList() {
       align: "right" as const,
       responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (val: number) => (
-        <NumberField value={Number(val) || 0} options={{ notation: "standard" }} />
+        <span style={{ fontVariantNumeric: "tabular-nums" }}>
+          <NumberField value={Number(val) || 0} options={{ notation: "standard" }} />
+        </span>
       ),
     },
     {
@@ -117,7 +119,7 @@ export default function AnomalyList() {
       width: 160,
       responsive: ["lg", "xl"] as Breakpoint[],
       render: (_: any, record: any) => (
-        <span style={{ fontSize: 13, color: "#6B7280" }}>
+        <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, color: "#6B7280" }}>
           {record.minExpected} - {record.maxExpected}
         </span>
       ),

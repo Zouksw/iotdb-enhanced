@@ -126,7 +126,7 @@ export default function TimeseriesList() {
       sorter: true,
       responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (count: number) => (
-        <span style={{ fontFamily: "monospace", fontSize: 13 }}>
+        <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13 }}>
           {(count ?? 0).toLocaleString()}
         </span>
       ),
