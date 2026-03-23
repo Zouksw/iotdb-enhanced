@@ -469,14 +469,6 @@ export default function AlertList() {
               </div>
             </GlassCard>
           </Col>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
-                {stats.bySeverity.WARNING || 0}
-              </div>
-              <Text type="warning" style={{ fontSize: "12px" }}>
-                Need review
-              </Text>
-            </GlassCard>
-          </Col>
         </Row>
       )}
 

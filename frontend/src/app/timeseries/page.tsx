@@ -271,7 +271,6 @@ export default function TimeseriesList() {
               </Text>
             </GlassCard>
           </Col>
-          </Col>
 
           <Col xs={12} sm={12} md={6}>
             <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
