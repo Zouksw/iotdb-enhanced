@@ -146,10 +146,10 @@ export const Hero: React.FC = () => {
               padding: "0 32px",
               fontSize: "16px",
               fontWeight: 600,
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+              borderRadius: "4px",
+              background: "#0066CC",
               border: "none",
-              boxShadow: "0 4px 20px rgba(0, 102, 204, 0.35)",
+              boxShadow: "0 2px 8px rgba(0, 102, 204, 0.15)",
             }}
             href="/register"
           >

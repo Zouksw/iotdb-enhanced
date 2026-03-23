@@ -282,9 +282,9 @@ export const DataExport: React.FC<DataExportProps> = ({
           icon={<CloudDownloadOutlined />}
           size="large"
           style={{
-            background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+            background: "#0066CC",
             border: "none",
-            borderRadius: "10px",
+            borderRadius: "3px",
             fontWeight: 600,
           }}
         >

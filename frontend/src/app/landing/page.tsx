@@ -93,9 +93,9 @@ export default function LandingPage() {
             <Button
               type="primary"
               style={{
-                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                background: "#0066CC",
                 border: "none",
-                borderRadius: "8px",
+                borderRadius: "3px",
                 height: "40px",
                 padding: "0 20px",
               }}
@@ -126,7 +126,7 @@ export default function LandingPage() {
       <section
         style={{
           padding: "100px 24px",
-          background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+          background: "#0066CC",
           textAlign: "center",
         }}
       >
