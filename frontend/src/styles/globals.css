@@ -1063,6 +1063,11 @@ textarea {
   outline-color: #3b82f6;
 }
 
+/* Text Wrap Balance for Better Headings */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
 /* Smooth Scroll */
 html {
   scroll-behavior: smooth;
