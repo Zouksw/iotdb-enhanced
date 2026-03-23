@@ -195,7 +195,7 @@ export default function TimeseriesList() {
         />
 
         {/* Statistics - Varied Layout */}
-        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 32 }}>
           {/* Featured metric - spans 2 columns on desktop */}
           <Col xs={24} sm={24} md={12}>
             <GlassCard intensity="medium" style={{ padding: isMobile ? "20px" : "24px" }}>

@@ -392,7 +392,7 @@ export default function AlertList() {
 
       {/* Statistics - Varied Layout */}
       {stats && (
-        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 12 : 16 }}>
           {/* Featured metric - spans 2 columns */}
           <Col xs={24} sm={24} md={12}>
             <GlassCard intensity="medium" style={{ padding: isMobile ? "20px" : "24px" }}>
@@ -483,7 +483,7 @@ export default function AlertList() {
       {/* Filters */}
       <ContentCard
         title="Filters"
-        style={{ marginBottom: 24 }}
+        style={{ marginBottom: 16 }}
       >
         <Space wrap size="middle">
           <Text strong>Filter by:</Text>
