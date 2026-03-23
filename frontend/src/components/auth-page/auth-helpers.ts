@@ -88,10 +88,10 @@ export function getFormConfig(type: AuthType): AuthFormConfig {
  */
 export const inputStyle = {
   height: 48,
-  borderRadius: 12,
-  border: "1px solid rgba(0, 0, 0, 0.08)",
-  background: "rgba(255, 255, 255, 0.8)",
-  backdropFilter: "blur(10px)",
+  borderRadius: 3,
+  border: "1px solid #E5E7EB",
+  background: "#FFFFFF",
+  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
 };
 
 /**
@@ -99,13 +99,13 @@ export const inputStyle = {
  */
 export const buttonStyle = {
   height: 50,
-  borderRadius: 12,
+  borderRadius: 3,
   fontSize: 16,
   fontWeight: 600,
-  background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+  background: "#0066CC",
   border: "none",
-  boxShadow: "0 4px 15px rgba(0, 102, 204, 0.35)",
-  transition: "all 0.3s ease",
+  boxShadow: "0 1px 3px rgba(0, 102, 204, 0.2)",
+  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
 };
 
 /**

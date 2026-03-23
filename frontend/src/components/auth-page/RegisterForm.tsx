@@ -4,10 +4,10 @@
 
 "use client";
 
-import React from "react";
-import { Form, Input, message, Button } from "antd";
+import React, { useMemo } from "react";
+import { Form, Input, message, Button, Progress } from "antd";
 import { useRouter } from "next/navigation";
-import { MailOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
+import { MailOutlined, LockOutlined, UserOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -21,7 +21,43 @@ import { tokenManager } from "@/lib/tokenManager";
 export function RegisterForm() {
   const [form] = Form.useForm();
   const [loading, setLoading] = React.useState(false);
+  const [passwordStrength, setPasswordStrength] = React.useState(0);
   const router = useRouter();
+
+  // Calculate password strength
+  const calculatePasswordStrength = (password: string): number => {
+    if (!password) return 0;
+
+    let strength = 0;
+    // Length check (up to 40 points)
+    if (password.length >= 8) strength += 20;
+    if (password.length >= 12) strength += 20;
+
+    // Character variety (up to 60 points)
+    if (/[a-z]/.test(password)) strength += 15;
+    if (/[A-Z]/.test(password)) strength += 15;
+    if (/[0-9]/.test(password)) strength += 15;
+    if (/[^a-zA-Z0-9]/.test(password)) strength += 15;
+
+    return Math.min(strength, 100);
+  };
+
+  const getPasswordStrengthColor = (strength: number): string => {
+    if (strength < 40) return "#EF4444"; // error red
+    if (strength < 70) return "#F59E0B"; // warning orange
+    return "#10B981"; // success green
+  };
+
+  const getPasswordStrengthText = (strength: number): string => {
+    if (strength < 40) return "Weak";
+    if (strength < 70) return "Medium";
+    return "Strong";
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const password = e.target.value;
+    setPasswordStrength(calculatePasswordStrength(password));
+  };
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     setLoading(true);
@@ -86,66 +122,99 @@ export function RegisterForm() {
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleSubmit}>
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={handleSubmit}
+      validateTrigger="onBlur"
+    >
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)" }}>Full Name</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151" }}>Full Name</span>}
         name="name"
+        validateStatus={form.getFieldError("name").length > 0 ? "error" : ""}
         rules={[validationRules.getAntRule(required("Name"))]}
+        extra="Enter your full name for your profile"
       >
         <Input
           placeholder="John Doe"
           size="large"
           style={inputStyle}
-          prefix={<UserOutlined style={{ fontSize: 18, color: "#0066cc" }} />}
+          prefix={<UserOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
           autoComplete="name"
         />
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)" }}>Email</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151" }}>Email</span>}
         name="email"
+        validateStatus={form.getFieldError("email").length > 0 ? "error" : ""}
         rules={[
           validationRules.getAntRule(required("Email")),
           validationRules.getAntRule(validationRules.email),
         ]}
+        extra="We'll send you a confirmation email"
       >
         <Input
           placeholder="your.email@example.com"
           size="large"
           style={inputStyle}
-          prefix={<MailOutlined style={{ fontSize: 18, color: "#0066cc" }} />}
+          prefix={<MailOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
           autoComplete="email"
         />
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)" }}>Password</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151" }}>Password</span>}
         name="password"
+        validateStatus={form.getFieldError("password").length > 0 ? "error" : ""}
         rules={[validationRules.getAntRule(required("Password"))]}
+        extra={
+          <div style={{ marginTop: 8 }}>
+            <div style={{ fontSize: 12, marginBottom: 4, color: "#6B7280" }}>
+              Must be at least 8 characters with uppercase, lowercase, and numbers
+            </div>
+            {passwordStrength > 0 && (
+              <div style={{ marginTop: 8 }}>
+                <Progress
+                  percent={passwordStrength}
+                  strokeColor={getPasswordStrengthColor(passwordStrength)}
+                  showInfo={false}
+                  size="small"
+                />
+                <div style={{ fontSize: 11, color: getPasswordStrengthColor(passwordStrength), marginTop: 2 }}>
+                  Password strength: {getPasswordStrengthText(passwordStrength)}
+                </div>
+              </div>
+            )}
+          </div>
+        }
       >
         <Input.Password
           placeholder="Create a strong password"
           size="large"
           style={inputStyle}
-          prefix={<LockOutlined style={{ fontSize: 18, color: "#0066cc" }} />}
+          prefix={<LockOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
           autoComplete="new-password"
+          onChange={handlePasswordChange}
         />
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)" }}>Confirm Password</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151" }}>Confirm Password</span>}
         name="confirmPassword"
         dependencies={["password"]}
+        validateStatus={form.getFieldError("confirmPassword").length > 0 ? "error" : ""}
         rules={[
           validationRules.getAntRule(required("Confirm Password")),
           validationRules.getAntRule(confirmation("password")),
         ]}
+        extra="Re-enter your password to confirm"
       >
         <Input.Password
           placeholder="Confirm your password"
           size="large"
           style={inputStyle}
-          prefix={<LockOutlined style={{ fontSize: 18, color: "#0066cc" }} />}
+          prefix={<LockOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
           autoComplete="new-password"
         />
       </Form.Item>

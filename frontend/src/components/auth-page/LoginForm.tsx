@@ -84,34 +84,47 @@ export function LoginForm() {
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleSubmit}>
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={handleSubmit}
+      validateTrigger="onBlur"
+    >
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)" }}>Email</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151" }}>Email</span>}
         name="email"
+        validateStatus={form.getFieldError("email").length > 0 ? "error" : ""}
         rules={[
           validationRules.getAntRule(required("Email")),
           validationRules.getAntRule(validationRules.email),
         ]}
+        extra="Enter the email address associated with your account"
       >
         <Input
           placeholder="your.email@example.com"
           size="large"
           style={inputStyle}
-          prefix={<MailOutlined style={{ fontSize: 18, color: "#0066cc" }} />}
+          prefix={<MailOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
           autoComplete="email"
         />
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)" }}>Password</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151" }}>Password</span>}
         name="password"
+        validateStatus={form.getFieldError("password").length > 0 ? "error" : ""}
         rules={[validationRules.getAntRule(required("Password"))]}
+        extra={
+          <span style={{ fontSize: 12 }}>
+            Enter your password. <a href="/forgot-password" style={{ color: "#0066CC" }}>Forgot password?</a>
+          </span>
+        }
       >
         <Input.Password
           placeholder="Enter your password"
           size="large"
           style={inputStyle}
-          prefix={<LockOutlined style={{ fontSize: 18, color: "#0066cc" }} />}
+          prefix={<LockOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
           autoComplete="current-password"
         />
       </Form.Item>
