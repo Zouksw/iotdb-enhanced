@@ -404,7 +404,7 @@ export default function ApiKeyList() {
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
           <Alert
             message="Save this API key now!"
-            description="You won't be able to see it again once you close this modal."
+            description="You won&apos;t be able to see it again once you close this modal."
             type="warning"
             showIcon
           />
