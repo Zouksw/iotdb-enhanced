@@ -23,6 +23,26 @@ const nextConfig = {
 
   // Security Headers
   async headers() {
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    // CSP connect-src: allow Next.js dev server WebSocket in development
+    const connectSrc = [
+      "'self'",
+      "https://api.iotdb-enhanced.com",
+      "http://localhost:8000",
+      "https://localhost:8000",
+      "ws://localhost:8000",
+      "wss://localhost:8000"
+    ];
+
+    // Add Next.js dev server WebSocket for HMR in development
+    if (isDev) {
+      connectSrc.push("ws://localhost:5001", "wss://localhost:5001");
+    }
+
+    // frame-src: allow development tools in development mode
+    const frameSrc = isDev ? "'self'" : "'none'";
+
     return [
       {
         source: '/:path*',
@@ -59,8 +79,8 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.iotdb-enhanced.com http://localhost:8000 https://localhost:8000 ws://localhost:8000 wss://localhost:8000",
-              "frame-src 'none'",
+              `connect-src ${connectSrc.join(' ')}`,
+              `frame-src ${frameSrc}`,
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
