@@ -9,7 +9,7 @@ import {
   EyeOutlined,
   ExperimentOutlined,
 } from "@ant-design/icons";
-import { useGo } from "@refinedev/core";
+import { useRouter } from "next/navigation";
 
 const { Title } = Typography;
 
@@ -58,10 +58,10 @@ const quickActions: QuickAction[] = [
 ];
 
 export const QuickActions: React.FC = () => {
-  const go = useGo();
+  const router = useRouter();
 
   const handleAction = (action: QuickAction) => {
-    go({ to: action.path, type: "push" });
+    router.push(action.path);
   };
 
   return (
