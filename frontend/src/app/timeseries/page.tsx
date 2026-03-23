@@ -9,11 +9,10 @@ import {
   useTable,
   CreateButton,
 } from "@refinedev/antd";
-import { Space, Table, Tag, Row, Col, Typography, Progress } from "antd";
+import { Space, Table, Tag, Typography } from "antd";
 import type { Breakpoint } from "antd";
 import { useList } from "@refinedev/core";
 import {
-  LineChartOutlined,
   DatabaseOutlined,
   AlertOutlined,
   PlusOutlined,
@@ -23,7 +22,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
-import GlassCard from "@/components/ui/GlassCard";
+import { ResponsiveStats } from "@/components/ui/MobileStatsCard";
 import { useIsMobile } from "@/lib/responsive-utils";
 
 const { Text } = Typography;
@@ -194,112 +193,35 @@ export default function TimeseriesList() {
           }
         />
 
-        {/* Statistics - Varied Layout */}
-        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 32 }}>
-          {/* Featured metric - spans 2 columns on desktop */}
-          <Col xs={24} sm={24} md={12}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "20px" : "24px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
-                <div>
-                  <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500, display: "block", marginBottom: "8px" }}>
-                    Total Time Series
-                  </Text>
-                  <div style={{ fontSize: "36px", fontWeight: 700, color: "#111827", lineHeight: 1 }}>
-                    {totalTimeseries.toLocaleString()}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: 4,
-                    background: "rgba(0, 102, 204, 0.08)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <LineChartOutlined style={{ fontSize: "24px", color: "#0066CC" }} />
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Text
-                  type={timeseriesTrend >= 0 ? "success" : "danger"}
-                  style={{ fontSize: "13px", fontWeight: 600 }}
-                >
-                  {timeseriesTrend >= 0 ? "↑" : "↓"} {Math.abs(timeseriesTrend)}%
-                </Text>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  this month
-                </Text>
-              </div>
-            </GlassCard>
-          </Col>
-
-          {/* Standard metrics - 2 columns on desktop */}
-          <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ marginBottom: "12px" }}>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Data Points
-                </Text>
-              </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#111827", marginBottom: "4px" }}>
-                {totalDataPoints.toLocaleString()}
-              </div>
-              <Text type="secondary" style={{ fontSize: "12px" }}>
-                Across all series
-              </Text>
-            </GlassCard>
-          </Col>
-
-          <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ marginBottom: "12px" }}>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Anomalies
-                </Text>
-              </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: totalAnomalies > 0 ? "#EF4444" : "#111827", marginBottom: "4px" }}>
-                {totalAnomalies}
-              </div>
-              <Text
-                type={anomaliesTrend < 0 ? "success" : "warning"}
-                style={{ fontSize: "12px", fontWeight: 500 }}
-              >
-                {anomaliesTrend < 0 ? "↓" : "↑"} {Math.abs(anomaliesTrend)}%
-              </Text>
-            </GlassCard>
-          </Col>
-
-          <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
-                <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#0066CC",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
-                >
-                  <LineChartOutlined style={{ fontSize: "20px", color: "#fff" }} />
-                </div>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Storage
-                </Text>
-              </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
-                2.4 GB
-              </div>
-              <Progress percent={24} showInfo={false} strokeColor="#6366f1" size="small" />
-            </GlassCard>
-          </Col>
-        </Row>
+        {/* Statistics - Mobile-First Responsive Layout */}
+        <div style={{ marginBottom: isMobile ? 16 : 32 }}>
+          <ResponsiveStats
+            isMobile={isMobile}
+            items={[
+              {
+                label: "Total Time Series",
+                value: totalTimeseries,
+                trend: timeseriesTrend,
+              },
+              {
+                label: "Data Points",
+                value: totalDataPoints,
+              },
+              {
+                label: "Anomalies",
+                value: totalAnomalies,
+                trend: anomaliesTrend,
+                color: totalAnomalies > 0 ? "#EF4444" : undefined,
+              },
+              {
+                label: "Storage",
+                value: "2.4",
+                suffix: "GB",
+              },
+            ]}
+            featuredIndex={0}
+          />
+        </div>
 
         {/* Data Table */}
         <DataTable

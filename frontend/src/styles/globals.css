@@ -1162,3 +1162,244 @@ html {
     background: #E5E7EB;
   }
 }
+
+/* ==========================================================================
+   MOBILE-FIRST DESIGN ENHANCEMENTS
+   ========================================================================== */
+
+/* Hide scrollbar but keep functionality */
+.mobile-stats-scroll,
+.mobile-filter-scroll,
+.mobile-quick-filters-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.mobile-stats-scroll::-webkit-scrollbar,
+.mobile-filter-scroll::-webkit-scrollbar,
+.mobile-quick-filters-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Mobile statistics card - add shadow indicator */
+.mobile-stats-scroll {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 4%,
+    black 96%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 4%,
+    black 96%,
+    transparent 100%
+  );
+}
+
+/* Mobile filter panel - safe area support */
+.ant-drawer.ant-drawer-top .ant-drawer-content,
+.ant-drawer.ant-drawer-bottom .ant-drawer-content {
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Mobile action bar - smooth slide up animation */
+@keyframes slideUpFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.mobile-action-bar {
+  animation: slideUpFromBottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile floating action button - ripple effect */
+@keyframes fabPulse {
+  0% {
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
+  }
+  50% {
+    box-shadow: 0 6px 16px rgba(0, 102, 204, 0.6);
+  }
+  100% {
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
+  }
+}
+
+.mobile-fab {
+  animation: fabPulse 2s ease-in-out infinite;
+}
+
+/* Mobile table card - tap highlight */
+.mobile-table-card:active {
+  background-color: #F3F4F6;
+  transform: scale(0.98);
+  transition: all 0.1s ease;
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+  /* Ensure minimum touch target size of 44x44px */
+  .ant-btn-sm {
+    min-height: 32px;
+    min-width: 32px;
+  }
+
+  /* Increase spacing between clickable elements */
+  .ant-space-item {
+    margin: 4px 0;
+  }
+
+  /* Optimize form inputs for mobile */
+  .ant-input,
+  .ant-select-selector {
+    min-height: 44px;
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
+  /* Make dropdowns touch-friendly */
+  .ant-dropdown-menu-item {
+    min-height: 44px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* Mobile-specific layout adjustments */
+@media (max-width: 640px) {
+  /* Reduce padding on small screens */
+  .page-container {
+    padding: 12px;
+  }
+
+  /* Stack filters vertically */
+  .filter-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Make tables full width */
+  .ant-table {
+    font-size: 13px;
+  }
+
+  /* Optimize table cell padding */
+  .ant-table-cell {
+    padding: 8px 12px !important;
+  }
+
+  /* Hide non-essential columns */
+  .hide-on-mobile {
+    display: none;
+  }
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Moderate padding on tablets */
+  .page-container {
+    padding: 16px;
+  }
+
+  /* Show 2-column grid on tablets */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reduce padding in landscape */
+  .page-container {
+    padding: 8px 16px;
+  }
+
+  /* Make action bars more compact */
+  .mobile-action-bar {
+    padding: 8px 16px;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-action-bar {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-fab {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    right: calc(16px + env(safe-area-inset-right));
+  }
+
+  .page-container {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Mobile navigation enhancements */
+@media (max-width: 768px) {
+  /* Hide navigation text, show icons only */
+  .nav-item-text {
+    display: none;
+  }
+
+  /* Show navigation icon centered */
+  .nav-item-icon {
+    margin: 0;
+    font-size: 20px;
+  }
+
+  /* Make bottom navigation items equal width */
+  .bottom-nav-item {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 4px;
+  }
+}
+
+/* Mobile drawer optimizations */
+@media (max-width: 768px) {
+  .ant-drawer-content {
+    background-color: #F9FAFB;
+  }
+
+  .ant-drawer-header {
+    padding: 16px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+
+  .ant-drawer-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .ant-drawer-close {
+    font-size: 20px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Respect prefers-reduced-motion for mobile animations */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-action-bar,
+  .mobile-fab,
+  .mobile-table-card {
+    animation: none;
+    transition: none;
+  }
+}

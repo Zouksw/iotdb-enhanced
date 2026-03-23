@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import {
-  Table,
   Space,
   Typography,
   Tag,
@@ -14,8 +13,6 @@ import {
   Popconfirm,
   message,
   Alert,
-  Row,
-  Col,
 } from "antd";
 import type { Breakpoint } from "antd";
 import {
@@ -24,10 +21,8 @@ import {
   WarningOutlined,
   InfoCircleOutlined,
   CloseCircleOutlined,
-  BellOutlined,
   ReloadOutlined,
   CheckOutlined,
-  FilterOutlined,
   ClearOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -39,7 +34,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
 import { ContentCard } from "@/components/layout/ContentCard";
-import GlassCard from "@/components/ui/GlassCard";
+import { ResponsiveStats } from "@/components/ui/MobileStatsCard";
 import { authFetch } from "@/utils/auth";
 import { useIsMobile } from "@/lib/responsive-utils";
 
@@ -390,86 +385,33 @@ export default function AlertList() {
         }
       />
 
-      {/* Statistics - Varied Layout */}
+      {/* Statistics - Mobile-First Responsive Layout */}
       {stats && (
-        <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 12 : 16 }}>
-          {/* Featured metric - spans 2 columns */}
-          <Col xs={24} sm={24} md={12}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "20px" : "24px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
-                <div>
-                  <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500, display: "block", marginBottom: "8px" }}>
-                    Total Alerts
-                  </Text>
-                  <div style={{ fontSize: "36px", fontWeight: 700, color: "#111827", lineHeight: 1 }}>
-                    {stats.total}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    borderRadius: 4,
-                    background: "rgba(0, 102, 204, 0.08)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <BellOutlined style={{ fontSize: "24px", color: "#0066CC" }} />
-                </div>
-              </div>
-              <Text type="secondary" style={{ fontSize: "13px" }}>
-                All notifications
-              </Text>
-            </GlassCard>
-          </Col>
-
-          {/* Unread - highlighted if > 0 */}
-          <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ marginBottom: "12px" }}>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Unread
-                </Text>
-              </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: stats.unread > 0 ? "#EF4444" : "#111827", marginBottom: "4px" }}>
-                {stats.unread}
-              </div>
-              <Text
-                type={stats.unread > 0 ? "danger" : "success"}
-                style={{ fontSize: "12px", fontWeight: 500 }}
-              >
-                {stats.unread > 0 ? "Need attention" : "All caught up"}
-              </Text>
-            </GlassCard>
-          </Col>
-
-          {/* Errors & Warnings grouped */}
-          <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ marginBottom: "12px" }}>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
-                  Issues
-                </Text>
-              </div>
-              <div style={{ display: "flex", gap: "16px" }}>
-                <div>
-                  <div style={{ fontSize: "20px", fontWeight: 700, color: "#EF4444" }}>
-                    {stats.bySeverity.ERROR || 0}
-                  </div>
-                  <Text type="secondary" style={{ fontSize: "11px" }}>Errors</Text>
-                </div>
-                <div>
-                  <div style={{ fontSize: "20px", fontWeight: 700, color: "#F59E0B" }}>
-                    {stats.bySeverity.WARNING || 0}
-                  </div>
-                  <Text type="secondary" style={{ fontSize: "11px" }}>Warnings</Text>
-                </div>
-              </div>
-            </GlassCard>
-          </Col>
-        </Row>
+        <ResponsiveStats
+          isMobile={isMobile}
+          items={[
+            {
+              label: "Total Alerts",
+              value: stats.total,
+            },
+            {
+              label: "Unread",
+              value: stats.unread,
+              color: stats.unread > 0 ? "#EF4444" : undefined,
+            },
+            {
+              label: "Errors",
+              value: stats.bySeverity.ERROR || 0,
+              color: "#EF4444",
+            },
+            {
+              label: "Warnings",
+              value: stats.bySeverity.WARNING || 0,
+              color: "#F59E0B",
+            },
+          ]}
+          featuredIndex={0}
+        />
       )}
 
       {/* Filters */}
