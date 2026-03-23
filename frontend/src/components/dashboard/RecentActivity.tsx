@@ -151,9 +151,9 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
   return (
     <Card
       loading={loading}
-      bordered={false}
+      variant="borderless"
       style={{ height: "100%" }}
-      bodyStyle={{ padding: "16px" }}
+      styles={{ body: { padding: "16px" } }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <Title level={5} style={{ margin: 0 }}>

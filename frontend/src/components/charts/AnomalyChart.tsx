@@ -252,9 +252,9 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
     if (chartData.length === 0) {
         return (
             <Card
-                bordered={false}
+                variant="borderless"
                 style={{ borderRadius: 12 }}
-                bodyStyle={{ padding: "40px", textAlign: "center" }}
+                styles={{ body: { padding: "40px", textAlign: "center" } }}
             >
                 <Spin size="large" tip="Loading anomaly data..." />
             </Card>
@@ -264,9 +264,9 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
     return (
         <div ref={chartRef}>
             <Card
-                bordered={false}
+                variant="borderless"
                 style={{ borderRadius: 12 }}
-                bodyStyle={{ padding: expanded ? "24px" : "20px" }}
+                styles={{ body: { padding: expanded ? "24px" : "20px" } }}
             >
                 {/* Header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>

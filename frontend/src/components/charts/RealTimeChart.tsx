@@ -228,9 +228,9 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
 
   return (
     <Card
-      bordered={false}
+      variant="borderless"
       style={{ borderRadius: 12 }}
-      bodyStyle={{ padding: "20px" }}
+      styles={{ body: { padding: "20px" } }}
     >
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>

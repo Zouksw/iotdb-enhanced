@@ -158,7 +158,7 @@ export default function SettingsPage() {
         <Col xs={24} lg={16}>
           <Card
             title="Account Settings"
-            bordered={false}
+            variant="borderless"
             style={{ height: "100%" }}
           >
             <Space direction="vertical" style={{ width: "100%" }} size="middle">
@@ -215,7 +215,7 @@ export default function SettingsPage() {
       {/* Additional Information */}
       <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
         <Col xs={24}>
-          <Card title="Account Security" bordered={false}>
+          <Card title="Account Security" variant="borderless">
             <Space direction="vertical" style={{ width: "100%" }}>
               <Paragraph>
                 <SafetyOutlined style={{ color: "#52c41a", marginRight: 8 }} />
@@ -244,7 +244,7 @@ export default function SettingsPage() {
       {/* Quick Actions */}
       <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
         <Col xs={24}>
-          <Card title="Quick Actions" bordered={false}>
+          <Card title="Quick Actions" variant="borderless">
             <Space wrap>
               <Button onClick={() => go({ to: "/settings/sessions", type: "push" })}>
                 View Active Sessions

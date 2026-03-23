@@ -116,7 +116,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       className={`stat-card stat-card--${variant}`}
       style={cardStyle}
       loading={loading}
-      bordered={false}
+      variant="borderless"
       onClick={onClick}
       hoverable={!!onClick}
     >

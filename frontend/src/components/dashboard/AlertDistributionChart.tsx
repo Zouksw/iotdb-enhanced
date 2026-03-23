@@ -90,9 +90,9 @@ export const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({
   return (
     <Card
       loading={loading}
-      bordered={false}
+      variant="borderless"
       style={{ height: "100%" }}
-      bodyStyle={{ padding: "16px" }}
+      styles={{ body: { padding: "16px" } }}
     >
       <Title level={5} style={{ marginBottom: 16 }}>
         Alert Distribution

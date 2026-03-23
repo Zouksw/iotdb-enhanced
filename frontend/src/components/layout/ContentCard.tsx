@@ -84,7 +84,7 @@ export const ContentCard: React.FC<ContentCardProps> = ({
       className={`content-card ${className}`}
       style={cardStyle}
       title={header}
-      bordered={false}
+      variant="borderless"
       {...props}
     >
       {children}
