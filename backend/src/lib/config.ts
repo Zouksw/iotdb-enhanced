@@ -71,7 +71,9 @@ export const config = {
   server: {
     port: parseInt(process.env.PORT || '8000', 10),
     corsOrigin: process.env.CORS_ORIGIN
-      ? (Array.isArray(process.env.CORS_ORIGIN) ? process.env.CORS_ORIGIN : [process.env.CORS_ORIGIN])
+      ? (Array.isArray(process.env.CORS_ORIGIN)
+          ? process.env.CORS_ORIGIN
+          : process.env.CORS_ORIGIN.split(',').map(s => s.trim()))
       : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
     nodeEnv: process.env.NODE_ENV || 'development',
     swaggerEnabled: process.env.SWAGGER_ENABLED === 'true' || process.env.NODE_ENV !== 'production',

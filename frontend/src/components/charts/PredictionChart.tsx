@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Card, Button, Space, Typography, Spin, Alert, message, Tooltip } from "antd";
+import { Card, Button, Space, Typography, Spin, Alert, message, Tooltip as AntTooltip } from "antd";
 import {
   LineChart,
   Line,

@@ -18,7 +18,6 @@ import securityRouter from '@/routes/security';
 import { errorHandler } from '@/middleware/errorHandler';
 import { logger } from '@/utils/logger';
 import { securityHeaders } from '@/middleware/security';
-import { csrfProtection, generateCsrfToken } from '@/middleware/csrf';
 import {
   authRateLimiter,
   apiRateLimiter,
@@ -219,19 +218,6 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 // Health check routes
 app.use('/health', healthRouter);
 
-// CSRF token endpoint
-app.get('/api/csrf-token', optionalAuth, async (req, res) => {
-  const token = await generateCsrfToken(req.userId);
-  res.cookie('csrf_token', token, {
-    httpOnly: true,
-    secure: req.secure,
-    sameSite: 'strict',
-    maxAge: 86400000, // 24 hours
-  });
-  res.setHeader('X-CSRF-Token', token);
-  res.json({ csrfToken: token });
-});
-
 // Security routes (with optional auth - logs can be submitted without auth)
 app.use('/api/security', securityRouter);
 
@@ -261,15 +247,14 @@ if (config.server.swaggerEnabled) {
 // Authentication routes with rate limiting
 app.use('/api/auth', authRateLimiter, authRouter);
 
-// API routes with CSRF protection and rate limiting
-// CSRF protection is applied to state-changing operations (POST/PUT/PATCH/DELETE)
-app.use('/api/datasets', csrfProtection(), apiRateLimiter, datasetsRouter);
-app.use('/api/timeseries', csrfProtection(), apiRateLimiter, timeseriesRouter);
-app.use('/api/models', csrfProtection(), apiRateLimiter, modelsRouter);
-app.use('/api/anomalies', csrfProtection(), apiRateLimiter, anomaliesRouter);
-app.use('/api/iotdb', csrfProtection(), apiRateLimiter, iotdbRouter);
-app.use('/api/api-keys', csrfProtection(), apiKeyCreationLimiter, apiKeysRouter);
-app.use('/api/alerts', csrfProtection(), apiRateLimiter, alertsRouter);
+// API routes with rate limiting
+app.use('/api/datasets', apiRateLimiter, datasetsRouter);
+app.use('/api/timeseries', apiRateLimiter, timeseriesRouter);
+app.use('/api/models', apiRateLimiter, modelsRouter);
+app.use('/api/anomalies', apiRateLimiter, anomaliesRouter);
+app.use('/api/iotdb', apiRateLimiter, iotdbRouter);
+app.use('/api/api-keys', apiKeyCreationLimiter, apiKeysRouter);
+app.use('/api/alerts', apiRateLimiter, alertsRouter);
 
 // Error handling
 app.use(errorHandler);

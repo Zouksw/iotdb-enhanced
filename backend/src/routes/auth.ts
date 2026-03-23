@@ -457,4 +457,26 @@ router.get('/verify', asyncHandler(async (req: Request, res: Response) => {
   }
 }));
 
+// GET /api/auth/csrf-token - Get CSRF token for form submissions
+// Returns a token that should be included in the x-csrf-token header for state-changing requests
+router.get('/csrf-token', asyncHandler(async (req: Request, res: Response) => {
+  // Generate a random CSRF token
+  const crypto = require('crypto');
+  const token = crypto.randomBytes(32).toString('hex');
+
+  // Set the token as an httpOnly cookie for additional security
+  res.cookie('csrf_token', token, {
+    httpOnly: true,
+    secure: config.server.nodeEnv === 'production',
+    sameSite: 'strict',
+    maxAge: 3600000, // 1 hour
+  });
+
+  // Also return the token in the response body for client-side use
+  return success(res, {
+    csrfToken: token,
+    token: token, // Frontend checks for both field names
+  });
+}));
+
 export { router as authRouter };

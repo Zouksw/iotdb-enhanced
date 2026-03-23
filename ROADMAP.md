@@ -1,8 +1,8 @@
 ---
 title: "IoTDB Enhanced Platform Roadmap"
 en_title: "IoTDB Enhanced Platform Roadmap"
-version: "1.0.0"
-last_updated: "2026-03-13"
+version: "2.0.0"
+last_updated: "2026-03-22"
 status: "active"
 maintainer: "IoTDB Enhanced Team"
 reviewers:
@@ -17,21 +17,59 @@ related_docs:
   - "Change Log": "CHANGELOG.md"
   - "Deployment Guide": "docs/DEPLOYMENT.md"
   - "User Guide": "docs/GUIDE.md"
+  - "Stability Plan": ".claude/plans/stability-optimization-plan.md"
 changes:
+  - version: "2.0.0"
+    date: "2026-03-22"
+    author: "Claude Code + gstack office-hours"
+    changes: "Strategic pivot: Stability & Optimization over feature expansion"
   - version: "1.0.0"
     date: "2026-03-10"
     author: "IoTDB Enhanced Team"
     changes: "Initial roadmap with phase planning"
-next_review: "2026-09-10"
+next_review: "2026-06-22"
 approval:
   status: "approved"
   reviewed_by: "Project Maintainer"
-  approved_date: "2026-03-10"
+  approved_date: "2026-03-22"
 ---
 
 # IoTDB Enhanced Platform - Roadmap
 
+**IMPORTANT UPDATE (2026-03-22)**: This roadmap has been revised to focus on **stability, performance, and usability** rather than feature expansion. See [Stability & Optimization Plan](/.claude/plans/stability-optimization-plan.md) for details.
+
 This document outlines the planned development roadmap for the IoTDB Enhanced Platform.
+
+---
+
+## Strategic Direction 🎯
+
+**Current Focus**: Stability & Optimization Priority (Option A)
+
+After comprehensive project reassessment, we are shifting from feature expansion to quality improvement:
+
+### Core Principles
+1. **Quality over Quantity** - No new features until existing ones are excellent
+2. **Real over Hypothetical** - Build based on verified user needs, not assumptions
+3. **Simple over Complex** - Avoid over-engineering, maintain 5.5/10 complexity score
+4. **Stable First** - Reliability before features
+
+### Immediate Goals (Next 2-3 Months)
+- [ ] Fix all failing tests (13 cacheDecorator tests)
+- [ ] Achieve 80%+ test coverage
+- [ ] Optimize API performance (P95 < 200ms)
+- [ ] Complete documentation (API docs, deployment guide)
+- [ ] Deploy to production and gather real user feedback
+
+### Deferred Features
+The following features from the original roadmap are **deferred pending user validation**:
+- GraphQL support
+- OAuth 2.0 / SSO
+- Two-factor authentication (2FA)
+- Kubernetes deployment
+- SDK generation
+
+These features will be reconsidered **after** we have real user feedback confirming they are needed.
 
 ---
 
@@ -69,7 +107,48 @@ The IoTDB Enhanced Platform is currently at **v1.1.0** with Phase 1 (Infrastruct
 
 ## In Progress 🚧
 
-### Test Coverage Improvements (Latest Round)
+### Stability & Optimization Initiative (2026-03-22 → Present)
+
+**Strategic Shift**: Focus on quality over feature expansion. See [Stability & Optimization Plan](/.claude/plans/stability-optimization-plan.md) for complete details.
+
+#### Phase 1: Stability加固 (Week 1-3) - IN PROGRESS
+- [ ] Fix failing cacheDecorator tests (13 tests)
+- [ ] Achieve 80%+ test coverage (current: 70.22%)
+- [ ] Complete integration test coverage
+- [ ] Standardize error handling across codebase
+- [ ] Unify logging system
+
+**Progress**:
+- [x] Architecture simplification (-1775 lines of unused code)
+  - [x] Removed unused apiCache middleware (-1087 lines)
+  - [x] Removed unused CSRF middleware (-688 lines)
+- [x] Test suite improvements (1369 tests passing)
+- [x] HTTP response compression
+- [x] Cache decorator implementation
+
+#### Phase 2: Performance Optimization (Week 4-6) - PLANNED
+- [ ] Establish performance baseline
+- [ ] Database index optimization
+- [ ] Eliminate N+1 queries
+- [ ] Cache strategy optimization
+- [ ] API response time optimization (P95 < 200ms)
+- [ ] Memory usage optimization
+
+#### Phase 3: Documentation & Usability (Week 7-8) - PLANNED
+- [ ] Complete API documentation (OpenAPI/Swagger)
+- [ ] Update deployment guide
+- [ ] Create troubleshooting guide
+- [ ] Add examples and tutorials
+- [ ] Create Postman collection
+
+#### Phase 4: User Feedback Loop (Ongoing) - PLANNED
+- [ ] Deploy to production environment
+- [ ] Collect user feedback
+- [ ] Data-driven feature planning
+
+---
+
+### Test Coverage Improvements (Completed)
 - [x] Core infrastructure tests (logging, security, cache, AI access)
 - [x] Error handling utilities (100% coverage)
 - [x] JWT and response utilities (100% coverage)

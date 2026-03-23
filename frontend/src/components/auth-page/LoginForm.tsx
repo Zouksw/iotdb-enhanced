@@ -5,7 +5,7 @@
 "use client";
 
 import React from "react";
-import { Form, Input, Checkbox, message } from "antd";
+import { Form, Input, Checkbox, message, Button } from "antd";
 import { useRouter } from "next/navigation";
 import { MailOutlined, LockOutlined } from "@ant-design/icons";
 import axios from "axios";
@@ -123,14 +123,16 @@ export function LoginForm() {
       </Form.Item>
 
       <Form.Item>
-        <button
-          type="submit"
+        <Button
+          type="primary"
+          htmlType="submit"
           style={buttonStyle as React.CSSProperties}
-          className="w-full text-white hover:opacity-90"
+          className="w-full"
           disabled={loading}
+          loading={loading}
         >
           {loading ? "Signing in..." : "Sign In"}
-        </button>
+        </Button>
       </Form.Item>
     </Form>
   );

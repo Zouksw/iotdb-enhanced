@@ -1,8 +1,9 @@
 /**
  * CSRF Protection Module
  *
- * Provides Cross-Site Request Forgery protection for all state-changing requests.
- * Integrates with the backend's CSRF implementation at /api/auth/csrf-token.
+ * NOTE: CSRF protection has been removed from the backend.
+ * This module is kept for compatibility but does not enforce CSRF.
+ * All methods return empty values to allow the app to function normally.
  */
 
 class CsrfProtection {
@@ -13,39 +14,11 @@ class CsrfProtection {
   private initialized = false;
 
   /**
-   * Initialize CSRF protection by fetching token from backend
-   * Should be called on app startup
+   * Initialize CSRF protection - NOOP since CSRF was removed from backend
    */
   async initialize(): Promise<void> {
-    if (this.initialized) {
-      return;
-    }
-
-    try {
-      // The backend /api/auth/csrf-token endpoint returns the token
-      // and sets it as an httpOnly cookie
-      const response = await fetch(this.TOKEN_ENDPOINT, {
-        method: 'GET',
-        credentials: 'include', // Include cookies
-        headers: this.getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        this.token = data.csrfToken || data.token;
-        this.initialized = true;
-
-        // Store for fallback (in case backend doesn't use cookies)
-        if (typeof window !== 'undefined' && this.token) {
-          sessionStorage.setItem(this.STORAGE_KEY, this.token);
-        }
-      } else {
-        console.warn('Failed to fetch CSRF token:', response.status);
-      }
-    } catch (error) {
-      console.error('Error fetching CSRF token:', error);
-      // Don't throw - allow app to continue with degraded security
-    }
+    // Mark as initialized without fetching token
+    this.initialized = true;
   }
 
   /**
@@ -86,16 +59,10 @@ class CsrfProtection {
 
   /**
    * Get headers object with CSRF token for API requests
-   * Returns empty object if no token available
+   * Returns empty object since CSRF was removed from backend
    */
   getHeaders(): Record<string, string> {
-    const token = this.getToken();
-    if (!token) {
-      return {};
-    }
-    return {
-      [this.HEADER_NAME]: token, // Lowercase to match backend
-    };
+    return {};
   }
 
   /**

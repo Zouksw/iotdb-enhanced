@@ -562,4 +562,261 @@ describe('Alert Rules Service', () => {
       await expect(alertRules.triggerAlert(params)).resolves.not.toThrow();
     });
   });
+
+  describe('listAlertRules', () => {
+    test('should list alert rules for a user', async () => {
+      const mockDbRules = [
+        {
+          id: 'rule-1',
+          userId: 'user-123',
+          timeseriesId: 'ts-1',
+          name: 'Rule 1',
+          description: 'Description 1',
+          type: 'ANOMALY',
+          enabled: true,
+          conditions: { type: 'threshold' },
+          severity: 'WARNING',
+          channels: [],
+          cooldownMinutes: 5,
+          lastTriggeredAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'rule-2',
+          userId: 'user-123',
+          timeseriesId: 'ts-2',
+          name: 'Rule 2',
+          description: null,
+          type: 'FORECAST_READY',
+          enabled: false,
+          conditions: { type: 'pattern' },
+          severity: 'INFO',
+          channels: [],
+          cooldownMinutes: 10,
+          lastTriggeredAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      mockPrisma.alertRule.findMany.mockResolvedValue(mockDbRules);
+
+      const rules = await alertRules.listAlertRules('user-123');
+
+      expect(rules).toHaveLength(2);
+      expect(rules[0].name).toBe('Rule 1');
+      expect(rules[1].name).toBe('Rule 2');
+      expect(mockPrisma.alertRule.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-123' },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    test('should list alert rules with enabled filter', async () => {
+      const mockDbRules = [
+        {
+          id: 'rule-1',
+          userId: 'user-123',
+          timeseriesId: 'ts-1',
+          name: 'Rule 1',
+          description: null,
+          type: 'ANOMALY',
+          enabled: true,
+          conditions: { type: 'threshold' },
+          severity: 'WARNING',
+          channels: [],
+          cooldownMinutes: 5,
+          lastTriggeredAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      mockPrisma.alertRule.findMany.mockResolvedValue(mockDbRules);
+
+      const rules = await alertRules.listAlertRules('user-123', { enabled: true });
+
+      expect(rules).toHaveLength(1);
+      expect(mockPrisma.alertRule.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-123', enabled: true },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    test('should list alert rules with timeseries filter', async () => {
+      const mockDbRules = [
+        {
+          id: 'rule-1',
+          userId: 'user-123',
+          timeseriesId: 'ts-1',
+          name: 'Rule 1',
+          description: null,
+          type: 'ANOMALY',
+          enabled: true,
+          conditions: { type: 'threshold' },
+          severity: 'WARNING',
+          channels: [],
+          cooldownMinutes: 5,
+          lastTriggeredAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      mockPrisma.alertRule.findMany.mockResolvedValue(mockDbRules);
+
+      const rules = await alertRules.listAlertRules('user-123', { timeseriesId: 'ts-1' });
+
+      expect(rules).toHaveLength(1);
+      expect(mockPrisma.alertRule.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-123', timeseriesId: 'ts-1' },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    test('should return empty array when no rules found', async () => {
+      mockPrisma.alertRule.findMany.mockResolvedValue([]);
+
+      const rules = await alertRules.listAlertRules('user-123');
+
+      expect(rules).toEqual([]);
+    });
+  });
+
+  describe('updateAlertRule', () => {
+    test('should update alert rule name', async () => {
+      const mockDbRule = {
+        id: 'rule-1',
+        userId: 'user-123',
+        timeseriesId: 'ts-1',
+        name: 'Updated Name',
+        description: null,
+        type: 'ANOMALY',
+        enabled: true,
+        conditions: { type: 'threshold' },
+        severity: 'WARNING',
+        channels: [],
+        cooldownMinutes: 5,
+        lastTriggeredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.alertRule.update.mockResolvedValue(mockDbRule);
+
+      const rule = await alertRules.updateAlertRule('rule-1', { name: 'Updated Name' });
+
+      expect(rule.name).toBe('Updated Name');
+      expect(mockPrisma.alertRule.update).toHaveBeenCalledWith({
+        where: { id: 'rule-1' },
+        data: expect.objectContaining({
+          name: 'Updated Name',
+          updatedAt: expect.any(Date),
+        }),
+      });
+    });
+
+    test('should update multiple fields', async () => {
+      const mockDbRule = {
+        id: 'rule-1',
+        userId: 'user-123',
+        timeseriesId: 'ts-1',
+        name: 'Rule 1',
+        description: 'New description',
+        type: 'FORECAST_READY',
+        enabled: false,
+        conditions: { type: 'pattern' },
+        severity: 'ERROR',
+        channels: [],
+        cooldownMinutes: 15,
+        lastTriggeredAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.alertRule.update.mockResolvedValue(mockDbRule);
+
+      const updates = {
+        name: 'Rule 1',
+        description: 'New description',
+        type: 'FORECAST_READY' as const,
+        enabled: false,
+        severity: 'ERROR' as const,
+        cooldownMinutes: 15,
+      };
+
+      const rule = await alertRules.updateAlertRule('rule-1', updates);
+
+      expect(rule.description).toBe('New description');
+      expect(rule.enabled).toBe(false);
+      expect(rule.severity).toBe('ERROR');
+    });
+
+    test('should update condition and notification channels', async () => {
+      const mockDbRule = {
+        id: 'rule-1',
+        userId: 'user-123',
+        timeseriesId: 'ts-1',
+        name: 'Rule 1',
+        description: null,
+        type: 'ANOMALY',
+        enabled: true,
+        conditions: { type: 'threshold', operator: '<', value: 50 },
+        severity: 'WARNING',
+        channels: [{ type: 'webhook', enabled: true, config: { url: 'http://example.com' } }],
+        cooldownMinutes: 5,
+        lastTriggeredAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      mockPrisma.alertRule.update.mockResolvedValue(mockDbRule);
+
+      const condition = {
+        type: 'threshold' as const,
+        operator: '<' as const,
+        value: 50,
+      };
+
+      const notificationChannels = [
+        {
+          type: 'webhook' as const,
+          enabled: true,
+          config: { url: 'http://example.com' },
+        },
+      ];
+
+      const rule = await alertRules.updateAlertRule('rule-1', {
+        condition,
+        notificationChannels,
+      });
+
+      expect(rule.condition).toEqual(condition);
+      expect(rule.notificationChannels).toEqual(notificationChannels);
+    });
+  });
+
+  describe('deleteAlertRule', () => {
+    test('should delete alert rule', async () => {
+      mockPrisma.alertRule.delete.mockResolvedValue({ id: 'rule-1' });
+
+      await expect(alertRules.deleteAlertRule('rule-1')).resolves.not.toThrow();
+
+      expect(mockPrisma.alertRule.delete).toHaveBeenCalledWith({
+        where: { id: 'rule-1' },
+      });
+    });
+
+    test('should log deletion', async () => {
+      mockPrisma.alertRule.delete.mockResolvedValue({ id: 'rule-1' });
+      const { logger } = require('../../lib');
+
+      await alertRules.deleteAlertRule('rule-1');
+
+      expect(logger.info).toHaveBeenCalledWith(
+        '[ALERT_RULE] Deleted alert rule rule-1'
+      );
+    });
+  });
 });

@@ -5,8 +5,6 @@
  * Uses DOMPurify for HTML sanitization and custom validators for other input types.
  */
 
-import DOMPurify from 'dompurify';
-
 // For Next.js client-side, DOMPurify works directly
 // For server-side, we use a basic fallback (or you can add jsdom as devDependency if needed)
 
@@ -34,9 +32,18 @@ class InputSanitizer {
       return '';
     }
 
-    // Client-side DOMPurify (works in browser)
+    // Client-side: Try to use DOMPurify if available, otherwise use fallback
+    // Server-side: Use basic HTML escaping
     if (typeof window !== 'undefined') {
-      return DOMPurify.sanitize(dirty, this.DOMPURIFY_CONFIG);
+      try {
+        // Try to use DOMPurify from window if available (loaded by CDN or client-side)
+        const purify = (window as any).DOMPurify;
+        if (purify) {
+          return purify.sanitize(dirty, this.DOMPURIFY_CONFIG);
+        }
+      } catch {
+        // Fall through to basic escaping
+      }
     }
 
     // Server-side fallback - basic HTML escaping

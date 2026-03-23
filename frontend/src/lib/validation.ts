@@ -10,7 +10,7 @@
  * Defines the structure for a validation rule
  */
 export interface ValidationRule {
-  validate: (value: any) => boolean;
+  validate: (value: any, allValues?: Record<string, any>) => boolean;
   message: string;
   errorCode?: string;
 }
@@ -215,11 +215,9 @@ class ValidationRules {
    */
   getAntRule(rule: ValidationRule) {
     return {
-      validator(_: any, value: any) {
-        if (!value || (typeof value === 'string' && value.trim() === '')) {
-          return Promise.resolve(); // Let required validator handle empty
-        }
-        if (rule.validate(value)) {
+      validator(_: any, value: any, source: Record<string, any>) {
+        // Pass source to validation rules that need it (like confirmation)
+        if (rule.validate(value, source)) {
           return Promise.resolve();
         }
         return Promise.reject(new Error(rule.message));

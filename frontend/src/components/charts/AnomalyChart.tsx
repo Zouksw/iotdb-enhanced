@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Card, Button, Space, Typography, Spin, Tooltip, Alert, Tag } from "antd";
+import { Card, Button, Space, Typography, Spin, Tooltip as AntTooltip, Alert, Tag } from "antd";
 import {
     ComposedChart,
     Line,
@@ -280,7 +280,7 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                     </Space>
 
                     <Space>
-                        <Tooltip title="Export as PNG">
+                        <AntTooltip title="Export as PNG">
                             <Button
                                 icon={<FileImageOutlined />}
                                 onClick={exportAsPNG}
@@ -289,8 +289,8 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                             >
                                 PNG
                             </Button>
-                        </Tooltip>
-                        <Tooltip title="Export as CSV">
+                        </AntTooltip>
+                        <AntTooltip title="Export as CSV">
                             <Button
                                 icon={<FileExcelOutlined />}
                                 onClick={exportAsCSV}
@@ -298,7 +298,7 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                             >
                                 CSV
                             </Button>
-                        </Tooltip>
+                        </AntTooltip>
                         <Button
                             icon={expanded ? <CompressOutlined /> : <ExpandOutlined />}
                             onClick={() => setExpanded(!expanded)}
