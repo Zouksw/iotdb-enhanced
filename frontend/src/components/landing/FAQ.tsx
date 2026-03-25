@@ -64,7 +64,7 @@ export default function FAQ() {
       id="faq"
       style={{
         padding: "100px 24px",
-        background: "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)",
+        background: "#FFFFFF",
       }}
     >
       <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
@@ -74,8 +74,8 @@ export default function FAQ() {
             style={{
               display: "inline-block",
               padding: "8px 20px",
-              background: "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
-              borderRadius: "20px",
+              background: "rgba(0, 102, 204, 0.08)",
+              borderRadius: "3px",
               marginBottom: "16px",
             }}
           >
@@ -83,10 +83,7 @@ export default function FAQ() {
               style={{
                 fontSize: "14px",
                 fontWeight: 600,
-                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
+                color: "#0066CC",
               }}
             >
               FAQ
@@ -96,12 +93,10 @@ export default function FAQ() {
             level={2}
             style={{
               fontSize: "clamp(28px, 4vw, 42px)",
-              fontWeight: 700,
+              fontWeight: 600,
+              lineHeight: 1.25,
               marginBottom: "16px",
-              background: "linear-gradient(135deg, #1e293b 0%, #475569 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+              color: "#111827",
             }}
           >
             Frequently Asked Questions
@@ -119,7 +114,7 @@ export default function FAQ() {
                 onClick={() => toggleFAQ(index)}
                 style={{
                   padding: "24px",
-                  borderRadius: "16px",
+                  borderRadius: "6px",
                   background: expandedIndex === index
                     ? "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)"
                     : "#fff",
@@ -142,7 +137,7 @@ export default function FAQ() {
                     style={{
                       width: "48px",
                       height: "48px",
-                      borderRadius: "12px",
+                      borderRadius: "4px",
                       background: expandedIndex === index
                         ? "rgba(255, 255, 255, 0.2)"
                         : "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
@@ -232,7 +227,7 @@ export default function FAQ() {
             marginTop: "48px",
             textAlign: "center",
             padding: "32px",
-            borderRadius: "16px",
+            borderRadius: "6px",
             background: "#fff",
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
           }}

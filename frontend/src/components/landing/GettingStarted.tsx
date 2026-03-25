@@ -94,7 +94,7 @@ export default function GettingStarted() {
               display: "inline-block",
               padding: "8px 20px",
               background: "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
-              borderRadius: "20px",
+              borderRadius: "3px",
               marginBottom: "16px",
             }}
           >
@@ -167,7 +167,7 @@ export default function GettingStarted() {
                 <div
                   style={{
                     padding: "32px 24px 24px",
-                    borderRadius: "16px",
+                    borderRadius: "6px",
                     background: "#fff",
                     border: "1px solid #f1f5f9",
                     boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
@@ -189,7 +189,7 @@ export default function GettingStarted() {
                     style={{
                       width: "56px",
                       height: "56px",
-                      borderRadius: "14px",
+                      borderRadius: "4px",
                       background: `linear-gradient(135deg, ${step.color}15 0%, ${step.color}10 100%)`,
                       display: "flex",
                       alignItems: "center",
@@ -253,7 +253,7 @@ export default function GettingStarted() {
                   alignItems: "center",
                   gap: "12px",
                   padding: "16px 20px",
-                  borderRadius: "12px",
+                  borderRadius: "4px",
                   background: "#f8fafc",
                   border: "1px solid #f1f5f9",
                 }}
@@ -277,7 +277,7 @@ export default function GettingStarted() {
               padding: "0 48px",
               fontSize: "16px",
               fontWeight: 600,
-              borderRadius: "12px",
+              borderRadius: "4px",
               background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
               border: "none",
               boxShadow: "0 4px 20px rgba(0, 102, 204, 0.35)",
