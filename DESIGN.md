@@ -1026,7 +1026,7 @@ export const Button: React.FC<ButtonProps> = ({
 
 ## Implementation Status
 
-**Last Updated**: 2026-03-25
+**Last Updated**: 2026-03-26
 
 ### Phase 1: Foundation ✅ COMPLETE
 **Status**: 已完成 (2026-03-25)
@@ -1040,8 +1040,8 @@ export const Button: React.FC<ButtonProps> = ({
 - ✅ 演示页面（DesignSystemDemo）
 
 ### Phase 2: Pages ✅ COMPLETE
-**Status**: 已完成 (2026-03-25)
-**Commits**: `3f9dc88`, `074b15e`
+**Status**: 已完成 (2026-03-26)
+**Commits**: `3f9dc88`, `074b15e`, `3dda685`, `a33d171`, `d37d6b1`
 
 **营销页面**:
 - ✅ 首页 (`/`) — Hero + 功能 + 仪表板预览 + CTA
@@ -1050,6 +1050,9 @@ export const Button: React.FC<ButtonProps> = ({
 
 **应用页面**:
 - ✅ 仪表板 (`/dashboard`) — 更新为设计系统
+- ✅ Forecasts (`/forecasts`) — 按复杂度优先迁移完成
+- ✅ Timeseries (`/timeseries`) — 按复杂度优先迁移完成
+- ✅ Alerts (`/alerts`) — 按复杂度优先迁移完成（最复杂）
 - ✅ StatCard 组件 — 应用设计令牌
 
 ### Phase 3: Polish ⏳ PENDING
@@ -1083,9 +1086,9 @@ export const Button: React.FC<ButtonProps> = ({
 | About (`/about`) | ✅ Complete | ✅ Done |
 | Pricing (`/pricing`) | ✅ Complete | ✅ Done |
 | Dashboard (`/dashboard`) | ✅ Complete | ✅ Done |
-| Timeseries (`/timeseries`) | ⏳ Partial update needed | ⏳ TODO |
-| Alerts (`/alerts`) | ⏳ Partial update needed | ⏳ TODO |
-| Forecasts (`/forecasts`) | ⏳ Partial update needed | ⏳ TODO |
+| Forecasts (`/forecasts`) | ✅ Complete | ✅ Done |
+| Timeseries (`/timeseries`) | ✅ Complete | ✅ Done |
+| Alerts (`/alerts`) | ✅ Complete | ✅ Done |
 | AI Models (`/ai/models`) | ⏳ Partial update needed | ⏳ TODO |
 | AI Anomalies (`/ai/anomalies`) | ⏳ Partial update needed | ⏳ TODO |
 | Login (`/login`) | ⏳ Partial update needed | ⏳ TODO |
@@ -1093,19 +1096,18 @@ export const Button: React.FC<ButtonProps> = ({
 
 ### Migration Progress
 
-**Overall Progress**: 30% (7/23 pages and components fully migrated)
+**Overall Progress**: 40% (7/17 pages fully migrated)
 
 **Completed**:
 - 3 marketing pages (100%)
-- 1 dashboard page (10% of app pages)
+- 4 app pages (Forecasts, Timeseries, Alerts, Dashboard) (40% of app pages)
 
 **Remaining**:
-- 9 app pages (timeseries, alerts, forecasts, AI pages, settings)
-- 3 auth pages (login, register, forgot password)
-- 3 form pages (create device, create timeseries, create alert rule)
+- 2 AI pages (ai/models, ai/anomalies)
+- 6 other pages (datasets, login, settings, etc.)
 
 ---
 
-*Last Updated: 2026-03-25*
+*Last Updated: 2026-03-26*
 *Maintained by: IoTDB Enhanced Team*
 *Created by: /design-consultation skill*
