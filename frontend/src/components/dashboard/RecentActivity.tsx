@@ -69,8 +69,17 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         dataSource={alertsItems}
         renderItem={(item) => (
           <List.Item
+            role="button"
+            tabIndex={0}
+            aria-label={`View alert: ${item.title}`}
             style={{ cursor: "pointer" }}
             onClick={() => go({ to: `/alerts/show/${item.id}`, type: "push" })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                go({ to: `/alerts/show/${item.id}`, type: "push" });
+              }
+            }}
           >
             <List.Item.Meta
               avatar={<BellOutlined style={{ fontSize: 20, color: "#1890ff" }} />}
@@ -105,7 +114,16 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         dataSource={forecastsItems}
         renderItem={(item) => (
           <List.Item
+            role="button"
+            tabIndex={0}
+            aria-label={`View forecast: ${item.title}`}
             onClick={() => go({ to: "/forecasts", type: "push" })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                go({ to: "/forecasts", type: "push" });
+              }
+            }}
           >
             <List.Item.Meta
               avatar={<ThunderboltOutlined style={{ fontSize: 20, color: "#722ed1" }} />}
