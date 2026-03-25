@@ -3,11 +3,17 @@
 import React from "react";
 import { Table, theme } from "antd";
 import type { TableProps as AntTableProps } from "antd";
+import { EmptyState, EmptyStateType } from "@/components/ui/EmptyState";
 
 export interface DataTableProps<T = any> extends Omit<AntTableProps<T>, "className"> {
   enableZebraStriping?: boolean;
   stickyHeader?: boolean;
   compact?: boolean;
+  emptyStateType?: EmptyStateType;
+  emptyStateTitle?: string;
+  emptyStateDescription?: string;
+  emptyStateActionText?: string;
+  emptyStateOnAction?: () => void;
 }
 
 /**
@@ -20,6 +26,7 @@ export interface DataTableProps<T = any> extends Omit<AntTableProps<T>, "classNa
  * - Enhanced pagination styling
  * - Responsive design
  * - Loading state support
+ * - Empty state support
  */
 export const DataTable = <T extends Record<string, any>>({
   enableZebraStriping = true,
@@ -27,9 +34,18 @@ export const DataTable = <T extends Record<string, any>>({
   compact = false,
   rowClassName,
   pagination,
+  emptyStateType = "data",
+  emptyStateTitle,
+  emptyStateDescription,
+  emptyStateActionText,
+  emptyStateOnAction,
   ...props
 }: DataTableProps<T>) => {
   const { token } = theme.useToken();
+
+  // Check if data source is empty
+  const dataSource = props.dataSource as T[] | undefined;
+  const isEmpty = !dataSource || dataSource.length === 0;
 
   // Enhanced row class name for zebra striping
   const getRowClassName = (
@@ -67,19 +83,29 @@ export const DataTable = <T extends Record<string, any>>({
 
   return (
     <>
-      <Table<T>
-        {...props}
-        rowClassName={getRowClassName}
-        sticky={stickyHeader ? { offsetHeader: 64 } : undefined}
-        pagination={paginationConfig}
-        size={compact ? "small" : "middle"}
-        className={`data-table ${enableZebraStriping ? "data-table--striped" : ""} ${compact ? "data-table--compact" : ""}`}
-        style={{
-          fontSize: token.fontSize,
-          borderRadius: token.borderRadiusLG,
-          overflow: "hidden",
-        }}
-      />
+      {isEmpty ? (
+        <EmptyState
+          type={emptyStateType}
+          title={emptyStateTitle}
+          description={emptyStateDescription}
+          actionText={emptyStateActionText}
+          onAction={emptyStateOnAction}
+        />
+      ) : (
+        <Table<T>
+          {...props}
+          rowClassName={getRowClassName}
+          sticky={stickyHeader ? { offsetHeader: 64 } : undefined}
+          pagination={paginationConfig}
+          size={compact ? "small" : "middle"}
+          className={`data-table ${enableZebraStriping ? "data-table--striped" : ""} ${compact ? "data-table--compact" : ""}`}
+          style={{
+            fontSize: token.fontSize,
+            borderRadius: token.borderRadiusLG,
+            overflow: "hidden",
+          }}
+        />
+      )}
       <style jsx global>{`
         /* Data table specific styles */
         .data-table .ant-table {
