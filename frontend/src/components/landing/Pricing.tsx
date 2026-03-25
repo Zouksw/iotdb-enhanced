@@ -157,7 +157,7 @@ export const Pricing: React.FC = () => {
                       background: planColors.purple,
                       color: "#fff",
                       padding: "4px 16px",
-                      borderRadius: "20px",
+                      borderRadius: "3px",
                       fontSize: "12px",
                       fontWeight: 600,
                       display: "flex",
@@ -218,7 +218,7 @@ export const Pricing: React.FC = () => {
                     height: "48px",
                     fontSize: "16px",
                     fontWeight: 600,
-                    borderRadius: "12px",
+                    borderRadius: "4px",
                     ...(plan.popular
                       ? {
                           background: planColors.purple,
