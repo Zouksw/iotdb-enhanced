@@ -95,7 +95,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
+      <Row
+        gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}
+        style={{ marginBottom: isMobile ? 16 : 24 }}
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {statCards.map((stat, index) => (
           <Col xs={12} sm={12} md={6} key={index}>
             <StatCard {...stat} loading={loading} />
