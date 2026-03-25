@@ -123,7 +123,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: false,
                           label: "Dashboard",
-                          icon: <DashboardOutlined />,
+                          icon: <DashboardOutlined aria-label="Dashboard" />,
                         },
                       },
 
@@ -135,7 +135,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: true,
                           label: "Time Series",
-                          icon: <LineChartOutlined />,
+                          icon: <LineChartOutlined aria-label="LineChart" />,
                         },
                       },
 
@@ -147,7 +147,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: true,
                           label: "Forecasts",
-                          icon: <LineChartOutlined />,
+                          icon: <LineChartOutlined aria-label="LineChart" />,
                         },
                       },
                       {
@@ -157,7 +157,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: true,
                           label: "Anomalies",
-                          icon: <AlertOutlined />,
+                          icon: <AlertOutlined aria-label="Alert" />,
                         },
                       },
 
@@ -168,7 +168,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: false,
                           label: "AI Models",
-                          icon: <ThunderboltOutlined />,
+                          icon: <ThunderboltOutlined aria-label="Thunderbolt" />,
                         },
                       },
                       {
@@ -177,7 +177,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: false,
                           label: "AI Anomaly Detection",
-                          icon: <EyeOutlined />,
+                          icon: <EyeOutlined aria-label="Eye" />,
                         },
                       },
                       {
@@ -186,7 +186,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: false,
                           label: "AI Prediction",
-                          icon: <RocketOutlined />,
+                          icon: <RocketOutlined aria-label="Rocket" />,
                         },
                       },
 
@@ -198,7 +198,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: true,
                           label: "Alerts",
-                          icon: <BellOutlined />,
+                          icon: <BellOutlined aria-label="Bell" />,
                         },
                       },
                       {
@@ -207,7 +207,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: false,
                           label: "Alert Rules",
-                          icon: <AlertOutlined />,
+                          icon: <AlertOutlined aria-label="Alert" />,
                         },
                       },
 
@@ -219,7 +219,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: true,
                           label: "API Keys",
-                          icon: <KeyOutlined />,
+                          icon: <KeyOutlined aria-label="Key" />,
                         },
                       },
 
@@ -230,7 +230,7 @@ export default function RootLayout({
                         meta: {
                           canDelete: false,
                           label: "Settings",
-                          icon: <SettingOutlined />,
+                          icon: <SettingOutlined aria-label="Settings" />,
                         },
                       },
                     ]}
