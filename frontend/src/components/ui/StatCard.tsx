@@ -1,14 +1,12 @@
 "use client";
 
 import React from "react";
-import { Card, Space, Typography, theme } from "antd";
+import { Card, Space } from "antd";
 import {
   ArrowUpOutlined,
   ArrowDownOutlined,
   MinusOutlined,
 } from "@ant-design/icons";
-
-const { Text } = Typography;
 
 export interface TrendIndicator {
   value: number;
@@ -52,100 +50,105 @@ export const StatCard = React.memo<StatCardProps>(({
   loading = false,
   onClick,
 }) => {
-  const { token } = theme.useToken();
-
-  // Define variant colors
+  // Define variant colors using design system
   const variantColors: Record<
     StatCardVariant,
-    { border: string; text: string; bg?: string }
+    { border: string; text: string; bgLight: string }
   > = {
     default: {
-      border: token.colorBorder,
-      text: token.colorText,
+      border: "#E2E8F0",
+      text: "#475569",
+      bgLight: "#F1F5F9",
     },
     primary: {
-      border: token.colorPrimary,
-      text: token.colorPrimary,
+      border: "#F59E0B",
+      text: "#F59E0B",
+      bgLight: "#FEF3C7",
     },
     success: {
-      border: token.colorSuccess,
-      text: token.colorSuccess,
+      border: "#10B981",
+      text: "#10B981",
+      bgLight: "#D1FAE5",
     },
     warning: {
-      border: token.colorWarning,
-      text: token.colorWarning,
+      border: "#F59E0B",
+      text: "#F59E0B",
+      bgLight: "#FEF3C7",
     },
     error: {
-      border: token.colorError,
-      text: token.colorError,
+      border: "#EF4444",
+      text: "#EF4444",
+      bgLight: "#FEE2E2",
     },
   };
 
   const colors = variantColors[variant];
 
   const cardStyle: React.CSSProperties = {
-    borderRadius: 4,
-    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
-    borderLeft: `2px solid ${colors.border}`,
+    borderRadius: 8,
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
+    borderLeft: `3px solid ${colors.border}`,
     cursor: onClick ? "pointer" : "default",
-    transition: "all 0.2s ease",
+    transition: "all 0.15s ease-move",
     height: "100%",
   };
 
   const valueStyle: React.CSSProperties = {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 700,
     color: colors.text,
     margin: 0,
-    lineHeight: 1.25,
+    lineHeight: 1.2,
   };
 
   const titleStyle: React.CSSProperties = {
-    fontSize: token.fontSizeSM,
-    color: token.colorTextSecondary,
-    marginBottom: 4,
+    fontSize: 14,
+    color: "#64748B",
+    marginBottom: 8,
+    fontWeight: 500,
   };
 
   const iconStyle: React.CSSProperties = {
-    color: token.colorTextSecondary,
-    fontSize: token.fontSizeLG,
+    color: "#64748B",
+    fontSize: 18,
   };
 
   return (
     <Card
-      className={`stat-card stat-card--${variant}`}
+      className={`stat-card stat-card--${variant} hover:-translate-y-0.5 hover:shadow-card-hover`}
       style={cardStyle}
       loading={loading}
       variant="borderless"
       onClick={onClick}
       hoverable={!!onClick}
     >
-      <Space direction="vertical" size={token.marginXS} style={{ width: "100%" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: token.marginXS }}>
+      <Space direction="vertical" size={8} style={{ width: "100%" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {icon && <span style={iconStyle}>{icon}</span>}
-          <Text style={titleStyle}>{title}</Text>
+          <span style={titleStyle}>{title}</span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "baseline", gap: token.marginSM }}>
-          <Text style={valueStyle}>{value}</Text>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{...valueStyle}} className="data-text">{value}</span>
 
           {trend && (
-            <Space size={token.marginXS}>
+            <Space size={4}>
               <TrendIcon
                 value={trend.value}
                 isPositive={trend.isPositive}
                 color={colors.text}
               />
-              <Text
-                type="secondary"
+              <span
                 style={{
                   fontSize: 12,
                   whiteSpace: "nowrap",
+                  color: trend.isPositive ? "#10B981" : "#EF4444",
+                  fontWeight: 500,
                 }}
               >
                 {trend.isPositive ? "+" : ""}
                 {trend.value}%
-              </Text>
+              </span>
             </Space>
           )}
         </div>

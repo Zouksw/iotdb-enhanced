@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Row, Col, Typography, Space, Avatar } from "antd";
+import { Row, Col, Space, Avatar } from "antd";
 import {
   DatabaseOutlined,
   LineChartOutlined,
@@ -21,8 +21,6 @@ import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { getCachedUser } from "@/utils/auth";
 import { useIsMobile } from "@/lib/responsive-utils";
-
-const { Title, Text } = Typography;
 
 export default function DashboardPage() {
   const { stats, loading, error, manualRetry } = useDashboardStats();
@@ -76,27 +74,20 @@ export default function DashboardPage() {
       {/* Loading State with timeout */}
       <LoadingState loading={loading} timeout={15000}>
         {/* Welcome Header */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: isMobile ? "flex-start" : "center",
-          marginBottom: isMobile ? 16 : 24,
-          flexDirection: isMobile ? "column" : "row",
-          gap: 16,
-        }}>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <Title level={isMobile ? 3 : 2} style={{ marginBottom: 4 }}>
+            <h1 className="text-h1 font-display font-bold text-gray-900 dark:text-gray-50 mb-1">
               Welcome back, {user?.name || "User"}!
-            </Title>
-            <Text type="secondary" style={{ fontSize: isMobile ? 13 : 14 }}>
+            </h1>
+            <p className="text-body text-gray-600 dark:text-gray-400">
               Here's what's happening with your IoTDB Platform.
-            </Text>
+            </p>
           </div>
           <Avatar
             size={isMobile ? 40 : 48}
             src={user?.avatar}
             icon={<UserOutlined />}
-            style={{ border: "2px solid #1890ff" }}
+            style={{ border: "2px solid #F59E0B" }}
           />
         </div>
 
@@ -146,29 +137,24 @@ export default function DashboardPage() {
           <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginTop: isMobile ? 16 : 24 }}>
             <Col xs={24}>
               <div
-                style={{
-                  background: "#0066CC",
-                  borderRadius: 4,
-                  padding: isMobile ? "16px 20px" : "20px 24px",
-                  color: "white",
-                }}
+                className="bg-primary rounded-lg p-5 sm:p-6 text-white"
               >
                 <Space size="large" style={{ width: "100%", justifyContent: "space-between" }}>
                   <div>
-                    <Title level={4} style={{ color: "white", marginBottom: 4 }}>
+                    <h3 className="text-h4 font-display font-bold text-white mb-1">
                       AI Models Status
-                    </Title>
-                    <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 14 }}>
+                    </h3>
+                    <p className="text-body text-white/85">
                       {stats.aiModels.active} of {stats.aiModels.total} models active
-                    </Text>
+                    </p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: 32, fontWeight: 700, lineHeight: 1 }}>
+                    <div className="text-5xl font-display font-bold leading-none data-text">
                       {stats.aiModels.active}
                     </div>
-                    <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12 }}>
+                    <p className="text-body-sm text-white/85">
                       Active Models
-                    </Text>
+                    </p>
                   </div>
                 </Space>
               </div>
