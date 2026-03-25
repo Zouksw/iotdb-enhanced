@@ -108,7 +108,7 @@ export const Features: React.FC = () => {
       id="features"
       style={{
         padding: "100px 24px",
-        background: "linear-gradient(180deg, #f8fafc 0%, #fff 100%)",
+        background: "#FFFFFF",
       }}
     >
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
@@ -118,8 +118,8 @@ export const Features: React.FC = () => {
             style={{
               display: "inline-block",
               padding: "8px 20px",
-              background: "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
-              borderRadius: "20px",
+              background: "rgba(0, 102, 204, 0.08)",
+              borderRadius: "3px",
               marginBottom: "16px",
             }}
           >
@@ -127,10 +127,7 @@ export const Features: React.FC = () => {
               style={{
                 fontSize: "14px",
                 fontWeight: 600,
-                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
+                color: "#0066CC",
               }}
             >
               FEATURES
@@ -140,12 +137,10 @@ export const Features: React.FC = () => {
             level={2}
             style={{
               fontSize: "clamp(28px, 4vw, 42px)",
-              fontWeight: 700,
+              fontWeight: 600,
+              lineHeight: 1.25,
               marginBottom: "16px",
-              background: "linear-gradient(135deg, #1e293b 0%, #475569 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+              color: "#111827",
             }}
           >
             Everything You Need
@@ -169,7 +164,7 @@ export const Features: React.FC = () => {
               <div
                 style={{
                   padding: "28px 20px",
-                  borderRadius: "16px",
+                  borderRadius: "6px",
                   background: "#fff",
                   border: "1px solid #f1f5f9",
                   boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
@@ -191,8 +186,8 @@ export const Features: React.FC = () => {
                   style={{
                     width: "48px",
                     height: "48px",
-                    borderRadius: "12px",
-                    background: "linear-gradient(135deg, #0066cc15 0%, #0077e615 100%)",
+                    borderRadius: "4px",
+                    background: "rgba(0, 102, 204, 0.08)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -213,10 +208,7 @@ export const Features: React.FC = () => {
                   style={{
                     fontSize: "32px",
                     fontWeight: 700,
-                    background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
+                    color: "#0066CC",
                     display: "block",
                     marginBottom: "8px",
                   }}
@@ -254,7 +246,7 @@ export const Features: React.FC = () => {
                   style={{
                     width: "56px",
                     height: "56px",
-                    borderRadius: "14px",
+                    borderRadius: "4px",
                     background: featureColors[feature.gradient],
                     display: "flex",
                     alignItems: "center",
