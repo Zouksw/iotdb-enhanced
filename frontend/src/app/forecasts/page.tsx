@@ -8,7 +8,7 @@ import {
   useTable,
   CreateButton,
 } from "@refinedev/antd";
-import { Space, Table, Tag, Badge, Row, Col, Typography, Button } from "antd";
+import { Space, Table, Tag, Badge, Row, Col } from "antd";
 import type { Breakpoint } from "antd";
 import { useList } from "@refinedev/core";
 import {
@@ -23,10 +23,8 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
-import GlassCard from "@/components/ui/GlassCard";
+import { Button } from "@/components/ui";
 import { useIsMobile } from "@/lib/responsive-utils";
-
-const { Text } = Typography;
 
 export default function ForecastList() {
   const { tableProps } = useTable({
@@ -63,9 +61,9 @@ export default function ForecastList() {
       fixed: "left" as const,
       responsive: ["lg"] as Breakpoint[],
       render: (id: string) => (
-        <Text code style={{ fontSize: 12 }}>
+        <code className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-700 dark:text-gray-300 data-text">
           {id.slice(0, 8)}...
-        </Text>
+        </code>
       ),
     },
     {
@@ -88,7 +86,7 @@ export default function ForecastList() {
       responsive: ["md", "lg", "xl"] as Breakpoint[],
       render: (ts: any) => (
         <Space>
-          <Text strong>{ts?.name || "-"}</Text>
+          <span className="font-semibold text-gray-900 dark:text-gray-50">{ts?.name || "-"}</span>
         </Space>
       ),
     },
@@ -121,9 +119,9 @@ export default function ForecastList() {
         const numValue = typeof value === "object" ? value.toNumber?.() : Number(value);
         const unit = record.timeseries?.unit || "";
         return (
-          <Text style={{ fontFamily: "monospace", fontSize: 13 }}>
+          <span className="data-text text-[13px] text-gray-700 dark:text-gray-300">
             {numValue.toFixed(2)} {unit}
-          </Text>
+          </span>
         );
       },
     },
@@ -156,13 +154,13 @@ export default function ForecastList() {
         const unit = record.timeseries?.unit || "";
 
         if (!lower || !upper) {
-          return <Text type="secondary">-</Text>;
+          return <span className="text-gray-400 dark:text-gray-600">-</span>;
         }
 
         return (
-          <Text style={{ fontFamily: "monospace", fontSize: 12 }}>
+          <span className="data-text text-xs text-gray-700 dark:text-gray-300">
             [{lower.toFixed(2)}, {upper.toFixed(2)}] {unit}
-          </Text>
+          </span>
         );
       },
     },
@@ -182,9 +180,9 @@ export default function ForecastList() {
             <Space direction="vertical" size={0}>
               <Badge status="error" text="Yes" />
               {probability > 0 && (
-                <Text type="secondary" style={{ fontSize: 11 }}>
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 data-text">
                   {(probability * 100).toFixed(0)}%
-                </Text>
+                </span>
               )}
             </Space>
           );
@@ -308,16 +306,21 @@ export default function ForecastList() {
           breadcrumbs={breadcrumbItems}
           actions={
             <Space>
-              <Button icon={<DownloadOutlined />} onClick={handleExport}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleExport}
+                icon={<DownloadOutlined />}
+              >
                 {!isMobile && "Export"}
               </Button>
               <CreateButton
                 icon={<PlusOutlined />}
                 style={{
-                  background: "#0066CC",
+                  background: "#F59E0B",
                   border: "none",
                   height: "40px",
-                  borderRadius: 3,
+                  borderRadius: "4px",
                   fontWeight: 600,
                 }}
               >
@@ -330,122 +333,86 @@ export default function ForecastList() {
         {/* Statistics Cards with Glassmorphism */}
         <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
+              <div className="flex items-center gap-3 mb-3">
                 <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#0066CC",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
+                  className="w-10 h-10 rounded-md bg-primary flex items-center justify-center"
                 >
                   <LineChartOutlined style={{ fontSize: "20px", color: "#fff" }} />
                 </div>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
+                <span className="text-body-sm font-medium text-gray-600 dark:text-gray-400">
                   Total Forecasts
-                </Text>
+                </span>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div className="text-[28px] font-bold text-gray-900 dark:text-gray-50 mb-1 data-text">
                 {totalForecasts}
               </div>
-              <Text type="secondary" style={{ fontSize: "12px" }}>
+              <span className="text-body-sm text-gray-500 dark:text-gray-400">
                 AI predictions generated
-              </Text>
+              </span>
             </GlassCard>
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
+              <div className="flex items-center gap-3 mb-3">
                 <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#3B82F6",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
+                  className="w-10 h-10 rounded-md bg-info flex items-center justify-center"
                 >
                   <ThunderboltOutlined style={{ fontSize: "20px", color: "#fff" }} />
                 </div>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
+                <span className="text-body-sm font-medium text-gray-600 dark:text-gray-400">
                   Active Models
-                </Text>
+                </span>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div className="text-[28px] font-bold text-gray-900 dark:text-gray-50 mb-1 data-text">
                 {uniqueModels}
               </div>
-              <Text type="success" style={{ fontSize: "12px" }}>
+              <span className="text-body-sm text-success dark:text-success-light">
                 AI algorithms
-              </Text>
+              </span>
             </GlassCard>
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
+              <div className="flex items-center gap-3 mb-3">
                 <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#0EA5E9",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
+                  className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center"
                 >
                   <ClockCircleOutlined style={{ fontSize: "20px", color: "#fff" }} />
                 </div>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
+                <span className="text-body-sm font-medium text-gray-600 dark:text-gray-400">
                   Time Series
-                </Text>
+                </span>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div className="text-[28px] font-bold text-gray-900 dark:text-gray-50 mb-1 data-text">
                 {uniqueTimeseries}
               </div>
-              <Text type="secondary" style={{ fontSize: "12px" }}>
+              <span className="text-body-sm text-gray-500 dark:text-gray-400">
                 Being forecasted
-              </Text>
+              </span>
             </GlassCard>
           </Col>
 
           <Col xs={12} sm={12} md={6}>
-            <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+            <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
+              <div className="flex items-center gap-3 mb-3">
                 <div
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: 3,
-                    background: "#F59E0B",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "12px",
-                  }}
+                  className="w-10 h-10 rounded-md bg-warning flex items-center justify-center"
                 >
                   <LineChartOutlined style={{ fontSize: "20px", color: "#fff" }} />
                 </div>
-                <Text type="secondary" style={{ fontSize: "13px", fontWeight: 500 }}>
+                <span className="text-body-sm font-medium text-gray-600 dark:text-gray-400">
                   Anomalies Detected
-                </Text>
+                </span>
               </div>
-              <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b", marginBottom: "4px" }}>
+              <div className="text-[28px] font-bold text-gray-900 dark:text-gray-50 mb-1 data-text">
                 {anomalyCount}
               </div>
-              <Text type={anomalyCount > 0 ? "warning" : "success"} style={{ fontSize: "12px" }}>
+              <span className={`text-body-sm ${anomalyCount > 0 ? "text-warning dark:text-warning-light" : "text-success dark:text-success-light"}`}>
                 {anomalyCount > 0 ? "Need attention" : "All normal"}
-              </Text>
+              </span>
             </GlassCard>
           </Col>
         </Row>
