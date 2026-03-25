@@ -13,6 +13,7 @@ import { authProviderClient } from "@/providers/auth-provider/auth-provider.clie
 import { dataProvider } from "@/providers/data-provider";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
+import { ToastProvider } from "@/components/ui/Toast";
 import "@ant-design/v5-patch-for-react-19";
 import "@refinedev/antd/dist/reset.css";
 import "@/styles/globals.css";
@@ -106,6 +107,7 @@ export default function RootLayout({
         <Suspense>
           <AntdRegistry>
             <AntdApp>
+              <ToastProvider>
               <GitHubBanner />
               <RefineKbarProvider>
                 <ColorModeContextProvider defaultMode={theme?.value}>
@@ -250,6 +252,7 @@ export default function RootLayout({
                 </DevtoolsProvider>
               </ColorModeContextProvider>
             </RefineKbarProvider>
+              </ToastProvider>
             </AntdApp>
           </AntdRegistry>
         </Suspense>
