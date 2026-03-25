@@ -78,7 +78,7 @@ export const Hero: React.FC = () => {
             display: "inline-flex",
             alignItems: "center",
             padding: "6px 16px",
-            borderRadius: "20px",
+            borderRadius: "3px",
             background: "rgba(0, 102, 204, 0.08)",
             border: "1px solid rgba(0, 102, 204, 0.2)",
             marginBottom: "24px",
@@ -95,14 +95,11 @@ export const Hero: React.FC = () => {
           level={1}
           style={{
             fontSize: "clamp(40px, 6vw, 72px)",
-            fontWeight: 800,
-            lineHeight: 1.1,
+            fontWeight: 700,
+            lineHeight: 1.25,
             marginBottom: "24px",
-            background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #00a8e8 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            letterSpacing: "-0.02em",
+            color: "#111827",
+            letterSpacing: "-0.01em",
           }}
         >
           IoTDB Enhanced
@@ -162,7 +159,7 @@ export const Hero: React.FC = () => {
               padding: "0 32px",
               fontSize: "16px",
               fontWeight: 600,
-              borderRadius: "12px",
+              borderRadius: "4px",
               border: "2px solid #e2e8f0",
               background: "rgba(255, 255, 255, 0.8)",
             }}
@@ -186,8 +183,8 @@ export const Hero: React.FC = () => {
               style={{
                 width: "48px",
                 height: "48px",
-                borderRadius: "12px",
-                background: "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)",
+                borderRadius: "4px",
+                background: "#0066CC",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -209,8 +206,8 @@ export const Hero: React.FC = () => {
               style={{
                 width: "48px",
                 height: "48px",
-                borderRadius: "12px",
-                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                borderRadius: "4px",
+                background: "#6366F1",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -232,8 +229,8 @@ export const Hero: React.FC = () => {
               style={{
                 width: "48px",
                 height: "48px",
-                borderRadius: "12px",
-                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                borderRadius: "4px",
+                background: "#0EA5E9",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
