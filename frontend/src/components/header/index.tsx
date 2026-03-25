@@ -12,6 +12,7 @@ import {
   theme,
 } from "antd";
 import React, { useContext } from "react";
+import { OnlineStatusCompact } from "@/components/ui/OnlineStatus";
 
 const { Text } = Typography;
 const { useToken } = theme;
@@ -47,6 +48,9 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
   return (
     <AntdLayout.Header style={headerStyles}>
       <Space>
+        {/* Online Status Indicator */}
+        <OnlineStatusCompact position="inline" />
+
         <Switch
           checkedChildren="🌛"
           unCheckedChildren="🔆"

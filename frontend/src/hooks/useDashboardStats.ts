@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import useSWR from "swr";
+import { useMemo } from "react";
+import { useRetryableFetch } from "@/hooks/useRetryableFetch";
 import { getAuthToken } from "@/utils/auth";
 import type { Alert, Forecast } from "@/types/api";
 
@@ -55,88 +55,83 @@ const fetcher = async (url: string) => {
 };
 
 export const useDashboardStats = () => {
-  const [error, setError] = useState<Error | null>(null);
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
-  // Use SWR for each API endpoint with 30-second cache
-  const { data: datasetsData, error: datasetsError } = useSWR(
+  // Use useRetryableFetch for each API endpoint with automatic retry
+  const { data: datasetsData, error: datasetsError, isLoading: datasetsLoading } = useRetryableFetch(
     () => (getAuthToken() ? `${API_BASE}/datasets?page=1&limit=1` : null),
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000, // 30 seconds cache
-      shouldRetryOnError: false,
+      maxRetries: 3,
+      retryDelay: 1000,
+      backoffMultiplier: 2,
     }
   );
 
-  const { data: timeseriesData, error: timeseriesError } = useSWR(
+  const { data: timeseriesData, error: timeseriesError, isLoading: timeseriesLoading } = useRetryableFetch(
     () => (getAuthToken() ? `${API_BASE}/timeseries?page=1&limit=1` : null),
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-      shouldRetryOnError: false,
+      maxRetries: 3,
+      retryDelay: 1000,
+      backoffMultiplier: 2,
     }
   );
 
-  const { data: forecastsData, error: forecastsError } = useSWR(
+  const { data: forecastsData, error: forecastsError, isLoading: forecastsLoading } = useRetryableFetch(
     () => (getAuthToken() ? `${API_BASE}/forecasts?page=1&limit=1` : null),
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-      shouldRetryOnError: false,
+      maxRetries: 3,
+      retryDelay: 1000,
+      backoffMultiplier: 2,
     }
   );
 
-  const { data: alertsData } = useSWR(
+  const { data: alertsData, isLoading: alertsLoading } = useRetryableFetch(
     () => (getAuthToken() ? `${API_BASE}/alerts?page=1&limit=100` : null),
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-      shouldRetryOnError: false,
+      maxRetries: 3,
+      retryDelay: 1000,
+      backoffMultiplier: 2,
     }
   );
 
-  const { data: recentAlertsData } = useSWR(
+  const { data: recentAlertsData } = useRetryableFetch(
     () => (getAuthToken() ? `${API_BASE}/alerts?limit=5` : null),
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-      shouldRetryOnError: false,
+      maxRetries: 3,
+      retryDelay: 1000,
+      backoffMultiplier: 2,
     }
   );
 
-  const { data: recentForecastsData } = useSWR(
+  const { data: recentForecastsData } = useRetryableFetch(
     () => (getAuthToken() ? `${API_BASE}/forecasts?limit=5` : null),
     fetcher,
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 30000,
-      shouldRetryOnError: false,
+      maxRetries: 3,
+      retryDelay: 1000,
+      backoffMultiplier: 2,
     }
   );
 
-  // Combine loading states
-  const loading = !datasetsData && !timeseriesData && !forecastsData && !alertsData;
+  // Combine loading states - using useRetryableFetch's isLoading
+  const loading = datasetsLoading || timeseriesLoading || forecastsLoading || alertsLoading;
 
-  // Handle errors
-  useEffect(() => {
-    const errors = [datasetsError, timeseriesError, forecastsError].filter(Boolean);
-    if (errors.length > 0) {
-      setError(errors[0] as Error);
-    }
-  }, [datasetsError, timeseriesError, forecastsError]);
+  // Derive error from individual errors - no setState needed
+  const errors = [datasetsError, timeseriesError, forecastsError].filter(Boolean);
+  const error = errors.length > 0 ? (errors[0] as Error) : null;
 
-  // Calculate trends (mock data for now)
-  const mockTrends = {
-    datasets: Math.floor(Math.random() * 30) - 10,
-    timeseries: Math.floor(Math.random() * 20) - 5,
-    forecasts: Math.floor(Math.random() * 40) - 15,
-    alerts: Math.floor(Math.random() * 50) - 25,
-  };
+  // Calculate trends (mock data for now) - use useMemo to avoid impure function calls during render
+  const mockTrends = useMemo(() => ({
+    datasets: 5, // Mock trend value
+    timeseries: 3, // Mock trend value
+    forecasts: -8, // Mock trend value
+    alerts: -12, // Mock trend value
+  }), []); // Empty dependency array - calculate once
 
   // Count alerts by severity
   const alertsBySeverity = {
@@ -179,5 +174,12 @@ export const useDashboardStats = () => {
     recentForecasts: recentForecastsData?.data || recentForecastsData?.items || [],
   } : null;
 
-  return { stats, loading, error };
+  // Create a manual retry function that retries all requests
+  const manualRetry = () => {
+    // The useRetryableFetch hooks will handle their own retries
+    // This is a placeholder for a coordinated retry if needed
+    window.location.reload();
+  };
+
+  return { stats, loading, error, manualRetry };
 };
