@@ -265,6 +265,7 @@ export default function Phase1Demo() {
           </Space>
 
           <DataTable
+            key={showEmptyTable ? "empty" : "data"}
             columns={columns}
             dataSource={tableData}
             emptyStateType="data"
@@ -283,7 +284,7 @@ export default function Phase1Demo() {
       >
         <Row gutter={[16, 16]}>
           <Col span={6}>
-            <Card type="inner" title="ToastProvider" bordered={false}>
+            <Card variant="borderless" title="ToastProvider">
               <CheckCircleOutlined style={{ color: "#52c41a", fontSize: 24 }} />
               <p style={{ marginTop: 8 }}>Integrated ✅</p>
             </Card>
