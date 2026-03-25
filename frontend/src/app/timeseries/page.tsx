@@ -9,7 +9,7 @@ import {
   useTable,
   CreateButton,
 } from "@refinedev/antd";
-import { Space, Table, Tag, Typography } from "antd";
+import { Space, Table, Tag } from "antd";
 import type { Breakpoint } from "antd";
 import { useList } from "@refinedev/core";
 import {
@@ -24,8 +24,6 @@ import { StatCard } from "@/components/ui/StatCard";
 import { DataTable } from "@/components/tables/DataTable";
 import { ResponsiveStats } from "@/components/ui/MobileStatsCard";
 import { useIsMobile } from "@/lib/responsive-utils";
-
-const { Text } = Typography;
 
 export default function TimeseriesList() {
   const { tableProps } = useTable({
@@ -67,7 +65,7 @@ export default function TimeseriesList() {
       fixed: "left" as const,
       responsive: ["lg"] as Breakpoint[],
       render: (id: string) => (
-        <code style={{ fontSize: 12, padding: "2px 6px", background: "#f5f5f5", borderRadius: 4 }}>
+        <code className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-700 dark:text-gray-300 data-text">
           {id.slice(0, 8)}...
         </code>
       ),
@@ -80,15 +78,13 @@ export default function TimeseriesList() {
       render: (name: string, record: any) => (
         <Space>
           <span
-            style={{
-              fontWeight: 500,
-              color: record.colorHex || undefined,
-            }}
+            className="font-semibold"
+            style={{ color: record.colorHex || undefined }}
           >
             {name}
           </span>
           {record.isAnomalyDetectionEnabled && (
-            <Tag color="orange" style={{ fontSize: 11 }}>
+            <Tag color="orange" className="text-[11px]">
               Anomaly Detection
             </Tag>
           )}
@@ -125,7 +121,7 @@ export default function TimeseriesList() {
       sorter: true,
       responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (count: number) => (
-        <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13 }}>
+        <span className="data-text text-[13px] text-gray-700 dark:text-gray-300">
           {(count ?? 0).toLocaleString()}
         </span>
       ),
@@ -137,7 +133,7 @@ export default function TimeseriesList() {
       align: "center" as const,
       responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (count: number) => (
-        <Tag color={count > 0 ? "red" : "green"} style={{ margin: 0 }}>
+        <Tag color={count > 0 ? "red" : "green"} className="m-0">
           {count ?? 0}
         </Tag>
       ),
@@ -180,10 +176,10 @@ export default function TimeseriesList() {
           actions={
             <CreateButton
               style={{
-                background: "#0066CC",
+                background: "#F59E0B",
                 border: "none",
                 height: "40px",
-                borderRadius: 3,
+                borderRadius: "4px",
                 fontWeight: 600,
               }}
               icon={<PlusOutlined />}
