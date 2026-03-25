@@ -1,18 +1,17 @@
 "use client";
 
-import { ColorModeContext } from "@/contexts/color-mode";
 import type { RefineThemedLayoutHeaderProps } from "@refinedev/antd";
 import { useGetIdentity } from "@refinedev/core";
 import {
   Layout as AntdLayout,
   Avatar,
   Space,
-  Switch,
   Typography,
   theme,
 } from "antd";
-import React, { useContext } from "react";
+import React from "react";
 import { OnlineStatusCompact } from "@/components/ui/OnlineStatus";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const { Text } = Typography;
 const { useToken } = theme;
@@ -28,7 +27,6 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
 }) => {
   const { token } = useToken();
   const { data: user } = useGetIdentity<IUser>();
-  const { mode, setMode } = useContext(ColorModeContext);
 
   const headerStyles: React.CSSProperties = {
     backgroundColor: token.colorBgElevated,
@@ -51,12 +49,9 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({
         {/* Online Status Indicator */}
         <OnlineStatusCompact position="inline" />
 
-        <Switch
-          checkedChildren="🌛"
-          unCheckedChildren="🔆"
-          onChange={() => setMode(mode === "light" ? "dark" : "light")}
-          defaultChecked={mode === "dark"}
-        />
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
         {(user?.name || user?.avatar) && (
           <Space style={{ marginLeft: "8px" }} size="middle">
             {user?.name && <Text strong>{user.name}</Text>}

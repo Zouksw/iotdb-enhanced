@@ -2,7 +2,6 @@
 
 import { RefineThemes } from "@refinedev/antd";
 import { App as AntdApp, ConfigProvider, theme } from "antd";
-import Cookies from "js-cookie";
 import React, {
   type PropsWithChildren,
   createContext,
@@ -30,7 +29,7 @@ export const ColorModeContextProvider: React.FC<
   PropsWithChildren<ColorModeContextProviderProps>
 > = ({ children, defaultMode }) => {
   const [isMounted, setIsMounted] = useState(false);
-  const [mode, setMode] = useState(defaultMode || "light");
+  const [mode, setMode] = useState(defaultMode || "dark");
 
   useEffect(() => {
     setIsMounted(true);
@@ -38,19 +37,20 @@ export const ColorModeContextProvider: React.FC<
 
   useLayoutEffect(() => {
     if (isMounted) {
-      const theme = Cookies.get("theme") || "light";
-      setMode(theme);
+      // Read from localStorage (syncs with ThemeToggle component)
+      const savedTheme = localStorage.getItem("theme") || "dark";
+      setMode(savedTheme);
+      // Apply Tailwind dark mode class
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
     }
   }, [isMounted]);
 
-  const setColorMode = () => {
-    if (mode === "light") {
-      setMode("dark");
-      Cookies.set("theme", "dark");
-    } else {
-      setMode("light");
-      Cookies.set("theme", "light");
-    }
+  const setColorMode = (newMode: string) => {
+    setMode(newMode);
+    // Update localStorage (syncs with ThemeToggle component)
+    localStorage.setItem("theme", newMode);
+    // Apply Tailwind dark mode class
+    document.documentElement.classList.toggle("dark", newMode === "dark");
   };
 
   const { darkAlgorithm, defaultAlgorithm } = theme;
