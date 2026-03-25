@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import {
   Space,
-  Typography,
   Tag,
   Button,
   Badge,
@@ -40,8 +39,6 @@ import { useIsMobile } from "@/lib/responsive-utils";
 
 dayjs.extend(relativeTime);
 dayjs.locale("zh-cn");
-
-const { Text } = Typography;
 
 interface Alert {
   id: string;
@@ -254,7 +251,7 @@ export default function AlertList() {
       render: (message: string, record: Alert) => (
         <Space>
           {getAlertIcon(record.type, record.severity)}
-          <Text>{message}</Text>
+          <span className="text-body">{message}</span>
         </Space>
       ),
     },
@@ -268,10 +265,10 @@ export default function AlertList() {
       render: (timeseries?: { name: string; dataset: { name: string } }) =>
         timeseries ? (
           <Space direction="vertical" size={0}>
-            <Text style={{ fontSize: 13 }}>{timeseries.name}</Text>
-            <Text type="secondary" style={{ fontSize: 11 }}>
+            <span className="text-[13px] text-gray-900 dark:text-gray-50">{timeseries.name}</span>
+            <span className="text-[11px] text-gray-500 dark:text-gray-400">
               {timeseries.dataset.name}
-            </Text>
+            </span>
           </Space>
         ) : (
           "-"
@@ -285,9 +282,9 @@ export default function AlertList() {
       responsive: ["sm", "md", "lg", "xl"] as Breakpoint[],
       render: (date: string) => (
         <Tooltip title={dayjs(date).format("YYYY-MM-DD HH:mm:ss")}>
-          <Text type="secondary" style={{ fontSize: 13 }}>
+          <span className="text-body-sm text-gray-500 dark:text-gray-400">
             {dayjs(date).fromNow()}
-          </Text>
+          </span>
         </Tooltip>
       ),
     },
@@ -372,9 +369,9 @@ export default function AlertList() {
                 onClick={handleMarkAllAsRead}
                 type="primary"
                 style={{
-                  background: "#0066CC",
+                  background: "#F59E0B",
                   border: "none",
-                  borderRadius: 3,
+                  borderRadius: "4px",
                   fontWeight: 600,
                 }}
               >
@@ -420,7 +417,7 @@ export default function AlertList() {
         style={{ marginBottom: 16 }}
       >
         <Space wrap size="middle">
-          <Text strong>Filter by:</Text>
+          <span className="font-semibold text-gray-900 dark:text-gray-50">Filter by:</span>
           <Select
             placeholder="Type"
             allowClear
