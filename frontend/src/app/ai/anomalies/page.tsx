@@ -9,7 +9,20 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { ContentCard } from "@/components/layout/ContentCard";
 import { DataTable } from "@/components/tables/DataTable";
-import AnomalyChart from "@/components/charts/AnomalyChart";
+import dynamic from "next/dynamic";
+
+// Dynamic import for heavy chart component
+const AnomalyChart = dynamic(
+  () => import("@/components/charts/AnomalyChart").then(mod => ({ default: mod.AnomalyChart })),
+  {
+    loading: () => (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <Spin size="large" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 interface Anomaly {
   timestamp: number;

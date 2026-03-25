@@ -31,7 +31,20 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentCard } from "@/components/layout/ContentCard";
 import GlassCard from "@/components/ui/GlassCard";
 import { useIsMobile } from "@/lib/responsive-utils";
-import PredictionChart from "@/components/charts/PredictionChart";
+import dynamic from "next/dynamic";
+
+// Dynamic import for heavy chart component
+const PredictionChart = dynamic(
+  () => import("@/components/charts/PredictionChart").then(mod => ({ default: mod.PredictionChart })),
+  {
+    loading: () => (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        <Spin size="large" />
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 // Check if AI features are disabled
 const AI_DISABLED = process.env.NEXT_PUBLIC_AI_DISABLED === 'true';
