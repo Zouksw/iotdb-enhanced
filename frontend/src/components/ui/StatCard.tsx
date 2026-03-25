@@ -43,7 +43,7 @@ export interface StatCardProps {
  * - Optional click handler
  * - Consistent sizing and spacing
  */
-export const StatCard: React.FC<StatCardProps> = ({
+export const StatCard = React.memo<StatCardProps>(({
   title,
   value,
   icon,
@@ -152,7 +152,17 @@ export const StatCard: React.FC<StatCardProps> = ({
       </Space>
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison for React.memo
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.value === nextProps.value &&
+    prevProps.trend?.value === nextProps.trend?.value &&
+    prevProps.trend?.isPositive === nextProps.trend?.isPositive &&
+    prevProps.variant === nextProps.variant &&
+    prevProps.loading === nextProps.loading
+  );
+});
 
 interface TrendIconProps {
   value: number;

@@ -19,7 +19,7 @@ interface RecentActivityProps {
   loading?: boolean;
 }
 
-export const RecentActivity: React.FC<RecentActivityProps> = ({
+export const RecentActivity = React.memo<RecentActivityProps>(({
   recentAlerts = [],
   recentForecasts = [],
   loading = false,
@@ -200,6 +200,13 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
       />
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Memoize to prevent re-renders when parent updates
+  return (
+    prevProps.recentAlerts === nextProps.recentAlerts &&
+    prevProps.recentForecasts === nextProps.recentForecasts &&
+    prevProps.loading === nextProps.loading
+  );
+});
 
 export default RecentActivity;
