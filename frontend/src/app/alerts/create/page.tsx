@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Form, Input, Select, Switch, Button, Row, Col, Typography, Alert, Space, Divider, InputNumber } from "antd";
+import { Form, Input, Select, Switch, Button, Row, Col, Alert, Space, Divider, InputNumber } from "antd";
 import { ArrowLeftOutlined, BellOutlined } from "@ant-design/icons";
 import { useGo, useInvalidate, useNotification } from "@refinedev/core";
 import { useList } from "@refinedev/core";
@@ -17,8 +17,6 @@ import { sanitizer } from "@/lib/sanitizer";
 import { errorHandler } from "@/lib/errorHandler";
 import { tokenManager } from "@/lib/tokenManager";
 import { csrfProtection } from "@/lib/csrf";
-
-const { Text } = Typography;
 
 const ALERT_TYPES = [
   { value: "ANOMALY", label: "Anomaly Detection", description: "Alerts when anomalies are detected" },
@@ -164,7 +162,7 @@ export default function AlertCreate() {
             <Row gutter={[isMobile ? 16 : 24, 16]}>
               <Col xs={24}>
                 <Form.Item
-                  label={<span style={{ fontWeight: 500 }}>Alert Name</span>}
+                  label={<span className="font-semibold">Alert Name</span>}
                   name="name"
                   rules={[
                     validationRules.getAntRule(required("Alert name")),
@@ -186,7 +184,7 @@ export default function AlertCreate() {
             <Row gutter={[isMobile ? 16 : 24, 16]}>
               <Col xs={24} md={12}>
                 <Form.Item
-                  label={<span style={{ fontWeight: 500 }}>Alert Type</span>}
+                  label={<span className="font-semibold">Alert Type</span>}
                   name="type"
                   rules={[{ required: true, message: "Please select alert type" }]}
                 >
@@ -195,9 +193,9 @@ export default function AlertCreate() {
                       <Select.Option key={type.value} value={type.value}>
                         <div>
                           <div>{type.label}</div>
-                          <Text type="secondary" style={{ fontSize: 12 }}>
+                          <span className="text-body-sm text-gray-500 dark:text-gray-400">
                             {type.description}
-                          </Text>
+                          </span>
                         </div>
                       </Select.Option>
                     ))}
@@ -207,7 +205,7 @@ export default function AlertCreate() {
 
               <Col xs={24} md={12}>
                 <Form.Item
-                  label={<span style={{ fontWeight: 500 }}>Severity Level</span>}
+                  label={<span className="font-semibold">Severity Level</span>}
                   name="severity"
                   rules={[{ required: true, message: "Please select severity" }]}
                 >
@@ -226,7 +224,7 @@ export default function AlertCreate() {
 
             {/* Time Series Selection */}
             <Form.Item
-              label={<span style={{ fontWeight: 500 }}>Time Series</span>}
+              label={<span className="font-semibold">Time Series</span>}
               name="timeseriesId"
               rules={[{ required: true, message: "Please select a time series" }]}
               tooltip="Select the time series to monitor"
@@ -245,7 +243,7 @@ export default function AlertCreate() {
                   <Select.Option key={ts.id} value={ts.id}>
                     <Space>
                       <span>{ts.name}</span>
-                      {ts.unit && <Text type="secondary">({ts.unit})</Text>}
+                      {ts.unit && <span className="text-body-sm text-gray-500 dark:text-gray-400">({ts.unit})</span>}
                     </Space>
                   </Select.Option>
                 ))}
@@ -261,7 +259,7 @@ export default function AlertCreate() {
                   <Row gutter={[isMobile ? 16 : 24, 16]}>
                     <Col xs={24} md={8}>
                       <Form.Item
-                        label={<span style={{ fontWeight: 500 }}>Operator</span>}
+                        label={<span className="font-semibold">Operator</span>}
                         name={["condition", "operator"]}
                         initialValue=">"
                       >
@@ -275,7 +273,7 @@ export default function AlertCreate() {
                     </Col>
                     <Col xs={24} md={8}>
                       <Form.Item
-                        label={<span style={{ fontWeight: 500 }}>Threshold Value</span>}
+                        label={<span className="font-semibold">Threshold Value</span>}
                         name={["condition", "value"]}
                         rules={[{ required: true, message: "Required" }]}
                       >
@@ -284,7 +282,7 @@ export default function AlertCreate() {
                     </Col>
                     <Col xs={24} md={8}>
                       <Form.Item
-                        label={<span style={{ fontWeight: 500 }}>Cooldown (minutes)</span>}
+                        label={<span className="font-semibold">Cooldown (minutes)</span>}
                         name="cooldownMinutes"
                         initialValue={5}
                         tooltip="Minimum time between alert notifications"
@@ -299,7 +297,7 @@ export default function AlertCreate() {
 
             {/* Description */}
             <Form.Item
-              label={<span style={{ fontWeight: 500 }}>Description</span>}
+              label={<span className="font-semibold">Description</span>}
               name="description"
               rules={[
                 validationRules.getAntRule(validationRules.createMaxLengthValidator(1000, "Description")),
@@ -316,7 +314,7 @@ export default function AlertCreate() {
 
             {/* Enable/Disable */}
             <Form.Item
-              label={<span style={{ fontWeight: 500 }}>Status</span>}
+              label={<span className="font-semibold">Status</span>}
               name="enabled"
               valuePropName="checked"
             >
@@ -326,7 +324,19 @@ export default function AlertCreate() {
             <Divider style={{ margin: "24px 0" }} />
 
             <Form.Item>
-              <Button type="primary" size="large" htmlType="submit" loading={loading} block>
+              <Button
+                type="primary"
+                size="large"
+                htmlType="submit"
+                loading={loading}
+                block
+                style={{
+                  background: "#F59E0B",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontWeight: 600,
+                }}
+              >
                 Create Alert
               </Button>
             </Form.Item>
