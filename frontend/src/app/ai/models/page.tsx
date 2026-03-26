@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, Tag, Button, message, Card, Row, Col, Descriptions, Typography, Alert } from "antd";
+import { Table, Tag, Button, message, Card, Row, Col, Alert } from "antd";
 import type { Breakpoint } from "antd";
 import {
   ThunderboltOutlined,
@@ -17,8 +17,6 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { DataTable } from "@/components/tables/DataTable";
 import GlassCard from "@/components/ui/GlassCard";
 import { useIsMobile } from "@/lib/responsive-utils";
-
-const { Title } = Typography;
 
 // Check if AI features are disabled
 const AI_DISABLED = process.env.NEXT_PUBLIC_AI_DISABLED === 'true';
@@ -74,7 +72,7 @@ export default function AIModelsPage() {
       width: 150,
       responsive: ["lg"] as Breakpoint[],
       render: (id: string) => (
-        <code style={{ fontSize: 12, padding: "2px 6px", background: "#f5f5f5", borderRadius: 4 }}>
+        <code className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-700 dark:text-gray-300">
           {id}
         </code>
       ),
@@ -85,10 +83,10 @@ export default function AIModelsPage() {
       key: "name",
       width: 180,
       render: (name: string, record: AIModel) => (
-        <span style={{ fontWeight: 500 }}>
+        <span className="font-semibold text-gray-900 dark:text-gray-50">
           {name}
           {record.ainode && (
-            <Tag color="blue" icon={<ThunderboltOutlined />} style={{ marginLeft: 8 }}>
+            <Tag color="blue" icon={<ThunderboltOutlined />} className="ml-2">
               Built-in
             </Tag>
           )}
@@ -122,6 +120,12 @@ export default function AIModelsPage() {
           type="primary"
           icon={<RocketOutlined />}
           onClick={() => window.location.href = "/forecasts/create"}
+          style={{
+            background: "#F59E0B",
+            border: "none",
+            borderRadius: "4px",
+            fontWeight: 600,
+          }}
         >
           {!isMobile && "Use Model"}
         </Button>
@@ -181,6 +185,12 @@ export default function AIModelsPage() {
             loading={loading}
             disabled={AI_DISABLED}
             icon={<ReloadOutlined />}
+            style={{
+              background: "#F59E0B",
+              border: "none",
+              borderRadius: "4px",
+              fontWeight: 600,
+            }}
           >
             {!isMobile && "Refresh"}
           </Button>
@@ -190,30 +200,21 @@ export default function AIModelsPage() {
       {/* Statistics Card */}
       <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]} style={{ marginBottom: isMobile ? 16 : 24 }}>
         <Col xs={24} sm={12}>
-          <GlassCard intensity="medium"  style={{ padding: isMobile ? "16px" : "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
+          <GlassCard intensity="medium" style={{ padding: isMobile ? "16px" : "20px" }}>
+            <div className="flex items-center mb-3">
               <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: 3,
-                  background: "#0066CC",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
+                className="w-10 h-10 rounded-md bg-primary flex items-center justify-center mr-3"
               >
-                <ExperimentOutlined style={{ fontSize: "20px", color: "#fff" }} />
+                <ExperimentOutlined className="text-[20px] text-white" />
               </div>
-              <span style={{ fontSize: "13px", fontWeight: 500, color: "#64748b" }}>
+              <span className="text-body-sm font-medium text-gray-600 dark:text-gray-400">
                 Available Models
               </span>
             </div>
-            <div style={{ fontSize: "28px", fontWeight: 700, color: "#1e293b" }}>
+            <div className="text-[28px] font-bold text-gray-900 dark:text-gray-50 data-text">
               {totalModels}
             </div>
-            <span style={{ fontSize: "12px", color: "#64748b" }}>
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">
               Built-in AI models
             </span>
           </GlassCard>
@@ -239,23 +240,29 @@ export default function AIModelsPage() {
       >
         <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 16]}>
           <Col xs={24} md={8}>
-            <LineChartOutlined style={{ fontSize: 24, color: "#0066cc", marginBottom: 8 }} />
-            <Title level={5}>Time Series Forecasting</Title>
-            <p style={{ color: "#64748b" }}>
+            <LineChartOutlined className="text-2xl text-info mb-2" />
+            <h5 className="text-h5 font-display font-semibold text-gray-900 dark:text-gray-50 mb-2">
+              Time Series Forecasting
+            </h5>
+            <p className="text-body text-gray-600 dark:text-gray-400">
               Use built-in ARIMA, FFT, or Neural Network models to generate predictions for your time series data.
             </p>
           </Col>
           <Col xs={24} md={8}>
-            <ExperimentOutlined style={{ fontSize: 24, color: "#722ed1", marginBottom: 8 }} />
-            <Title level={5}>Anomaly Detection</Title>
-            <p style={{ color: "#64748b" }}>
+            <ExperimentOutlined className="text-2xl text-purple-600 mb-2" />
+            <h5 className="text-h5 font-display font-semibold text-gray-900 dark:text-gray-50 mb-2">
+              Anomaly Detection
+            </h5>
+            <p className="text-body text-gray-600 dark:text-gray-400">
               Detect anomalies in your data using statistical and machine learning methods.
             </p>
           </Col>
           <Col xs={24} md={8}>
-            <ThunderboltOutlined style={{ fontSize: 24, color: "#f59e0b", marginBottom: 8 }} />
-            <Title level={5}>IoTDB AI Node</Title>
-            <p style={{ color: "#64748b" }}>
+            <ThunderboltOutlined className="text-2xl text-primary mb-2" />
+            <h5 className="text-h5 font-display font-semibold text-gray-900 dark:text-gray-50 mb-2">
+              IoTDB AI Node
+            </h5>
+            <p className="text-body text-gray-600 dark:text-gray-400">
               Models run directly on IoTDB server for optimal performance.
             </p>
           </Col>
