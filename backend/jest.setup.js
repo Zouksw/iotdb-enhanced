@@ -53,29 +53,17 @@ jest.mock('winston', () => ({
   },
 }));
 
-// Mock crypto for tests - generate unique values each time
+// Mock crypto for tests - simplified but preserves all crypto functions
 let cryptoCounter = 0;
 jest.mock('crypto', () => {
   const actual = jest.requireActual('crypto');
   return {
     ...actual,
-    randomBytes: jest.fn(function(size) {
-      const counter = ++cryptoCounter;
-      return {
-        toString: function(encoding) {
-          if (encoding === 'hex') {
-            // Generate unique hex string based on counter
-            return counter.toString(16).padStart(size * 2, '0').slice(0, size * 2);
-          }
-          if (encoding === 'base64url') {
-            // Generate unique base64url string based on counter
-            const base = Buffer.alloc(size);
-            base.writeUInt32BE(counter, 0);
-            return base.toString('base64url').padEnd(size, 'X').slice(0, size);
-          }
-          return 'mock-random-bytes';
-        },
-      };
+    randomBytes: jest.fn((size) => {
+      cryptoCounter++;
+      const buffer = Buffer.alloc(size);
+      buffer.writeUInt32BE(cryptoCounter, 0);
+      return buffer;
     }),
   };
 });
