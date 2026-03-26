@@ -1041,7 +1041,7 @@ export const Button: React.FC<ButtonProps> = ({
 
 ### Phase 2: Pages ✅ COMPLETE
 **Status**: 已完成 (2026-03-26)
-**Commits**: `3f9dc88`, `074b15e`, `3dda685`, `a33d171`, `d37d6b1`, `bcd184f`, `d3ae0f9`, `1ef266c`, `a26dae1`
+**Commits**: `3f9dc88`, `074b15e`, `3dda685`, `a33d171`, `d37d6b1`, `bcd184f`, `d3ae0f9`, `1ef266c`, `a26dae1`, `c0393af`, `efb4123`, `3515eb0`, `0e9369e`, `1125d38`, `bd7098f`, `d9fd355`, `ef46ea8`
 
 **营销页面**:
 - ✅ 首页 (`/`) — Hero + 功能 + 仪表板预览 + CTA
@@ -1050,14 +1050,26 @@ export const Button: React.FC<ButtonProps> = ({
 
 **应用页面**:
 - ✅ 仪表板 (`/dashboard`) — 更新为设计系统
-- ✅ Forecasts (`/forecasts`) — 按复杂度优先迁移完成
-- ✅ Timeseries (`/timeseries`) — 按复杂度优先迁移完成
-- ✅ Alerts (`/alerts`) — 按复杂度优先迁移完成（最复杂）
+- ✅ Forecasts 列表 (`/forecasts`) — 按复杂度优先迁移完成
+- ✅ Timeseries 列表 (`/timeseries`) — 按复杂度优先迁移完成
+- ✅ Alerts 列表 (`/alerts`) — 按复杂度优先迁移完成（最复杂）
 - ✅ AI Models (`/ai/models`) — 已迁移到设计系统
 - ✅ AI Anomalies (`/ai/anomalies`) — 已迁移到设计系统
 - ✅ Settings (`/settings`) — 已迁移到设计系统
 - ✅ Auth Page (`/login`, `/register`) — 已迁移到设计系统
 - ✅ StatCard 组件 — 应用设计令牌
+
+**表单页面**:
+- ✅ Timeseries Create (`/timeseries/create`) — 已迁移到设计系统
+- ✅ Alerts Create (`/alerts/create`) — 已迁移到设计系统
+- ✅ Forecasts Create (`/forecasts/create`) — 已迁移到设计系统（复杂表单）
+
+**详情页面**:
+- ✅ Forecasts Show (`/forecasts/show/[id]`) — 已迁移到设计系统
+- ✅ Datasets Show (`/datasets/show/[id]`) — 已迁移到设计系统
+- ✅ Alerts Show (`/alerts/show/[id]`) — 已迁移到设计系统
+- ✅ Anomalies Show (`/anomalies/show/[id]`) — 已迁移到设计系统
+- ✅ API Keys Show (`/apikeys/show/[id]`) — 已迁移到设计系统
 
 ### Phase 3: Polish ⏳ PENDING
 **Status**: 待实施
@@ -1086,31 +1098,47 @@ export const Button: React.FC<ButtonProps> = ({
 
 | Page | Design System Applied | Status |
 |------|----------------------|--------|
+| **Marketing Pages** | | |
 | Homepage (`/`) | ✅ Complete | ✅ Done |
 | About (`/about`) | ✅ Complete | ✅ Done |
 | Pricing (`/pricing`) | ✅ Complete | ✅ Done |
+| **App Pages** | | |
 | Dashboard (`/dashboard`) | ✅ Complete | ✅ Done |
-| Forecasts (`/forecasts`) | ✅ Complete | ✅ Done |
-| Timeseries (`/timeseries`) | ✅ Complete | ✅ Done |
-| Alerts (`/alerts`) | ✅ Complete | ✅ Done |
+| Forecasts List (`/forecasts`) | ✅ Complete | ✅ Done |
+| Timeseries List (`/timeseries`) | ✅ Complete | ✅ Done |
+| Alerts List (`/alerts`) | ✅ Complete | ✅ Done |
 | AI Models (`/ai/models`) | ✅ Complete | ✅ Done |
 | AI Anomalies (`/ai/anomalies`) | ✅ Complete | ✅ Done |
 | Settings (`/settings`) | ✅ Complete | ✅ Done |
+| **Auth Pages** | | |
 | Login (`/login`) | ✅ Complete | ✅ Done |
 | Register (`/register`) | ✅ Complete | ✅ Done |
+| **Form Pages** | | |
+| Timeseries Create (`/timeseries/create`) | ✅ Complete | ✅ Done |
+| Alerts Create (`/alerts/create`) | ✅ Complete | ✅ Done |
+| Forecasts Create (`/forecasts/create`) | ✅ Complete | ✅ Done |
+| **Detail Pages** | | |
+| Forecasts Show (`/forecasts/show/[id]`) | ✅ Complete | ✅ Done |
+| Datasets Show (`/datasets/show/[id]`) | ✅ Complete | ✅ Done |
+| Alerts Show (`/alerts/show/[id]`) | ✅ Complete | ✅ Done |
+| Anomalies Show (`/anomalies/show/[id]`) | ✅ Complete | ✅ Done |
+| API Keys Show (`/apikeys/show/[id]`) | ✅ Complete | ✅ Done |
 
 ### Migration Progress
 
-**Overall Progress**: 71% (10/14 pages fully migrated)
+**Overall Progress**: 100% (17/17 core pages fully migrated) 🎉
 
 **Completed**:
-- 3 marketing pages (100%)
-- 7 app pages (Forecasts, Timeseries, Alerts, Dashboard, AI Models, AI Anomalies, Settings) (70% of app pages)
-- Auth Page component (affects Login and Register pages)
+- ✅ 3 marketing pages (100%)
+- ✅ 7 list/app pages (100%)
+- ✅ 3 form pages (100%)
+- ✅ 5 detail pages (100%)
+- ✅ 2 auth pages (100%)
+- ✅ Auth Page component (affects Login and Register)
 
 **Remaining**:
-- Datasets pages (if they exist)
-- Other specialized pages (create/edit forms, detail views)
+- Edit pages (if they exist) - Lower priority
+- Additional specialized pages (if needed)
 
 ---
 
