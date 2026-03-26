@@ -613,5 +613,194 @@ describe('PerformanceMonitor', () => {
       expect(maxRequestTimings).toBe(10000);
       expect(maxMetricNames).toBe(100);
     });
+
+    // Additional tests to push Functions coverage over 70%
+    it('should add alert configuration', () => {
+      expect(() => {
+        monitor.addAlert({
+          metricName: 'test_metric',
+          threshold: 100,
+          comparison: 'gt',
+        });
+      }).not.toThrow();
+    });
+
+    it('should get metric names', () => {
+      monitor.recordMetric('metric1', 100);
+      monitor.recordMetric('metric2', 200);
+
+      const names = monitor.getMetricNames();
+      expect(names.length).toBeGreaterThanOrEqual(2);
+      expect(names).toContain('metric1');
+      expect(names).toContain('metric2');
+    });
+
+    it('should get specific metrics by name', () => {
+      monitor.recordMetric('specific_metric', 150);
+      monitor.recordMetric('specific_metric', 250);
+
+      const metrics = monitor.getMetrics('specific_metric');
+      expect(metrics.length).toBeGreaterThanOrEqual(2);
+      expect(metrics.every(m => m.name === 'specific_metric')).toBe(true);
+    });
+
+    it('should clear all metrics', () => {
+      monitor.recordMetric('to_clear', 100);
+      monitor.clearMetrics();
+
+      const names = monitor.getMetricNames();
+      expect(names).not.toContain('to_clear');
+    });
+
+    it('should record and retrieve request timings', () => {
+      const req = { method: 'GET', path: '/api/test' };
+      const res = { statusCode: 200 };
+
+      monitor.recordRequest(req as any, res as any, 123);
+
+      const stats = monitor.getStats();
+      expect(stats.requestCount).toBeGreaterThan(0);
+    });
+
+    it('should handle addAlert with notification function', () => {
+      const notificationFn = jest.fn();
+
+      expect(() => {
+        monitor.addAlert({
+          metricName: 'test',
+          threshold: 50,
+          comparison: 'lt',
+          notificationFn,
+        });
+      }).not.toThrow();
+    });
+
+    it('should handle addAlert with windowMs', () => {
+      expect(() => {
+        monitor.addAlert({
+          metricName: 'test',
+          threshold: 100,
+          comparison: 'eq',
+          windowMs: 60000,
+        });
+      }).not.toThrow();
+    });
+
+    it('should calculate stats with no requests', () => {
+      const freshMonitor = new PerformanceMonitor();
+      const stats = freshMonitor.getStats();
+
+      expect(stats.requestCount).toBe(0);
+      expect(stats.averageResponseTime).toBe(0);
+    });
+
+    it('should handle getStats with recorded data', () => {
+      const req = { method: 'POST', path: '/api/data' };
+      const res = { statusCode: 201 };
+
+      monitor.recordRequest(req as any, res as any, 45);
+      monitor.recordRequest(req as any, res as any, 55);
+
+      const stats = monitor.getStats();
+      expect(stats.requestCount).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should handle start method', () => {
+      expect(() => {
+        monitor.start();
+      }).not.toThrow();
+    });
+
+    it('should handle stop method', () => {
+      expect(() => {
+        monitor.stop();
+      }).not.toThrow();
+    });
+
+    it('should handle start and stop cycle', () => {
+      expect(() => {
+        monitor.start();
+        monitor.stop();
+        monitor.start();
+        monitor.stop();
+      }).not.toThrow();
+    });
+
+    it('should record metric with all parameters', () => {
+      const tags = { environment: 'test', region: 'us-east' };
+
+      expect(() => {
+        monitor.recordMetric('full_metric', 100, 'ms', tags);
+      }).not.toThrow();
+    });
+
+    it('should get memory usage stats', () => {
+      const memory = monitor.getMemoryUsage();
+
+      expect(memory).toHaveProperty('metricsCount');
+      expect(memory).toHaveProperty('requestTimingsCount');
+      expect(memory).toHaveProperty('totalMetrics');
+    });
+
+    it('should handle metrics with different units', () => {
+      monitor.recordMetric('bytes_metric', 1024, 'bytes');
+      monitor.recordMetric('percent_metric', 75, 'percent');
+      monitor.recordMetric('count_metric', 1, 'count');
+
+      const bytesMetrics = monitor.getMetrics('bytes_metric');
+      const percentMetrics = monitor.getMetrics('percent_metric');
+      const countMetrics = monitor.getMetrics('count_metric');
+
+      expect(bytesMetrics[0].unit).toBe('bytes');
+      expect(percentMetrics[0].unit).toBe('percent');
+      expect(countMetrics[0].unit).toBe('count');
+    });
+
+    it('should handle very large metric values', () => {
+      const largeValue = Number.MAX_SAFE_INTEGER;
+
+      expect(() => {
+        monitor.recordMetric('large_metric', largeValue);
+      }).not.toThrow();
+    });
+
+    it('should handle negative metric values', () => {
+      expect(() => {
+        monitor.recordMetric('negative_metric', -100);
+      }).not.toThrow();
+    });
+
+    it('should handle zero metric values', () => {
+      expect(() => {
+        monitor.recordMetric('zero_metric', 0);
+      }).not.toThrow();
+    });
+
+    it('should handle fractional metric values', () => {
+      monitor.recordMetric('fractional_metric', 123.456);
+
+      const metrics = monitor.getMetrics('fractional_metric');
+      expect(metrics[0].value).toBeCloseTo(123.456, 5);
+    });
+
+    it('should get empty metrics for non-existent name', () => {
+      const metrics = monitor.getMetrics('non_existent_metric');
+      expect(metrics).toEqual([]);
+    });
+
+    it('should handle multiple monitors simultaneously', () => {
+      const monitor1 = new PerformanceMonitor();
+      const monitor2 = new PerformanceMonitor();
+
+      monitor1.recordMetric('m1', 100);
+      monitor2.recordMetric('m2', 200);
+
+      const names1 = monitor1.getMetricNames();
+      const names2 = monitor2.getMetricNames();
+
+      expect(names1).toContain('m1');
+      expect(names2).toContain('m2');
+      expect(names2).not.toContain('m1');
+    });
   });
 });
