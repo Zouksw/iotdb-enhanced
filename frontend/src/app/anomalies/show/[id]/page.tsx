@@ -19,7 +19,6 @@ import {
   Tag,
   Button,
   Space,
-  Typography,
   Descriptions,
   Alert,
   Timeline,
@@ -38,8 +37,6 @@ import type { Anomaly } from "@/types/api";
 import { authFetch } from "@/utils/auth";
 import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
 import { useIsMobile } from "@/lib/responsive-utils";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface AnomalyDetailParams {
   id?: string;
@@ -206,8 +203,8 @@ export default function AnomalyDetailPage() {
             <Card size="small" title="Time Series">
               <Space>
                 <LineChartOutlined />
-                <Text strong>{anomaly.timeseries.name}</Text>
-                <Text type="secondary">({anomaly.timeseries.path})</Text>
+                <span className="font-semibold text-gray-900 dark:text-gray-50">{anomaly.timeseries.name}</span>
+                <span className="text-body-sm text-gray-500 dark:text-gray-400">({anomaly.timeseries.path})</span>
               </Space>
             </Card>
           )}
@@ -230,8 +227,8 @@ export default function AnomalyDetailPage() {
           {anomaly.normalRange && (
             <Card size="small" title="Normal Range">
               <Space>
-                <Text>Min: {anomaly.normalRange.min.toFixed(4)}</Text>
-                <Text>Max: {anomaly.normalRange.max.toFixed(4)}</Text>
+                <span className="text-body data-text">Min: {anomaly.normalRange.min.toFixed(4)}</span>
+                <span className="text-body data-text">Max: {anomaly.normalRange.max.toFixed(4)}</span>
               </Space>
             </Card>
           )}
@@ -247,20 +244,12 @@ export default function AnomalyDetailPage() {
           showIcon
           style={{ marginBottom: "16px" }}
         />
-        <div style={{
-          height: "300px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(239, 68, 68, 0.05)",
-          borderRadius: "8px",
-          border: "1px dashed rgba(239, 68, 68, 0.3)"
-        }}>
-          <WarningOutlined style={{ fontSize: "48px", color: "#ef4444", marginRight: "16px" }} />
+        <div className="h-[300px] flex items-center justify-center bg-error/5 rounded-lg border border-dashed border-error/30">
+          <WarningOutlined className="text-[48px] text-error mr-4" />
           <div>
-            <Text strong>Anomaly Visualization</Text>
+            <span className="font-semibold text-gray-900 dark:text-gray-50">Anomaly Visualization</span>
             <br />
-            <Text type="secondary">Chart will display the anomalous data point</Text>
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">Chart will display the anomalous data point</span>
           </div>
         </div>
       </DetailSection>
@@ -274,13 +263,13 @@ export default function AnomalyDetailPage() {
               dot: <ExclamationCircleOutlined />,
               children: (
                 <div>
-                  <Text strong>Anomaly Detected</Text>
+                  <span className="font-semibold text-gray-900 dark:text-gray-50">Anomaly Detected</span>
                   <br />
-                  <Text type="secondary">
+                  <span className="text-body-sm text-gray-500 dark:text-gray-400">
                     {anomaly.detectedAt
                       ? new Date(anomaly.detectedAt).toLocaleString()
                       : "Recently"}
-                  </Text>
+                  </span>
                 </div>
               )
             },
@@ -289,17 +278,17 @@ export default function AnomalyDetailPage() {
               dot: <CheckCircleOutlined />,
               children: (
                 <div>
-                  <Text strong>Anomaly Resolved</Text>
+                  <span className="font-semibold text-gray-900 dark:text-gray-50">Anomaly Resolved</span>
                   <br />
-                  <Text type="secondary">
+                  <span className="text-body-sm text-gray-500 dark:text-gray-400">
                     {anomaly.resolvedAt
                       ? new Date(anomaly.resolvedAt).toLocaleString()
                       : "Recently"}
-                  </Text>
+                  </span>
                   {anomaly.resolutionNote && (
                     <>
                       <br />
-                      <Text type="secondary">{anomaly.resolutionNote}</Text>
+                      <span className="text-body-sm text-gray-500 dark:text-gray-400">{anomaly.resolutionNote}</span>
                     </>
                   )}
                 </div>
