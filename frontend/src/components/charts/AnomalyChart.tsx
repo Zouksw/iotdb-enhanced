@@ -354,6 +354,7 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                                 onClick={exportAsPNG}
                                 loading={exporting}
                                 size="small"
+                                aria-label="Export anomaly chart as PNG image"
                             >
                                 PNG
                             </Button>
@@ -363,6 +364,7 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                                 icon={<FileExcelOutlined />}
                                 onClick={exportAsCSV}
                                 size="small"
+                                aria-label="Export anomaly data as CSV spreadsheet"
                             >
                                 CSV
                             </Button>
@@ -371,6 +373,7 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
                             icon={expanded ? <CompressOutlined /> : <ExpandOutlined />}
                             onClick={() => setExpanded(!expanded)}
                             size="small"
+                            aria-label={expanded ? "Collapse anomaly chart to normal size" : "Expand anomaly chart to full size"}
                         >
                             {expanded ? "Collapse" : "Expand"}
                         </Button>
@@ -475,7 +478,12 @@ export const AnomalyChart: React.FC<AnomalyChartProps> = ({
 
                 {/* Chart */}
                 <ResponsiveContainer width="100%" height={expanded ? height * 1.5 : height}>
-                    <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <ComposedChart
+                        data={chartData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                        role="img"
+                        aria-label={`Anomaly detection chart for ${timeseries}. ${anomalies.length} anomalies detected using ${method} method.`}
+                    >
                         <CartesianGrid
                             strokeDasharray={chartGridStyles.strokeDasharray}
                             stroke={chartGridStyles.stroke}

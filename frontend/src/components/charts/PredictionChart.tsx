@@ -332,6 +332,7 @@ export const PredictionChart: React.FC<PredictionChartProps> = ({
                 icon={<FileImageOutlined />}
                 onClick={exportAsPNG}
                 loading={exporting}
+                aria-label="Export chart as PNG image"
               >
                 PNG
               </Button>
@@ -340,6 +341,7 @@ export const PredictionChart: React.FC<PredictionChartProps> = ({
               <Button
                 icon={<FileExcelOutlined />}
                 onClick={exportAsCSV}
+                aria-label="Export chart data as CSV spreadsheet"
               >
                 CSV
               </Button>
@@ -347,6 +349,7 @@ export const PredictionChart: React.FC<PredictionChartProps> = ({
             <Button
               icon={expanded ? <CompressOutlined /> : <ExpandOutlined />}
               onClick={() => setExpanded(!expanded)}
+              aria-label={expanded ? "Collapse chart to normal size" : "Expand chart to full size"}
             >
               {expanded ? "Collapse" : "Expand"}
             </Button>
@@ -430,7 +433,12 @@ export const PredictionChart: React.FC<PredictionChartProps> = ({
 
         {/* Chart */}
         <ResponsiveContainer width="100%" height={expanded ? height * 1.5 : height}>
-          <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+          <ComposedChart
+            data={chartData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            role="img"
+            aria-label={`Prediction chart for ${timeseries} using ${algorithm} algorithm. Showing historical data and ${predictionData.timestamps.length} forecasted data points with confidence intervals.`}
+          >
             <CartesianGrid
               strokeDasharray={chartGridStyles.strokeDasharray}
               stroke={chartGridStyles.stroke}

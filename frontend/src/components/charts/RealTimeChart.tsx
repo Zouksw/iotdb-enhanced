@@ -319,6 +319,7 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
               icon={<PlayCircleOutlined />}
               onClick={startUpdates}
               loading={loading}
+              aria-label="Start real-time data monitoring"
             >
               Start
             </Button>
@@ -327,12 +328,14 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
               <Button
                 icon={isPaused ? <PlayCircleOutlined /> : <PauseCircleOutlined />}
                 onClick={togglePause}
+                aria-label={isPaused ? "Resume real-time updates" : "Pause real-time updates"}
               >
                 {isPaused ? "Resume" : "Pause"}
               </Button>
               <Button
                 icon={<ReloadOutlined />}
                 onClick={clearData}
+                aria-label="Clear all chart data"
               >
                 Clear
               </Button>
@@ -343,6 +346,7 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
                   stopUpdates();
                   onDisconnect?.();
                 }}
+                aria-label="Stop real-time monitoring"
               >
                 Stop
               </Button>
@@ -453,7 +457,12 @@ export const RealTimeChart: React.FC<RealTimeChartProps> = ({
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={height}>
-          <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <LineChart
+            data={data}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            role="img"
+            aria-label={`Line chart showing real-time data for ${timeseries}. Current value: ${data[data.length - 1]?.value || 'N/A'}. ${data.length} data points displayed.`}
+          >
             <CartesianGrid
               strokeDasharray={chartGridStyles.strokeDasharray}
               stroke={chartGridStyles.stroke}
