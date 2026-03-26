@@ -1,6 +1,6 @@
 "use client";
 
-import { Row, Col, Typography, Tag, Button, Space, Alert, Descriptions, Badge } from "antd";
+import { Row, Col, Tag, Button, Space, Alert, Descriptions, Badge } from "antd";
 import { ArrowLeftOutlined, BellOutlined, InfoCircleOutlined, WarningOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { useGo } from "@refinedev/core";
 import { useOne } from "@refinedev/core";
@@ -9,8 +9,6 @@ import { DateField } from "@refinedev/antd";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentCard } from "@/components/layout/ContentCard";
-
-const { Text, Paragraph } = Typography;
 
 interface AlertShowPageProps {
   params: { id: string };
@@ -110,11 +108,13 @@ export default function AlertShowPage({ params }: AlertShowPageProps) {
           <ContentCard title="Alert Information" subtitle="Details about this alert">
             <Descriptions bordered column={{ xs: 1, sm: 2 }} size="middle">
               <Descriptions.Item label="Alert ID" span={2}>
-                <Text code>{alert.id}</Text>
+                <code className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-700 dark:text-gray-300">
+                  {alert.id}
+                </code>
               </Descriptions.Item>
 
               <Descriptions.Item label="Name" span={2}>
-                <Text strong>{alert.name || "Unnamed Alert"}</Text>
+                <span className="font-semibold text-gray-900 dark:text-gray-50">{alert.name || "Unnamed Alert"}</span>
               </Descriptions.Item>
 
               <Descriptions.Item label="Type">
@@ -127,7 +127,7 @@ export default function AlertShowPage({ params }: AlertShowPageProps) {
                 <Tag
                   color={severityConfig.color}
                   icon={severityConfig.icon}
-                  style={{ fontSize: 13, padding: "4px 12px" }}
+                  className="text-[13px] px-3 py-1"
                 >
                   {severityConfig.label}
                 </Tag>
@@ -147,9 +147,9 @@ export default function AlertShowPage({ params }: AlertShowPageProps) {
               {alert.timeseries && (
                 <Descriptions.Item label="Time Series" span={2}>
                   <Space>
-                    <Text strong>{alert.timeseries.name}</Text>
+                    <span className="font-semibold text-gray-900 dark:text-gray-50">{alert.timeseries.name}</span>
                     {alert.timeseries.unit && (
-                      <Text type="secondary">({alert.timeseries.unit})</Text>
+                      <span className="text-body-sm text-gray-500 dark:text-gray-400">({alert.timeseries.unit})</span>
                     )}
                   </Space>
                 </Descriptions.Item>
@@ -157,9 +157,9 @@ export default function AlertShowPage({ params }: AlertShowPageProps) {
 
               {alert.description && (
                 <Descriptions.Item label="Description" span={2}>
-                  <Paragraph style={{ marginBottom: 0 }}>
+                  <p className="text-body mb-0">
                     {alert.description}
-                  </Paragraph>
+                  </p>
                 </Descriptions.Item>
               )}
             </Descriptions>
@@ -172,7 +172,16 @@ export default function AlertShowPage({ params }: AlertShowPageProps) {
           <ContentCard title="Quick Actions" subtitle="Available actions for this alert">
             <Space direction="vertical" style={{ width: "100%" }}>
               {!alert.isRead && (
-                <Button type="primary" block>
+                <Button
+                  type="primary"
+                  block
+                  style={{
+                    background: "#F59E0B",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontWeight: 600,
+                  }}
+                >
                   Mark as Read
                 </Button>
               )}
