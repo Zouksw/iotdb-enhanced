@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import React, { Suspense, useEffect } from "react";
 import { App as AntdApp } from "antd";
-import { Satoshi, DM_Sans, Geist_Mono, JetBrains_Mono } from "next/font/google";
+import { Outfit, DM_Sans, Roboto_Mono, JetBrains_Mono } from "next/font/google";
 
 import { ColorModeContextProvider } from "@/contexts/color-mode";
 import { authProviderClient } from "@/providers/auth-provider/auth-provider.client";
@@ -21,11 +21,11 @@ import "@refinedev/antd/dist/reset.css";
 import "@/styles/globals.css";
 
 // Configure fonts with automatic subsetting
-const satoshi = Satoshi({
+const outfit = Outfit({
   weight: '700',
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-satoshi',
+  variable: '--font-outfit',
 });
 
 const dmSans = DM_Sans({
@@ -35,11 +35,11 @@ const dmSans = DM_Sans({
   variable: '--font-dm-sans',
 });
 
-const geistMono = Geist_Mono({
+const robotoMono = Roboto_Mono({
   weight: ['400', '500', '600'],
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-geist-mono',
+  variable: '--font-roboto-mono',
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -112,7 +112,7 @@ export default function RootLayout({
   const theme = cookieStore.get("theme");
 
   return (
-    <html lang="en" className={`${satoshi.variable} ${dmSans.variable} ${geistMono.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${outfit.variable} ${dmSans.variable} ${robotoMono.variable} ${jetbrainsMono.variable}`}>
       <head>
         {/* Skip to main content link for accessibility */}
         <style>{`
