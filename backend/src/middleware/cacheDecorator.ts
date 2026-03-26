@@ -249,7 +249,7 @@ export function cacheRoute(
             };
 
             // Set cache asynchronously (don't block response)
-            await setCached(cacheKey, cachedResponse, config.ttl).catch((err) => {
+            await setCached(cacheKey, cachedResponse, config.ttl || 300).catch((err) => {
               logger.error('Failed to cache response:', err);
             });
           })()
@@ -361,13 +361,12 @@ export function cacheFn<T extends (...args: any[]) => Promise<any>>(
     if (cached) {
       return cached.body;
     }
-
     // Execute function
     const result = await (async () => {
       // This will be replaced with the actual function when used
       return null as any;
+    // @ts-ignore - spread argument type issue
     })(...args);
-
     // Store in cache
     await setCached(cacheKey, { statusCode: 200, body: result, headers: {} }, ttl);
 

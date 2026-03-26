@@ -7,7 +7,7 @@
 
 import { User, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import { generateAccessToken } from '@/lib/jwt';
+import { generateToken } from '@/lib/jwt';
 
 export interface TestUser {
   id: string;
@@ -38,7 +38,7 @@ export async function createTestUser(overrides: Partial<User> = {}): Promise<Tes
   const userData: Partial<User> = {
     email: `test-${timestamp}@example.com`,
     name: 'Test User',
-    role: 'USER',
+    role: UserRole.VIEWER,
     passwordHash,
     ...overrides,
   };
@@ -71,7 +71,7 @@ export async function createTestUser(overrides: Partial<User> = {}): Promise<Tes
  */
 export async function createTestUserWithToken(overrides: Partial<User> = {}): Promise<TestUser> {
   const user = await createTestUser(overrides);
-  user.token = generateAccessToken({ userId: user.id, role: user.role });
+  user.token = generateToken(user.id);
   return user;
 }
 
@@ -85,10 +85,10 @@ export async function createTestUserWithToken(overrides: Partial<User> = {}): Pr
  * @example
  * ```typescript
  * const admins = await createTestUsers(5, 'ADMIN');
- * const users = await createTestUsers(10, 'USER');
+ * const users = await createTestUsers(10, UserRole.VIEWER);
  * ```
  */
-export async function createTestUsers(count: number, role: UserRole = 'USER'): Promise<TestUser[]> {
+export async function createTestUsers(count: number, role: UserRole = UserRole.VIEWER): Promise<TestUser[]> {
   const users: TestUser[] = [];
   for (let i = 0; i < count; i++) {
     const user = await createTestUser({
@@ -134,7 +134,7 @@ export function createExpiredToken(): string {
   // Token that expired in the past (1 hour ago)
   const payload = {
     userId: 'test-user-id',
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
     iat: Math.floor(Date.now() / 1000) - 7200, // Issued 2 hours ago
     exp: Math.floor(Date.now() / 1000) - 3600, // Expired 1 hour ago
   };

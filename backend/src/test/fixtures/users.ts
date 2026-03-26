@@ -13,7 +13,7 @@ import * as bcrypt from 'bcryptjs';
 export const standardUser: Partial<User> = {
   email: 'test.user@example.com',
   name: 'Standard Test User',
-  role: 'USER',
+  role: UserRole.VIEWER,
 };
 
 /**
@@ -31,7 +31,7 @@ export const adminUser: Partial<User> = {
 export const premiumUser: Partial<User> = {
   email: 'premium@example.com',
   name: 'Premium User',
-  role: 'PREMIUM',
+  role: UserRole.EDITOR,
 };
 
 /**
@@ -40,7 +40,7 @@ export const premiumUser: Partial<User> = {
 export const fullUser: Partial<User> = {
   email: 'full.user@example.com',
   name: 'Full Test User',
-  role: 'USER',
+  role: UserRole.VIEWER,
 };
 
 /**
@@ -49,16 +49,16 @@ export const fullUser: Partial<User> = {
 export const invalidUsers = {
   noEmail: {
     name: 'No Email User',
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
   },
   invalidEmail: {
     email: 'not-an-email',
     name: 'Invalid Email User',
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
   },
   noName: {
     email: 'noname@example.com',
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
   },
   noRole: {
     email: 'norole@example.com',
@@ -67,7 +67,7 @@ export const invalidUsers = {
   weakPassword: {
     email: 'weak@example.com',
     name: 'Weak Password User',
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
   },
 };
 
@@ -78,17 +78,17 @@ export const edgeCaseUsers = {
   veryLongName: {
     email: 'longname@example.com',
     name: 'A'.repeat(300), // Exceeds typical database limits
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
   },
   specialCharsInName: {
     email: 'special@example.com',
     name: "Test O'Connor-Österreich",
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
   },
   unicodeEmail: {
     email: 'test@例え.jp',
     name: 'Unicode User',
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
   },
 };
 
@@ -101,7 +101,7 @@ export const edgeCaseUsers = {
  */
 export function generateUserFixtures(
   count: number,
-  role: UserRole = 'USER'
+  role: UserRole = UserRole.VIEWER
 ): Partial<User>[] {
   const users: Partial<User>[] = [];
   for (let i = 0; i < count; i++) {
@@ -127,7 +127,7 @@ export async function createUserWithPassword(
   return {
     email: 'user.with.password@example.com',
     name: 'User With Password',
-    role: 'USER',
+    role: UserRole.VIEWER,
     passwordHash,
   };
 }
@@ -185,14 +185,14 @@ export const permissionScenarios = {
     canDeleteUsers: true,
   },
   premium: {
-    role: 'PREMIUM' as UserRole,
+    role: UserRole.EDITOR as UserRole,
     canAccessAdminRoutes: false,
     canCreateUsers: false,
     canDeleteUsers: false,
     canAccessPremiumFeatures: true,
   },
   user: {
-    role: 'USER' as UserRole,
+    role: UserRole.VIEWER as UserRole,
     canAccessAdminRoutes: false,
     canCreateUsers: false,
     canDeleteUsers: false,

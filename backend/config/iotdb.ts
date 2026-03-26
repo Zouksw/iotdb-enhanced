@@ -4,7 +4,6 @@
 
 import type {
   IoTDBConfig,
-  IoTDBQueryResult,
   IoTDBResponse,
   IoTDBValue,
   IoTDBQueryRequest,
@@ -17,6 +16,7 @@ import type {
   IoTDBTrainingHyperparameters,
   IoTDBQueryRow,
 } from '../src/types/iotdb';
+import type { IoTDBQueryResult } from '../src/types/api';
 
 const iotdbConfig: IoTDBConfig = {
   host: process.env.IOTDB_HOST || 'localhost',

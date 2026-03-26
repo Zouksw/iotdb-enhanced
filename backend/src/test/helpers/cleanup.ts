@@ -63,13 +63,13 @@ export async function cleanupTestData(options: CleanupOptions = {}): Promise<voi
 
     if (opts.alertRules) {
       await prisma.alertRule.deleteMany({
-        where: { OR: [{ name: { contains: 'test-' } }, { timeseries: { contains: 'root.test' } }] },
+        where: { OR: [{ name: { contains: 'test-' } }, { timeseriesId: { contains: 'root.test' } }] },
       });
     }
 
     if (opts.apiKeys) {
       await prisma.apiKey.deleteMany({
-        where: { key: { contains: 'iotd_' } },
+        where: { id: { contains: 'iotd_' } },
       });
     }
 
@@ -268,7 +268,7 @@ export async function verifyCleanup(options: CleanupOptions = {}): Promise<boole
 
     if (opts.apiKeys) {
       const keyCount = await prisma.apiKey.count({
-        where: { key: { contains: 'iotd_' } },
+        where: { id: { contains: 'iotd_' } },
       });
       if (keyCount > 0) return false;
     }

@@ -230,7 +230,7 @@ router.post('/:modelId/predict', authenticate, checkAIAccess, asyncHandler(async
 
   // Convert AINode forecasts to database format
   // IoTDBForecast has timestamp: Date, need to convert to number for storage then back to Date for Prisma
-  const forecasts = predictResult.forecasts.map((f: { timestamp: Date | number; predictedValue?: number; lowerBound?: number; upperBound?: number }) => {
+  const forecasts = predictResult.forecasts.map((f) => {
     const timestamp = f.timestamp instanceof Date ? f.timestamp.getTime() : (f.timestamp as number);
     return {
       modelId,

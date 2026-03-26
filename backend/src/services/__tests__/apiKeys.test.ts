@@ -229,6 +229,7 @@ describe('API Keys Service', () => {
     });
 
     it('should return null when bcrypt comparison fails', async () => {
+      const bcrypt = require('bcryptjs');
       const mockUser = createMockUser();
 
       const mockApiKey = createMockApiKey({
@@ -236,6 +237,9 @@ describe('API Keys Service', () => {
       });
 
       mockPrisma.apiKey.findMany.mockResolvedValue([mockApiKey]);
+
+      // Mock bcrypt.compare to return false for this test
+      (bcrypt.compare as jest.Mock).mockImplementationOnce(() => Promise.resolve(false));
 
       const result = await validateApiKey('iotd_invalid_key');
       expect(result).toBeNull();
