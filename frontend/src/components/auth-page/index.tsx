@@ -8,7 +8,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Card, Typography, theme } from "antd";
+import { Card, Typography } from "antd";
 import { DatabaseOutlined } from "@ant-design/icons";
 
 import { LoginForm } from "./LoginForm";
@@ -18,34 +18,29 @@ import { UpdatePasswordForm } from "./UpdatePasswordForm";
 import { getTitle, getDescription } from "./auth-helpers";
 import type { AuthPageProps } from "./auth-types";
 
-const { Link, Title, Text } = Typography;
+const { Link } = Typography;
 
 export function AuthPage(props: AuthPageProps) {
-  const { token } = theme.useToken();
   const router = useRouter();
 
   const renderFooter = () => {
     switch (props.type) {
       case "login":
         return (
-          <div style={{ textAlign: "center", marginTop: 16 }}>
-            <Text style={{ fontSize: 14, color: token.colorTextSecondary }}>
+          <div className="text-center mt-4">
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">
               Don&apos;t have an account?{" "}
               <Link
                 onClick={() => router.push("/register")}
-                style={{ cursor: "pointer", fontWeight: 500 }}
+                className="cursor-pointer font-medium text-gray-900 dark:text-gray-50 hover:text-primary"
               >
                 Sign up
               </Link>
-            </Text>
+            </span>
             <br />
             <Link
               onClick={() => router.push("/forgot-password")}
-              style={{
-                cursor: "pointer",
-                fontSize: 14,
-                color: token.colorTextSecondary,
-              }}
+              className="cursor-pointer text-body-sm text-gray-500 dark:text-gray-400 hover:text-primary"
             >
               Forgot password?
             </Link>
@@ -53,28 +48,24 @@ export function AuthPage(props: AuthPageProps) {
         );
       case "register":
         return (
-          <div style={{ textAlign: "center", marginTop: 16 }}>
-            <Text style={{ fontSize: 14, color: token.colorTextSecondary }}>
+          <div className="text-center mt-4">
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">
               Already have an account?{" "}
               <Link
                 onClick={() => router.push("/login")}
-                style={{ cursor: "pointer", fontWeight: 500 }}
+                className="cursor-pointer font-medium text-gray-900 dark:text-gray-50 hover:text-primary"
               >
                 Sign in
               </Link>
-            </Text>
+            </span>
           </div>
         );
       case "forgotPassword":
         return (
-          <div style={{ textAlign: "center", marginTop: 16 }}>
+          <div className="text-center mt-4">
             <Link
               onClick={() => router.push("/login")}
-              style={{
-                cursor: "pointer",
-                fontSize: 14,
-                color: token.colorTextSecondary,
-              }}
+              className="cursor-pointer text-body-sm text-gray-500 dark:text-gray-400 hover:text-primary"
             >
               ← Back to login
             </Link>
@@ -82,14 +73,10 @@ export function AuthPage(props: AuthPageProps) {
         );
       case "updatePassword":
         return (
-          <div style={{ textAlign: "center", marginTop: 16 }}>
+          <div className="text-center mt-4">
             <Link
               onClick={() => router.push("/login")}
-              style={{
-                cursor: "pointer",
-                fontSize: 14,
-                color: token.colorTextSecondary,
-              }}
+              className="cursor-pointer text-body-sm text-gray-500 dark:text-gray-400 hover:text-primary"
             >
               ← Back to login
             </Link>
@@ -116,97 +103,43 @@ export function AuthPage(props: AuthPageProps) {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#F9FAFB",
-        padding: token.paddingLG,
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-lg">
       {/* Main Card */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          width: "100%",
-          maxWidth: 460,
-        }}
-      >
+      <div className="relative z-1 w-full max-w-[460px]">
         <Card
           variant="borderless"
-          style={{
-            borderRadius: 6,
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-            border: "1px solid #E5E7EB",
-            background: "#FFFFFF",
-          }}
+          className="rounded-md shadow-card border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
         >
           {/* Header Section */}
-          <div
-            style={{
-              padding: "32px 32px 16px 32px",
-              textAlign: "center",
-            }}
-          >
+          <div className="px-8 pt-8 pb-4 text-center">
             {/* Logo */}
             <div
+              className="w-16 h-16 mx-auto mb-5 rounded-md bg-primary flex items-center justify-center shadow-lg"
               style={{
-                width: 64,
-                height: 64,
-                margin: "0 auto 20px",
-                borderRadius: 6,
-                background: "#0066CC",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 6px rgba(0, 102, 204, 0.2)",
+                boxShadow: "0 2px 6px rgba(245, 158, 11, 0.2)",
               }}
             >
-              <DatabaseOutlined style={{ fontSize: 32, color: "#fff" }} />
+              <DatabaseOutlined className="text-[32px] text-white" />
             </div>
 
-            <Title
-              level={2}
-              style={{
-                margin: "0 0 8px 0",
-                fontWeight: 600,
-                color: "#111827",
-                fontSize: 24,
-              }}
-            >
+            <h2 className="text-h4 font-display font-semibold text-gray-900 dark:text-gray-50 mb-2">
               {getTitle(props.type)}
-            </Title>
+            </h2>
 
-            <Text
-              style={{
-                fontSize: 14,
-                color: "#6B7280",
-                display: "block",
-              }}
-            >
+            <p className="text-body text-gray-600 dark:text-gray-400 block">
               {getDescription(props.type)}
-            </Text>
+            </p>
           </div>
 
           {/* Form Section */}
-          <div style={{ padding: "16px 32px 32px 32px" }}>
+          <div className="px-8 pb-8 pt-4">
             {renderForm()}
             {renderFooter()}
           </div>
         </Card>
 
         {/* Footer */}
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: 20,
-            color: "#9CA3AF",
-            fontSize: 13,
-          }}
-        >
+        <div className="text-center mt-5 text-gray-400 dark:text-gray-500 text-body-sm">
           IoTDB Enhanced - Time Series Data Management Platform
         </div>
       </div>
