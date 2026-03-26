@@ -1041,7 +1041,7 @@ export const Button: React.FC<ButtonProps> = ({
 
 ### Phase 2: Pages ✅ COMPLETE
 **Status**: 已完成 (2026-03-26)
-**Commits**: `3f9dc88`, `074b15e`, `3dda685`, `a33d171`, `d37d6b1`
+**Commits**: `3f9dc88`, `074b15e`, `3dda685`, `a33d171`, `d37d6b1`, `bcd184f`, `d3ae0f9`, `1ef266c`, `a26dae1`
 
 **营销页面**:
 - ✅ 首页 (`/`) — Hero + 功能 + 仪表板预览 + CTA
@@ -1053,6 +1053,10 @@ export const Button: React.FC<ButtonProps> = ({
 - ✅ Forecasts (`/forecasts`) — 按复杂度优先迁移完成
 - ✅ Timeseries (`/timeseries`) — 按复杂度优先迁移完成
 - ✅ Alerts (`/alerts`) — 按复杂度优先迁移完成（最复杂）
+- ✅ AI Models (`/ai/models`) — 已迁移到设计系统
+- ✅ AI Anomalies (`/ai/anomalies`) — 已迁移到设计系统
+- ✅ Settings (`/settings`) — 已迁移到设计系统
+- ✅ Auth Page (`/login`, `/register`) — 已迁移到设计系统
 - ✅ StatCard 组件 — 应用设计令牌
 
 ### Phase 3: Polish ⏳ PENDING
@@ -1089,22 +1093,24 @@ export const Button: React.FC<ButtonProps> = ({
 | Forecasts (`/forecasts`) | ✅ Complete | ✅ Done |
 | Timeseries (`/timeseries`) | ✅ Complete | ✅ Done |
 | Alerts (`/alerts`) | ✅ Complete | ✅ Done |
-| AI Models (`/ai/models`) | ⏳ Partial update needed | ⏳ TODO |
-| AI Anomalies (`/ai/anomalies`) | ⏳ Partial update needed | ⏳ TODO |
-| Login (`/login`) | ⏳ Partial update needed | ⏳ TODO |
-| Settings (`/settings`) | ⏳ Partial update needed | ⏳ TODO |
+| AI Models (`/ai/models`) | ✅ Complete | ✅ Done |
+| AI Anomalies (`/ai/anomalies`) | ✅ Complete | ✅ Done |
+| Settings (`/settings`) | ✅ Complete | ✅ Done |
+| Login (`/login`) | ✅ Complete | ✅ Done |
+| Register (`/register`) | ✅ Complete | ✅ Done |
 
 ### Migration Progress
 
-**Overall Progress**: 40% (7/17 pages fully migrated)
+**Overall Progress**: 71% (10/14 pages fully migrated)
 
 **Completed**:
 - 3 marketing pages (100%)
-- 4 app pages (Forecasts, Timeseries, Alerts, Dashboard) (40% of app pages)
+- 7 app pages (Forecasts, Timeseries, Alerts, Dashboard, AI Models, AI Anomalies, Settings) (70% of app pages)
+- Auth Page component (affects Login and Register pages)
 
 **Remaining**:
-- 2 AI pages (ai/models, ai/anomalies)
-- 6 other pages (datasets, login, settings, etc.)
+- Datasets pages (if they exist)
+- Other specialized pages (create/edit forms, detail views)
 
 ---
 
