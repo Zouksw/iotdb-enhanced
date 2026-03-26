@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Form, Select, InputNumber, Input, Row, Col, Typography, Alert, Space, Divider, Card, Button, Collapse, Tag } from "antd";
+import { Form, Select, InputNumber, Input, Row, Col, Alert, Space, Divider, Card, Button, Collapse, Tag } from "antd";
 import {
   RobotOutlined,
   ThunderboltOutlined,
@@ -16,7 +16,6 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ContentCard } from "@/components/layout/ContentCard";
 
-const { Text, Paragraph } = Typography;
 const { Panel } = Collapse;
 
 // IoTDB AI Node 原生支持的算法
@@ -244,10 +243,10 @@ export default function ForecastCreate() {
           <Alert
             message={
               <Space direction="vertical" style={{ width: "100%" }}>
-                <Paragraph style={{ marginBottom: 8 }}>
+                <p className="text-body mb-2">
                   <strong>直接调用 IoTDB AI Node 原生模型</strong>，无需预先训练。选择时序数据、算法和参数后即可生成预测。
-                </Paragraph>
-                <ul style={{ marginBottom: 0, paddingLeft: 20 }}>
+                </p>
+                <ul className="mb-0 pl-5">
                   <li><strong>Horizon:</strong> 预测的时间点数量</li>
                   <li><strong>Confidence Level:</strong> 置信区间 (0-1)</li>
                   <li><strong>Algorithm:</strong> 选择 AI Node 内置算法</li>
@@ -279,7 +278,7 @@ export default function ForecastCreate() {
             <Row gutter={[24, 16]}>
               <Col xs={24}>
                 <Form.Item
-                  label={<span style={{ fontWeight: 500 }}>Time Series</span>}
+                  label={<span className="font-semibold">Time Series</span>}
                   name="timeseriesId"
                   rules={[{ required: true, message: "Please select a time series" }]}
                   tooltip="选择要预测的时序数据"
@@ -299,10 +298,10 @@ export default function ForecastCreate() {
                         <Space>
                           <LineChartOutlined />
                           <span>{ts.name}</span>
-                          {ts.unit && <Tag color="blue" style={{ fontSize: 11 }}>{ts.unit}</Tag>}
-                          <Text type="secondary" style={{ fontSize: 12 }}>
+                          {ts.unit && <Tag color="blue" className="text-[11px]">{ts.unit}</Tag>}
+                          <span className="text-body-sm text-gray-500 dark:text-gray-400">
                             {ts.slug}
-                          </Text>
+                          </span>
                         </Space>
                       </Select.Option>
                     ))}
@@ -315,7 +314,7 @@ export default function ForecastCreate() {
             <Row gutter={[24, 16]}>
               <Col xs={24}>
                 <Form.Item
-                  label={<span style={{ fontWeight: 500 }}>AI Node Algorithm</span>}
+                  label={<span className="font-semibold">AI Node Algorithm</span>}
                   name="algorithm"
                   rules={[{ required: true, message: "Please select an algorithm" }]}
                 >
@@ -327,23 +326,23 @@ export default function ForecastCreate() {
                   >
                     {AI_NODE_ALGORITHMS.map((algo) => (
                       <Select.Option key={algo.value} value={algo.value} label={algo.label}>
-                        <div style={{ padding: "4px 0" }}>
+                        <div className="py-1">
                           <Space>
-                            <span style={{ fontSize: 18 }}>{algo.icon}</span>
+                            <span className="text-[18px]">{algo.icon}</span>
                             <div>
-                              <div style={{ fontWeight: 500 }}>
+                              <div className="font-semibold">
                                 {algo.label}
                                 <Tag
                                   color={algo.category === "deeplearning" ? "purple" : algo.category === "statistical" ? "blue" : "default"}
-                                  style={{ marginLeft: 8, fontSize: 10 }}
+                                  className="ml-2 text-[10px]"
                                 >
                                   {algo.category === "deeplearning" ? "深度学习" : algo.category === "statistical" ? "统计" : "基线"}
                                 </Tag>
                                 {algo.requiresWeights && (
-                                  <Tag color="orange" style={{ fontSize: 10 }}>需权重</Tag>
+                                  <Tag color="orange" className="text-[10px]">需权重</Tag>
                                 )}
                               </div>
-                              <div style={{ fontSize: 12, color: "#999" }}>
+                              <div className="text-body-sm text-gray-400">
                                 {algo.description}
                               </div>
                             </div>
@@ -361,16 +360,16 @@ export default function ForecastCreate() {
               <Alert
                 message={
                   <Space direction="vertical" size={4} style={{ width: "100%" }}>
-                    <Text strong>{algorithmInfo.icon} {algorithmInfo.label} 特性：</Text>
-                    <ul style={{ marginBottom: 0, paddingLeft: 20, marginTop: 4 }}>
+                    <span className="font-semibold">{algorithmInfo.icon} {algorithmInfo.label} 特性：</span>
+                    <ul className="mb-0 pl-5 mt-1">
                       {algorithmInfo.features.map((feature, idx) => (
                         <li key={idx}>{feature}</li>
                       ))}
                     </ul>
                     {algorithmInfo.requiresWeights && (
-                      <Text type="warning" style={{ fontSize: 12 }}>
+                      <span className="text-body-sm text-warning">
                         ⚠️ 此算法需要预训练的模型权重文件
-                      </Text>
+                      </span>
                     )}
                   </Space>
                 }
@@ -383,7 +382,7 @@ export default function ForecastCreate() {
             <Row gutter={[24, 16]}>
               <Col xs={24} md={12}>
                 <Form.Item
-                  label={<span style={{ fontWeight: 500 }}>Forecast Horizon</span>}
+                  label={<span className="font-semibold">Forecast Horizon</span>}
                   name="horizon"
                   rules={[
                     { required: true, message: "Please enter horizon" },
@@ -404,7 +403,7 @@ export default function ForecastCreate() {
 
               <Col xs={24} md={12}>
                 <Form.Item
-                  label={<span style={{ fontWeight: 500 }}>Confidence Level</span>}
+                  label={<span className="font-semibold">Confidence Level</span>}
                   name="confidenceLevel"
                   rules={[
                     { required: true, message: "Please enter confidence level" },
@@ -448,7 +447,7 @@ export default function ForecastCreate() {
                           return (
                             <Col xs={24} md={12} key={param.name}>
                               <Form.Item
-                                label={<span style={{ fontWeight: 400 }}>{param.label}</span>}
+                                label={<span className="font-normal">{param.label}</span>}
                                 name={["hyperparameters", param.name]}
                                 initialValue={"default" in param ? param.default : undefined}
                                 tooltip={"default" in param ? `默认值: ${param.default}` : ("placeholder" in param ? param.placeholder : undefined)}
@@ -480,19 +479,19 @@ export default function ForecastCreate() {
             <Divider style={{ margin: "16px 0" }} />
 
             <Space direction="vertical" style={{ width: "100%" }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <span className="text-body-sm text-gray-500 dark:text-gray-400">
                 <strong>推荐设置：</strong>
-              </Text>
+              </span>
               <Space wrap>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <span className="text-body-sm text-gray-500 dark:text-gray-400">
                   • 短期预测: horizon=50-100, confidence=0.95
-                </Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                </span>
+                <span className="text-body-sm text-gray-500 dark:text-gray-400">
                   • 中期预测: horizon=100-500, confidence=0.90
-                </Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                </span>
+                <span className="text-body-sm text-gray-500 dark:text-gray-400">
                   • 长期预测: horizon=500-1000, confidence=0.85
-                </Text>
+                </span>
               </Space>
             </Space>
 
@@ -506,6 +505,12 @@ export default function ForecastCreate() {
                 htmlType="submit"
                 loading={loading}
                 block
+                style={{
+                  background: "#F59E0B",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontWeight: 600,
+                }}
               >
                 {loading ? "Generating Forecast..." : "Generate Forecast"}
               </Button>
@@ -523,39 +528,39 @@ export default function ForecastCreate() {
           }
           style={{ marginTop: 16 }}
         >
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table className="w-full" style={{ borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "2px solid #f0f0f0" }}>
-                <th style={{ padding: "12px", textAlign: "left" }}>算法</th>
-                <th style={{ padding: "12px", textAlign: "left" }}>类型</th>
-                <th style={{ padding: "12px", textAlign: "left" }}>训练时间</th>
-                <th style={{ padding: "12px", textAlign: "left" }}>适用场景</th>
+              <tr className="border-b-2" style={{ borderColor: "#f0f0f0" }}>
+                <th className="p-3 text-left">算法</th>
+                <th className="p-3 text-left">类型</th>
+                <th className="p-3 text-left">训练时间</th>
+                <th className="p-3 text-left">适用场景</th>
               </tr>
             </thead>
             <tbody>
               {AI_NODE_ALGORITHMS.map((algo) => (
-                <tr key={algo.value} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                  <td style={{ padding: "10px" }}>
+                <tr key={algo.value} className="border-b" style={{ borderColor: "#f0f0f0" }}>
+                  <td className="p-2.5">
                     <Space>
                       <span>{algo.icon}</span>
-                      <Text strong>{algo.label}</Text>
+                      <span className="font-semibold">{algo.label}</span>
                     </Space>
                   </td>
-                  <td style={{ padding: "10px" }}>
+                  <td className="p-2.5">
                     <Tag
                       color={algo.category === "deeplearning" ? "purple" : algo.category === "statistical" ? "blue" : "default"}
                     >
                       {algo.category === "deeplearning" ? "深度学习" : algo.category === "statistical" ? "统计模型" : "基线"}
                     </Tag>
                   </td>
-                  <td style={{ padding: "10px" }}>
+                  <td className="p-2.5">
                     {algo.category === "deeplearning" ? (
                       <Tag color="orange">需要预训练</Tag>
                     ) : (
                       <Tag color="green">无需训练</Tag>
                     )}
                   </td>
-                  <td style={{ padding: "10px", fontSize: 13 }}>
+                  <td className="p-2.5 text-[13px]">
                     {algo.features[0]}
                   </td>
                 </tr>
