@@ -1,10 +1,12 @@
 import React from "react";
+import { TRANSITIONS, DURATION, EASING } from "@/lib/animations";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
   fullWidth?: boolean;
+  "aria-label"?: string;
   children: React.ReactNode;
 }
 
@@ -16,9 +18,15 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   className = "",
   children,
+  "aria-label": ariaLabel,
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center font-semibold transition-all duration-150 ease-move focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  // Generate aria-label if not provided
+  const label = ariaLabel || (typeof children === "string" ? children : "Button");
+  // Use consistent transition from animation library
+  const transitionStyle = TRANSITIONS.button;
+
+  const baseStyles = "inline-flex items-center justify-center font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variantStyles = {
     primary: "bg-primary text-white hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-button-hover active:scale-95 focus:ring-primary",
@@ -40,7 +48,9 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       className={combinedClassName}
+      style={{ transition: transitionStyle }}
       disabled={disabled || isLoading}
+      aria-label={label}
       {...props}
     >
       {isLoading ? (

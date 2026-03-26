@@ -3,21 +3,6 @@
 import React, { useState, useRef } from "react";
 import { Card, Button, Space, Typography, Spin, Tooltip as AntTooltip, Alert, Tag } from "antd";
 import {
-    ComposedChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-    Scatter,
-    ScatterChart,
-    ZAxis,
-    ReferenceArea,
-    Cell,
-} from "recharts";
-import {
     DownloadOutlined,
     FileImageOutlined,
     FileExcelOutlined,
@@ -25,6 +10,7 @@ import {
     CompressOutlined,
     WarningOutlined,
 } from "@ant-design/icons";
+import dynamic from "next/dynamic";
 import {
     chartColors,
     chartTooltipStyles,
@@ -35,6 +21,79 @@ import {
 } from "@/lib/chart-config";
 
 const { Text } = Typography;
+
+// Dynamic imports for Recharts components to reduce initial bundle size
+const ComposedChart = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ComposedChart })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center h-full">
+        <Spin size="large" />
+      </div>
+    ),
+    ssr: false,
+  }
+) as React.ComponentType<any>;
+
+const Line = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Line })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const XAxis = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.XAxis })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const YAxis = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.YAxis })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const CartesianGrid = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.CartesianGrid })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Tooltip = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Tooltip })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Legend = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Legend })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const ResponsiveContainer = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ResponsiveContainer })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Scatter = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Scatter })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const ScatterChart = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ScatterChart })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const ZAxis = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ZAxis })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const ReferenceArea = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ReferenceArea })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Cell = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Cell })),
+  { ssr: false }
+) as React.ComponentType<any>;
 
 interface AnomalyPoint {
     timestamp: number;

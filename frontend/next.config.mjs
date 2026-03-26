@@ -4,6 +4,10 @@ const nextConfig = {
   // Allow external access
   experimental: {
     serverComponentsExternalPackages: [],
+    // Enable Ant Design tree-shaking
+    esmExternals: "lazy",
+    // Optimize imports for Ant Design
+    optimizePackageImports: ["@ant-design/icons", "antd"],
   },
 
   // Performance optimizations

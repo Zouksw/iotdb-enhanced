@@ -1,17 +1,48 @@
 "use client";
 
 import React from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  Legend,
-} from "recharts";
-import { Card, Typography, Tag } from "antd";
+import { Card, Typography, Tag, Spin } from "antd";
+import dynamic from "next/dynamic";
 
 const { Title } = Typography;
+
+// Dynamic imports for Recharts components to reduce initial bundle size
+const PieChart = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.PieChart })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center h-full">
+        <Spin size="large" />
+      </div>
+    ),
+    ssr: false,
+  }
+) as React.ComponentType<any>;
+
+const Pie = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Pie })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Cell = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Cell })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const ResponsiveContainer = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ResponsiveContainer })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Tooltip = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Tooltip })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Legend = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Legend })),
+  { ssr: false }
+) as React.ComponentType<any>;
 
 interface AlertDistributionChartProps {
   data?: {

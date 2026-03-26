@@ -5,8 +5,9 @@ import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
 import routerProvider from "@refinedev/nextjs-router";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { App as AntdApp } from "antd";
+import { Satoshi, DM_Sans, Geist_Mono, JetBrains_Mono } from "next/font/google";
 
 import { ColorModeContextProvider } from "@/contexts/color-mode";
 import { authProviderClient } from "@/providers/auth-provider/auth-provider.client";
@@ -14,9 +15,39 @@ import { dataProvider } from "@/providers/data-provider";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import ErrorBoundaryWrapper from "@/components/ErrorBoundaryWrapper";
 import { ToastProvider } from "@/components/ui/Toast";
+import { WebVitals } from "@/components/WebVitals";
 import "@ant-design/v5-patch-for-react-19";
 import "@refinedev/antd/dist/reset.css";
 import "@/styles/globals.css";
+
+// Configure fonts with automatic subsetting
+const satoshi = Satoshi({
+  weight: '700',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-satoshi',
+});
+
+const dmSans = DM_Sans({
+  weight: ['400', '500', '600'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+});
+
+const geistMono = Geist_Mono({
+  weight: ['400', '500', '600'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-geist-mono',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  weight: ['400', '500'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains-mono',
+});
 
 // Import icons for better navigation
 import {
@@ -81,7 +112,7 @@ export default function RootLayout({
   const theme = cookieStore.get("theme");
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${satoshi.variable} ${dmSans.variable} ${geistMono.variable} ${jetbrainsMono.variable}`}>
       <head>
         {/* Skip to main content link for accessibility */}
         <style>{`
@@ -100,7 +131,7 @@ export default function RootLayout({
           }
         `}</style>
       </head>
-      <body>
+      <body className={dmSans.className}>
         <a href="#main-content" className="skip-to-content">
           Skip to main content
         </a>
@@ -256,12 +287,25 @@ export default function RootLayout({
             </AntdApp>
           </AntdRegistry>
         </Suspense>
+
+        {/* Web Vitals Monitoring */}
+        <WebVitals />
+
         {/* Initialize CSRF protection on client side */}
         <script dangerouslySetInnerHTML={{
           __html: `
             if (typeof window !== 'undefined') {
               // CSRF protection will be initialized by the csrf module
               // This script ensures it loads early
+
+              // Register service worker for PWA support
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').then((registration) => {
+                  console.log('Service Worker registered with scope:', registration.scope);
+                }).catch((error) => {
+                  console.log('Service Worker registration failed:', error);
+                });
+              }
             }
           `
         }} />

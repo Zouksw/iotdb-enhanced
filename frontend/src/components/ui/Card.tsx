@@ -1,4 +1,5 @@
 import React from "react";
+import { TRANSITIONS } from "@/lib/animations";
 
 export interface CardProps {
   children: React.ReactNode;
@@ -13,7 +14,10 @@ export const Card: React.FC<CardProps> = ({
   hover = false,
   onClick,
 }) => {
-  const baseStyles = "bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-200 ease-move";
+  // Use consistent transition from animation library
+  const transitionStyle = TRANSITIONS.card;
+
+  const baseStyles = "bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700";
 
   const hoverStyles = hover
     ? "hover:-translate-y-0.5 hover:shadow-card-hover dark:hover:shadow-card-hover-dark cursor-pointer"
@@ -22,7 +26,7 @@ export const Card: React.FC<CardProps> = ({
   const combinedClassName = `${baseStyles} ${hoverStyles} ${className}`.trim();
 
   return (
-    <div className={combinedClassName} onClick={onClick}>
+    <div className={combinedClassName} style={{ transition: transitionStyle }} onClick={onClick}>
       {children}
     </div>
   );

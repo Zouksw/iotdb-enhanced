@@ -3,26 +3,13 @@
 import React, { useState, useRef } from "react";
 import { Card, Button, Space, Typography, Spin, Alert, message, Tooltip as AntTooltip } from "antd";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Area,
-  AreaChart,
-  ComposedChart,
-  ReferenceLine,
-} from "recharts";
-import {
   DownloadOutlined,
   FileImageOutlined,
   FileExcelOutlined,
   ExpandOutlined,
   CompressOutlined,
 } from "@ant-design/icons";
+import dynamic from "next/dynamic";
 import {
   chartColors,
   chartTooltipStyles,
@@ -34,6 +21,74 @@ import {
 } from "@/lib/chart-config";
 
 const { Text } = Typography;
+
+// Dynamic imports for Recharts components to reduce initial bundle size
+const LineChart = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.LineChart })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center h-full">
+        <Spin size="large" />
+      </div>
+    ),
+    ssr: false,
+  }
+) as React.ComponentType<any>;
+
+const Line = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Line })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const XAxis = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.XAxis })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const YAxis = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.YAxis })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const CartesianGrid = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.CartesianGrid })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Tooltip = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Tooltip })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Legend = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Legend })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const ResponsiveContainer = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ResponsiveContainer })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const Area = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.Area })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const AreaChart = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.AreaChart })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const ComposedChart = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ComposedChart })),
+  { ssr: false }
+) as React.ComponentType<any>;
+
+const ReferenceLine = dynamic(
+  () => import("recharts").then((mod) => ({ default: mod.ReferenceLine })),
+  { ssr: false }
+) as React.ComponentType<any>;
 
 interface DataPoint {
   timestamp: number;

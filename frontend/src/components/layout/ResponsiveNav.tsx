@@ -23,6 +23,7 @@ import {
   BellOutlined,
 } from "@ant-design/icons";
 import { useBreakpoint, useIsMobile } from "@/lib/responsive-utils";
+import { BREAKPOINT, COMPONENT_BREAKPOINTS } from "@/lib/responsive-constants";
 import { Avatar, Dropdown, Badge, Space } from "antd";
 
 export interface NavItem {
