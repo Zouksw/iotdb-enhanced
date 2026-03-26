@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Typography, Card, Row, Col, Button, Space, Divider, Avatar, Badge, Tag } from "antd";
+import { Card, Row, Col, Button, Space, Divider, Avatar, Badge, Tag } from "antd";
 import {
   SafetyOutlined,
   UserOutlined,
@@ -13,13 +13,10 @@ import {
   CheckCircleOutlined,
 } from "@ant-design/icons";
 import { useGo } from "@refinedev/core";
-import { useOne } from "@refinedev/core";
 
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { authFetch, getAuthToken, getCachedUser } from "@/utils/auth";
-
-const { Text, Paragraph, Title } = Typography;
 
 interface SettingsItem {
   title: string;
@@ -131,14 +128,16 @@ export default function SettingsPage() {
                 size={80}
                 src={user?.avatar}
                 icon={<UserOutlined />}
-                style={{ border: "3px solid #1890ff" }}
+                style={{ border: "3px solid #3B82F6" }}
               />
-              <div style={{ textAlign: "center" }}>
-                <Title level={4} style={{ marginBottom: 4 }}>
+              <div className="text-center">
+                <h4 className="text-h4 font-display font-semibold text-gray-900 dark:text-gray-50 mb-1">
                   {user?.name || "User"}
-                </Title>
-                <Text type="secondary">{user?.email || "user@example.com"}</Text>
-                <div style={{ marginTop: 8 }}>
+                </h4>
+                <p className="text-body text-gray-500 dark:text-gray-400">
+                  {user?.email || "user@example.com"}
+                </p>
+                <div className="mt-2">
                   <Tag color="blue">{user?.roles?.[0] || "User"}</Tag>
                 </div>
               </div>
@@ -147,6 +146,12 @@ export default function SettingsPage() {
                 icon={<UserOutlined />}
                 onClick={() => go({ to: "/settings/profile", type: "push" })}
                 block
+                style={{
+                  background: "#F59E0B",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontWeight: 600,
+                }}
               >
                 Edit Profile
               </Button>
@@ -168,6 +173,7 @@ export default function SettingsPage() {
                     block
                     size="large"
                     onClick={() => go({ to: section.path, type: "push" })}
+                    className="h-auto px-5 py-4 text-left flex items-center justify-between"
                     style={{
                       height: "auto",
                       padding: "16px 20px",
@@ -178,33 +184,35 @@ export default function SettingsPage() {
                     }}
                   >
                     <Space size="middle" style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                        <div style={{ position: "relative" }}>
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
                           {section.icon}
                           {section.status && (
-                            <div style={{ position: "absolute", bottom: -4, right: -4 }}>
+                            <div className="absolute bottom-[-4px] right-[-4px]">
                               {getStatusIcon(section.status)}
                             </div>
                           )}
                         </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <div style={{ fontWeight: 600, fontSize: 15 }}>{section.title}</div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <div className="font-semibold text-[15px] text-gray-900 dark:text-gray-50">
+                              {section.title}
+                            </div>
                             {section.badge && (
-                              <Tag color={getStatusColor(section.status)} style={{ margin: 0 }}>
+                              <Tag color={getStatusColor(section.status)} className="m-0">
                                 {section.badge}
                               </Tag>
                             )}
                           </div>
-                          <Text type="secondary" style={{ fontSize: 13 }}>
+                          <p className="text-body-sm text-gray-500 dark:text-gray-400 mt-0">
                             {section.description}
-                          </Text>
+                          </p>
                         </div>
                       </div>
                     </Space>
-                    <RightOutlined style={{ color: "#9ca3af" }} />
+                    <RightOutlined className="text-gray-400" />
                   </Button>
-                  {index < settingsSections.length - 1 && <Divider style={{ margin: "8px 0" }} />}
+                  {index < settingsSections.length - 1 && <Divider className="my-2" />}
                 </div>
               ))}
             </Space>
@@ -217,11 +225,11 @@ export default function SettingsPage() {
         <Col xs={24}>
           <Card title="Account Security" variant="borderless">
             <Space direction="vertical" style={{ width: "100%" }}>
-              <Paragraph>
-                <SafetyOutlined style={{ color: "#52c41a", marginRight: 8 }} />
-                <Text strong>Security Status:</Text>{" "}
-                <Text style={{ color: "#52c41a" }}>Your account is secure with JWT authentication</Text>
-              </Paragraph>
+              <p className="text-body text-gray-700 dark:text-gray-300">
+                <SafetyOutlined className="text-success mr-2" />
+                <span className="font-semibold text-gray-900 dark:text-gray-50">Security Status:</span>{" "}
+                <span className="text-success">Your account is secure with JWT authentication</span>
+              </p>
               <Space wrap>
                 <Button
                   icon={<KeyOutlined />}
