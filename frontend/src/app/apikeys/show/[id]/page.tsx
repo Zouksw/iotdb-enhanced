@@ -21,7 +21,6 @@ import {
   Tag,
   Button,
   Space,
-  Typography,
   Descriptions,
   Alert,
   Input,
@@ -45,8 +44,6 @@ import type { ApiKey } from "@/types/api";
 import { authFetch } from "@/utils/auth";
 import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
 import { useIsMobile } from "@/lib/responsive-utils";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface ApiKeyDetailParams {
   id?: string;
@@ -235,11 +232,11 @@ export default function ApiKeyDetailPage() {
         <Space direction="vertical" style={{ width: "100%" }} size="large">
           <Descriptions column={1} size="small">
             <Descriptions.Item label="Key Name">
-              <Text strong>{apiKey.name}</Text>
+              <span className="font-semibold text-gray-900 dark:text-gray-50">{apiKey.name}</span>
             </Descriptions.Item>
             <Descriptions.Item label="Key Preview">
               <Space>
-                <Text code copyable>{apiKey.keyPreview}</Text>
+                <code className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-700 dark:text-gray-300" copyable>{apiKey.keyPreview}</code>
                 <Button
                   size="small"
                   icon={<CopyOutlined />}
@@ -265,8 +262,8 @@ export default function ApiKeyDetailPage() {
 
           {apiKey.lastUsed && (
             <div>
-              <Text type="secondary">Last used: </Text>
-              <Text>{new Date(apiKey.lastUsed).toLocaleString()}</Text>
+              <span className="text-body-sm text-gray-500 dark:text-gray-400">Last used: </span>
+              <span className="text-body text-gray-900 dark:text-gray-50">{new Date(apiKey.lastUsed).toLocaleString()}</span>
             </div>
           )}
         </Space>
@@ -280,10 +277,10 @@ export default function ApiKeyDetailPage() {
               percent={(apiKey.rateLimit.remaining / apiKey.rateLimit.limit) * 100}
               status={apiKey.rateLimit.remaining < apiKey.rateLimit.limit * 0.2 ? "exception" : "active"}
             />
-            <Text type="secondary">
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">
               {apiKey.rateLimit.remaining} / {apiKey.rateLimit.limit} requests remaining
               ({apiKey.rateLimit.window})
-            </Text>
+            </span>
           </Space>
         </DetailSection>
       )}
@@ -303,7 +300,7 @@ export default function ApiKeyDetailPage() {
             ))}
           </Space>
         ) : (
-          <Text type="secondary">Full permissions</Text>
+          <span className="text-body-sm text-gray-500 dark:text-gray-400">Full permissions</span>
         )}
       </DetailSection>
 
@@ -325,9 +322,9 @@ export default function ApiKeyDetailPage() {
           )}
           {apiKey.expiresAt && (
             <Descriptions.Item label="Expires">
-              <Text type={isExpired ? "danger" : "secondary"}>
+              <span className={isExpired ? "text-error" : "text-body-sm text-gray-500 dark:text-gray-400"}>
                 {new Date(apiKey.expiresAt).toLocaleString()}
-              </Text>
+              </span>
             </Descriptions.Item>
           )}
         </Descriptions>
@@ -341,7 +338,7 @@ export default function ApiKeyDetailPage() {
       >
         {usageLogs.length === 0 ? (
           <Card>
-            <Text type="secondary">No usage logs available for this API key.</Text>
+            <span className="text-body text-gray-500 dark:text-gray-400">No usage logs available for this API key.</span>
           </Card>
         ) : (
           <Table
