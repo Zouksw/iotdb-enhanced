@@ -22,7 +22,6 @@ import {
   Button,
   Space,
   Tabs,
-  Typography,
   Alert,
   Spin,
 } from "antd";
@@ -39,8 +38,6 @@ import { authFetch } from "@/utils/auth";
 import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useIsMobile } from "@/lib/responsive-utils";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface ForecastDetailParams {
   id?: string;
@@ -184,19 +181,11 @@ export default function ForecastDetailPage() {
           showIcon
           style={{ marginBottom: "16px" }}
         />
-        <div style={{
-          height: "300px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(0, 102, 204, 0.05)",
-          borderRadius: "8px",
-          border: "1px dashed rgba(0, 102, 204, 0.3)"
-        }}>
-          <LineChartOutlined style={{ fontSize: "48px", color: "#0066cc" }} />
-          <Text type="secondary" style={{ marginLeft: "16px" }}>
+        <div className="h-[300px] flex items-center justify-center bg-info/10 rounded-lg border border-dashed border-info/30">
+          <LineChartOutlined className="text-[48px] text-info" />
+          <span className="text-body text-gray-500 dark:text-gray-400 ml-4">
             Chart visualization
-          </Text>
+          </span>
         </div>
       </DetailSection>
 
@@ -206,14 +195,14 @@ export default function ForecastDetailPage() {
           <Col xs={24} sm={12} md={8}>
             <Card size="small" title="Time Range">
               <Space direction="vertical" style={{ width: "100%" }}>
-                <Text>
+                <span className="text-body">
                   <ClockCircleOutlined /> Start:{" "}
                   {new Date(forecast.startTime).toLocaleString()}
-                </Text>
-                <Text>
+                </span>
+                <span className="text-body">
                   <ClockCircleOutlined /> End:{" "}
                   {new Date(forecast.endTime).toLocaleString()}
-                </Text>
+                </span>
               </Space>
             </Card>
           </Col>
@@ -221,8 +210,8 @@ export default function ForecastDetailPage() {
           <Col xs={24} sm={12} md={8}>
             <Card size="small" title="Model">
               <Space direction="vertical" style={{ width: "100%" }}>
-                <Text>Model ID: {forecast.modelId?.substring(0, 8)}...</Text>
-                <Text>Type: {forecast.model?.algorithm || "arima"}</Text>
+                <span className="text-body">Model ID: {forecast.modelId?.substring(0, 8)}...</span>
+                <span className="text-body">Type: {forecast.model?.algorithm || "arima"}</span>
               </Space>
             </Card>
           </Col>
@@ -231,10 +220,10 @@ export default function ForecastDetailPage() {
             <Card size="small" title="Performance Metrics">
               <Space direction="vertical" style={{ width: "100%" }}>
                 {forecast.mae !== undefined && (
-                  <Text>MAE: {forecast.mae.toFixed(4)}</Text>
+                  <span className="text-body data-text">MAE: {forecast.mae.toFixed(4)}</span>
                 )}
                 {forecast.rmse !== undefined && (
-                  <Text>RMSE: {forecast.rmse.toFixed(4)}</Text>
+                  <span className="text-body data-text">RMSE: {forecast.rmse.toFixed(4)}</span>
                 )}
               </Space>
             </Card>
@@ -290,18 +279,18 @@ const predictedValuesColumns: ColumnsType<{
     title: "Predicted Value",
     dataIndex: "value",
     key: "value",
-    render: (value) => value.toFixed(4)
+    render: (value) => <span className="data-text">{value.toFixed(4)}</span>
   },
   {
     title: "Lower Bound",
     dataIndex: "lower",
     key: "lower",
-    render: (lower) => lower !== undefined ? lower.toFixed(4) : "-"
+    render: (lower) => lower !== undefined ? <span className="data-text">{lower.toFixed(4)}</span> : "-"
   },
   {
     title: "Upper Bound",
     dataIndex: "upper",
     key: "upper",
-    render: (upper) => upper !== undefined ? upper.toFixed(4) : "-"
+    render: (upper) => upper !== undefined ? <span className="data-text">{upper.toFixed(4)}</span> : "-"
   }
 ];
