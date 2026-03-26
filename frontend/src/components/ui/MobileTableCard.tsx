@@ -97,7 +97,7 @@ export function MobileTableCard<T extends Record<string, any>>({
               border: "1px solid #E5E7EB",
               boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
             }}
-            bodyStyle={{ padding: "16px" }}
+            styles={{ body: { padding: "16px" } }}
           >
             {/* Render each visible column as a field */}
             <Space direction="vertical" size={8} style={{ width: "100%" }}>
@@ -217,7 +217,7 @@ export function MobileTableCompact<T extends Record<string, any>>({
               background: "#FFFFFF",
               border: "1px solid #E5E7EB",
             }}
-            bodyStyle={{ padding: "12px" }}
+            styles={{ body: { padding: "12px" } }}
           >
             {/* Header: Title + Status */}
             <div

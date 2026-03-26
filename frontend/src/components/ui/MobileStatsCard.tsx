@@ -81,7 +81,7 @@ export const MobileStatsCard: React.FC<MobileStatsCardProps> = ({
                 border: "1px solid #E5E7EB",
                 boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
               }}
-              bodyStyle={{ padding: 0 }}
+              styles={{ body: { padding: 0 } }}
             >
               <div
                 style={{
@@ -192,7 +192,7 @@ export const DesktopGridStats: React.FC<DesktopGridStatsProps> = ({
                 border: "1px solid #E5E7EB",
                 boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
               }}
-              bodyStyle={{ padding: 0 }}
+              styles={{ body: { padding: 0 } }}
             >
               <div
                 style={{
