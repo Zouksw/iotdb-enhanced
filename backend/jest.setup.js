@@ -53,6 +53,13 @@ jest.mock('winston', () => ({
   },
 }));
 
+// Mock bcryptjs
+jest.mock('bcryptjs', () => ({
+  hash: jest.fn().mockResolvedValue('$2b$12$hashedpassword'),
+  compare: jest.fn().mockResolvedValue(true),
+  genSalt: jest.fn().mockResolvedValue('$2b$12$salt'),
+}));
+
 // Mock crypto for tests - simplified but preserves all crypto functions
 let cryptoCounter = 0;
 jest.mock('crypto', () => {
