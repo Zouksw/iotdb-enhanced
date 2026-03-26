@@ -139,7 +139,11 @@ export default function AIAnomaliesPage() {
       key: "value",
       width: 120,
       align: "right" as const,
-      render: (val: number) => val.toFixed(2),
+      render: (val: number) => (
+        <span className="data-text text-[13px] text-gray-700 dark:text-gray-300">
+          {val.toFixed(2)}
+        </span>
+      ),
     },
     {
       title: "Anomaly Score",
@@ -150,15 +154,15 @@ export default function AIAnomaliesPage() {
       sorter: (a: Anomaly, b: Anomaly) => b.score - a.score,
       render: (score: number) => (
         <span
+          className="font-semibold data-text"
           style={{
-            fontWeight: 600,
             color:
               score > 4
                 ? "#EF4444"
                 : score > 3
                 ? "#F59E0B"
                 : score > 2
-                ? "#0066CC"
+                ? "#3B82F6"
                 : "#10B981",
           }}
         >
@@ -177,7 +181,7 @@ export default function AIAnomaliesPage() {
 
       <ContentCard
         title="Detection Configuration"
-        subtitle={<span style={{ fontSize: 13 }}>Powered by AI Node</span>}
+        subtitle={<span className="text-body-sm">Powered by AI Node</span>}
       >
         <Form
           form={form}
@@ -241,6 +245,12 @@ export default function AIAnomaliesPage() {
               loading={loading}
               size="large"
               icon={<WarningOutlined />}
+              style={{
+                background: "#F59E0B",
+                border: "none",
+                borderRadius: "4px",
+                fontWeight: 600,
+              }}
             >
               Detect Anomalies
             </Button>
