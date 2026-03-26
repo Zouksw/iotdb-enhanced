@@ -1,13 +1,3 @@
-/**
- * Dataset Detail Page
- *
- * Displays detailed information about a specific dataset including:
- * - Dataset metadata (name, description, storage format)
- * - Associated time series
- * - Import status and statistics
- * - Related forecasts and analyses
- */
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -22,7 +12,6 @@ import {
   Button,
   Space,
   Tabs,
-  Typography,
   Descriptions,
   Progress,
 } from "antd";
@@ -41,8 +30,6 @@ import type { Dataset, TimeSeries } from "@/types/api";
 import { authFetch } from "@/utils/auth";
 import { DetailPageLayout, DetailSection } from "@/components/layout/DetailPageLayout";
 import { useIsMobile } from "@/lib/responsive-utils";
-
-const { Title, Text, Paragraph } = Typography;
 
 interface DatasetDetailParams {
   id?: string;
@@ -215,14 +202,14 @@ export default function DatasetDetailPage() {
       {/* Description Card */}
       {dataset.description && (
         <DetailSection title="Description" colSpan={isMobile ? 24 : 16}>
-          <Paragraph>{dataset.description}</Paragraph>
+          <p className="text-body">{dataset.description}</p>
           <Space direction="vertical" style={{ width: "100%", marginTop: "16px" }}>
-            <Text type="secondary">
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">
               Created: {new Date(dataset.createdAt).toLocaleString()}
-            </Text>
-            <Text type="secondary">
+            </span>
+            <span className="text-body-sm text-gray-500 dark:text-gray-400">
               Updated: {new Date(dataset.updatedAt).toLocaleString()}
-            </Text>
+            </span>
           </Space>
         </DetailSection>
       )}
@@ -236,6 +223,12 @@ export default function DatasetDetailPage() {
             type="primary"
             icon={<PlusOutlined />}
             href={`/timeseries/create?dataset=${dataset.id}`}
+            style={{
+              background: "#F59E0B",
+              border: "none",
+              borderRadius: "4px",
+              fontWeight: 600,
+            }}
           >
             Add Series
           </Button>
@@ -243,7 +236,7 @@ export default function DatasetDetailPage() {
       >
         {timeseries.length === 0 ? (
           <Card>
-            <Text type="secondary">No time series associated with this dataset.</Text>
+            <span className="text-body text-gray-500 dark:text-gray-400">No time series associated with this dataset.</span>
           </Card>
         ) : (
           <Table
@@ -317,7 +310,7 @@ const timeseriesColumns: ColumnsType<TimeSeries> = [
     render: (name, record) => (
       <Space>
         <DatabaseOutlined />
-        <Text strong>{name}</Text>
+        <span className="font-semibold text-gray-900 dark:text-gray-50">{name}</span>
       </Space>
     )
   },
