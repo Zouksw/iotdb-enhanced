@@ -1,11 +1,9 @@
 "use client";
 
 import { Create, useForm, useSelect } from "@refinedev/antd";
-import { Form, Input, Select, Switch, Row, Col, Typography } from "antd";
+import { Form, Input, Select, Switch, Row, Col } from "antd";
 
 import { ContentCard } from "@/components/layout/ContentCard";
-
-const { Text } = Typography;
 
 export default function TimeseriesCreate() {
   const { formProps, saveButtonProps } = useForm({
@@ -28,7 +26,7 @@ export default function TimeseriesCreate() {
           <Row gutter={[24, 16]}>
             <Col xs={24} md={12}>
               <Form.Item
-                label={<span style={{ fontWeight: 500 }}>Dataset</span>}
+                label={<span className="font-semibold">Dataset</span>}
                 name="datasetId"
                 rules={[{ required: true, message: "Please select a dataset" }]}
               >
@@ -38,7 +36,7 @@ export default function TimeseriesCreate() {
 
             <Col xs={24} md={12}>
               <Form.Item
-                label={<span style={{ fontWeight: 500 }}>Name</span>}
+                label={<span className="font-semibold">Name</span>}
                 name="name"
                 rules={[{ required: true, message: "Please enter a name" }]}
               >
@@ -50,7 +48,7 @@ export default function TimeseriesCreate() {
           <Row gutter={[24, 16]}>
             <Col xs={24} md={12}>
               <Form.Item
-                label={<span style={{ fontWeight: 500 }}>Slug</span>}
+                label={<span className="font-semibold">Slug</span>}
                 name="slug"
                 rules={[
                   { required: true, message: "Please enter a slug" },
@@ -66,7 +64,7 @@ export default function TimeseriesCreate() {
 
             <Col xs={24} md={12}>
               <Form.Item
-                label={<span style={{ fontWeight: 500 }}>Unit</span>}
+                label={<span className="font-semibold">Unit</span>}
                 name="unit"
                 tooltip="The unit of measurement for this time series"
               >
@@ -76,7 +74,7 @@ export default function TimeseriesCreate() {
           </Row>
 
           <Form.Item
-            label={<span style={{ fontWeight: 500 }}>Description</span>}
+            label={<span className="font-semibold">Description</span>}
             name="description"
           >
             <Input.TextArea
@@ -94,9 +92,9 @@ export default function TimeseriesCreate() {
           <Row gutter={[24, 16]}>
             <Col xs={24} md={12}>
               <Form.Item
-                label={<span style={{ fontWeight: 500 }}>Color</span>}
+                label={<span className="font-semibold">Color</span>}
                 name="colorHex"
-                initialValue="#1890ff"
+                initialValue="#F59E0B"
                 tooltip="Color used in charts and visualizations"
               >
                 <Input
@@ -108,7 +106,7 @@ export default function TimeseriesCreate() {
 
             <Col xs={24} md={12}>
               <Form.Item
-                label={<span style={{ fontWeight: 500 }}>Timezone</span>}
+                label={<span className="font-semibold">Timezone</span>}
                 name="timezone"
                 initialValue="UTC"
                 tooltip="Timezone for timestamp display"
@@ -125,7 +123,7 @@ export default function TimeseriesCreate() {
           style={{ marginTop: 24 }}
         >
           <Form.Item
-            label={<span style={{ fontWeight: 500 }}>Anomaly Detection</span>}
+            label={<span className="font-semibold">Anomaly Detection</span>}
             name="isAnomalyDetectionEnabled"
             valuePropName="checked"
             initialValue={false}
@@ -134,9 +132,9 @@ export default function TimeseriesCreate() {
             <Switch checkedChildren="Enabled" unCheckedChildren="Disabled" />
           </Form.Item>
 
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <p className="text-body-sm text-gray-500 dark:text-gray-400">
             When enabled, the system will automatically analyze this time series for anomalies using machine learning algorithms.
-          </Text>
+          </p>
         </ContentCard>
       </Form>
     </Create>
