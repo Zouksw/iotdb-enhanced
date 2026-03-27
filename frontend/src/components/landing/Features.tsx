@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Row, Col, Typography, Space, Progress } from "antd";
+import { Row, Col, Typography, Space, Progress, Card } from "antd";
 import {
   ThunderboltOutlined,
   LineChartOutlined,
@@ -16,7 +16,6 @@ import {
   ExperimentOutlined,
   FundOutlined,
 } from "@ant-design/icons";
-import GlassCard from "@/components/ui/GlassCard";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -227,19 +226,24 @@ export const Features: React.FC = () => {
         <Row gutter={[24, 24]}>
           {features.map((feature, index) => (
             <Col xs={24} sm={12} lg={8} key={index}>
-              <GlassCard
-                intensity="medium"
+              <Card
                 style={{
                   height: "100%",
                   padding: "32px",
+                  background: "#fff",
+                  border: "1px solid #f1f5f9",
+                  borderRadius: "8px",
                   transition: "all 0.3s ease",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "translateY(-4px)";
                   e.currentTarget.style.boxShadow = `0 12px 40px ${feature.gradient === "purple" ? "rgba(0, 102, 204, 0.2)" : feature.gradient === "blue" ? "rgba(59, 130, 246, 0.2)" : "rgba(79, 172, 254, 0.2)"}`;
+                  e.currentTarget.style.borderColor = featureColors[feature.gradient];
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.12)";
+                  e.currentTarget.style.borderColor = "#f1f5f9";
                 }}
               >
                 <div
@@ -281,7 +285,7 @@ export const Features: React.FC = () => {
                     </Text>
                   ))}
                 </div>
-              </GlassCard>
+              </Card>
             </Col>
           ))}
         </Row>

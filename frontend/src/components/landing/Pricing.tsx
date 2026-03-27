@@ -1,13 +1,12 @@
 "use client";
 
 import React from "react";
-import { Row, Col, Typography, Button, Space, Divider } from "antd";
+import { Row, Col, Typography, Button, Space, Divider, Card } from "antd";
 import {
   CheckOutlined,
   ArrowRightOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
-import GlassCard from "@/components/ui/GlassCard";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -137,14 +136,23 @@ export const Pricing: React.FC = () => {
         <Row gutter={[24, 24]} align="stretch">
           {plans.map((plan, index) => (
             <Col xs={24} md={8} key={index}>
-              <GlassCard
-                intensity={plan.popular ? "heavy" : "medium"}
+              <Card
                 style={{
                   height: "100%",
                   padding: plan.popular ? "40px 32px" : "32px",
                   position: "relative",
-                  border: plan.popular ? "2px solid" : undefined,
-                  borderColor: plan.popular ? "#0066cc" : undefined,
+                  background: "#fff",
+                  border: plan.popular ? "2px solid #0066cc" : "1px solid #f1f5f9",
+                  borderRadius: "8px",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow = `0 12px 40px ${plan.gradient === "purple" ? "rgba(0, 102, 204, 0.2)" : plan.gradient === "blue" ? "rgba(59, 130, 246, 0.2)" : "rgba(79, 172, 254, 0.2)"}`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 1px 3px rgba(0, 0, 0, 0.12)";
                 }}
               >
                 {plan.popular && (
@@ -229,7 +237,7 @@ export const Pricing: React.FC = () => {
                 >
                   {plan.cta}
                 </Button>
-              </GlassCard>
+              </Card>
             </Col>
           ))}
         </Row>
