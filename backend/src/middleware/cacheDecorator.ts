@@ -19,6 +19,27 @@ import { getRedisClient } from '@/lib/redisPool';
 import { metrics } from '@/middleware/prometheus';
 
 /**
+ * Add jitter to TTL to prevent cache avalanche
+ * Adds random variation (±10%) to TTL to distribute cache expiration times
+ *
+ * @param baseTTL - Base TTL in seconds
+ * @param jitterPercent - Jitter percentage (default: 0.1 = 10%)
+ * @returns TTL with random jitter applied
+ */
+function getTTLWithJitter(baseTTL: number, jitterPercent: number = 0.1): number {
+  if (baseTTL <= 0) return baseTTL;
+
+  // Calculate jitter range
+  const jitter = baseTTL * jitterPercent;
+  const randomJitter = (Math.random() * jitter * 2) - jitter; // ±jitter
+
+  // Apply jitter and ensure minimum TTL of 1 second
+  const ttlWithJitter = Math.max(1, Math.floor(baseTTL + randomJitter));
+
+  return ttlWithJitter;
+}
+
+/**
  * Cache decorator configuration
  */
 interface CacheRouteOptions {
@@ -248,8 +269,11 @@ export function cacheRoute(
               headers,
             };
 
+            // Apply TTL jitter to prevent cache avalanche
+            const ttlWithJitter = getTTLWithJitter(config.ttl || 300);
+
             // Set cache asynchronously (don't block response)
-            await setCached(cacheKey, cachedResponse, config.ttl || 300).catch((err) => {
+            await setCached(cacheKey, cachedResponse, ttlWithJitter).catch((err) => {
               logger.error('Failed to cache response:', err);
             });
           })()

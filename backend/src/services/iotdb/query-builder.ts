@@ -5,7 +5,7 @@
  * All values are properly escaped and validated before use
  */
 
-import { escapeId } from './validator';
+import { escapeId, escapeString, validateIoTDBPath } from './validator';
 
 export interface IoTDBInsertRecord {
   device: string;
@@ -54,11 +54,14 @@ export function buildInsertSQL(record: {
   timestamp: number;
   measurements: Record<string, unknown>;
 }): string {
+  // Validate device path
+  validateIoTDBPath(record.device);
+
   const measurements = Object.keys(record.measurements).join(', ');
   const values = Object.values(record.measurements).map(v => {
     if (typeof v === 'string') {
-      // Escape single quotes for string values
-      return `'${String(v).replace(/'/g, "''")}'`;
+      // Use enhanced string escaping
+      return escapeString(v);
     }
     if (v === null || v === undefined) {
       return 'NULL';
@@ -74,12 +77,14 @@ export function buildInsertSQL(record: {
  */
 export function buildBatchInsertSQL(records: IoTDBInsertRecord[]): string {
   const sqlStatements = records.map(r => {
+    // Validate device path
+    validateIoTDBPath(r.device);
+
     const measurements = r.measurements.join(', ');
     const values = r.values.map(v => {
-      // Handle different value types
+      // Handle different value types with enhanced escaping
       if (typeof v === 'string') {
-        // Escape single quotes for string values
-        return `'${String(v).replace(/'/g, "''")}'`;
+        return escapeString(v);
       }
       if (v === null || v === undefined) {
         return 'NULL';
@@ -103,6 +108,9 @@ export function buildSelectQuery(params: {
   startTime?: number;
   endTime?: number;
 }): string {
+  // Validate path to prevent injection
+  validateIoTDBPath(params.path);
+
   const whereClause: string[] = [];
 
   if (params.startTime !== undefined) {

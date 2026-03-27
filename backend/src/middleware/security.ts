@@ -126,15 +126,84 @@ export const detectSqlInjection = (req: Request, res: Response, next: NextFuncti
 
 /**
  * XSS detection middleware
- * Basic detection for common XSS patterns
+ * Enhanced detection for common XSS patterns and attack vectors
  */
 export const detectXSS = (req: Request, res: Response, next: NextFunction) => {
+  // Comprehensive XSS attack patterns
   const xssPatterns = [
+    // Script and iframe tags
     /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
     /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
+
+    // JavaScript protocols
     /javascript:/gi,
-    /on\w+\s*=/gi, // Event handlers like onclick, onload
-    /<img[^>]+src[^>]*>/gi,
+    /vbscript:/gi,
+    /data:\s*text\/html/gi,
+
+    // Event handlers (common XSS vectors)
+    /on\w+\s*=/gi, // onclick, onload, onerror, etc.
+    /onfocus\s*=/gi,
+    /onblur\s*=/gi,
+    /onmouseover\s*=/gi,
+    /onmouseout\s*=/gi,
+    /onmouseenter\s*=/gi,
+    /onmouseleave\s*=/gi,
+    /onkeydown\s*=/gi,
+    /onkeyup\s*=/gi,
+    /onkeypress\s*=/gi,
+
+    // Dangerous HTML tags
+    /<object\b[^>]*>/gi,
+    /<embed\b[^>]*>/gi,
+    /<link\b[^>]*>/gi,
+    /<meta\b[^>]*>/gi,
+    /<style\b[^>]*>/gi,
+    /<base\b[^>]*>/gi,
+
+    // SVG-based XSS
+    /<svg[^>]*>.*?<script\b[^>]*>/gi,
+    /<svg[^>]*>.*?on\w+\s*=/gi,
+
+    // Expression and eval (older IE)
+    /expression\s*\(/gi,
+    /eval\s*\(/gi,
+    /<\s*!\[CDATA\[/gi,
+
+    // Common XSS payload patterns
+    /fromCharCode/gi,
+    /&#\d+;/gi, // HTML entity encoding
+    /&#x[\da-f]+;/gi, // Hex HTML entities
+    /%3Cscript/gi, // URL encoded script tag
+    /%3E/gi, // URL encoded >
+    /%2F/gi, // URL encoded /
+
+    // IMG tag XSS vectors
+    /<img[^>]+src[^>]*javascript:/gi,
+    /<img[^>]+onerror[^>]*>/gi,
+
+    // Input-based XSS
+    /<input[^>]+onfocus[^>]*>/gi,
+    /<input[^>]+onblur[^>]*>/gi,
+    /<input[^>]+onchange[^>]*>/gi,
+
+    // Form-based XSS
+    /<form[^>]+onsubmit[^>]*>/gi,
+    /<form[^>]+action[^>]*javascript:/gi,
+
+    // Meta refresh XSS
+    /<meta\b[^>]*http-equiv\s*=\s*["']?refresh["']?[^>]*url/gi,
+
+    // Link-based XSS
+    /<link\b[^>]*rel\s*=\s*["']?stylesheet["']?[^>]*href[^>]*javascript:/gi,
+
+    // @import in style (CSS-based XSS)
+    /@import\s+url\s*\(/gi,
+
+    // Behavior attribute (IE-specific)
+    /behavior\s*:/gi,
+
+    // Background image with javascript
+    /background\s*:\s*url\s*\(\s*javascript:/gi,
   ];
 
   const checkString = (str: string): boolean => {

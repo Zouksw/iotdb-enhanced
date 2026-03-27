@@ -15,6 +15,34 @@ export function escapeId(identifier: string): string {
 }
 
 /**
+ * Escape string values for IoTDB SQL queries
+ * Provides comprehensive escaping to prevent SQL injection
+ */
+export function escapeString(value: string): string {
+  // Convert to string if not already
+  const str = String(value);
+
+  // Escape backslashes first (before escaping other characters)
+  let escaped = str.replace(/\\/g, '\\\\');
+
+  // Escape single quotes by doubling them
+  escaped = escaped.replace(/'/g, "''");
+
+  // Escape newlines and carriage returns
+  escaped = escaped.replace(/\n/g, '\\n');
+  escaped = escaped.replace(/\r/g, '\\r');
+
+  // Escape null character
+  escaped = escaped.replace(/\x00/g, '\\0');
+
+  // Escape substitute character (used by some databases)
+  escaped = escaped.replace(/\x1a/g, '\\Z');
+
+  // Return with single quotes wrapped around
+  return `'${escaped}'`;
+}
+
+/**
  * Validate IoTDB path/timeseries name to prevent SQL injection
  * IoTDB paths follow pattern: root.device1.sensor1 (alphanumeric, underscore, dot)
  */
@@ -23,12 +51,20 @@ export function validateIoTDBPath(path: string): void {
     throw new Error('Invalid IoTDB path: path must be a non-empty string');
   }
 
-  // Allow alphanumeric, underscore, dot, and hyphen in paths
-  // Also allow root keyword and wildcards
-  const validPattern = /^[a-zA-Z0-9_.\-*\s]+$/;
+  // Trim whitespace
+  const trimmedPath = path.trim();
 
-  if (!validPattern.test(path)) {
-    throw new Error(`Invalid IoTDB path: "${path}" contains invalid characters`);
+  if (trimmedPath.length === 0) {
+    throw new Error('Invalid IoTDB path: path cannot be empty');
+  }
+
+  // Allow alphanumeric, underscore, dot, and hyphen in paths
+  // Also allow root keyword and wildcards (for queries)
+  // More strict pattern: no spaces, only valid path characters
+  const validPattern = /^[a-zA-Z0-9_.\-*]+$/;
+
+  if (!validPattern.test(trimmedPath)) {
+    throw new Error(`Invalid IoTDB path: "${trimmedPath}" contains invalid characters. Only alphanumeric, underscore, dot, hyphen, and asterisk are allowed.`);
   }
 
   // Check for potential SQL injection patterns
@@ -38,19 +74,23 @@ export function validateIoTDBPath(path: string): void {
     /\/\*/,          // SQL comment start
     /\*\//,          // SQL comment end
     /\bUNION\b/i,    // UNION operator
-    /\bOR\b/i,       // OR operator
-    /\bAND\b/i,      // AND operator (when not used properly)
     /\bDROP\b/i,     // DROP statement
     /\bDELETE\b/i,   // DELETE statement
     /\bINSERT\b/i,   // INSERT statement
     /\bUPDATE\b/i,   // UPDATE statement
-    /=/,             // Assignment (potential injection)
+    /\bEXEC\b/i,     // EXEC statement
+    /\bEXECUTE\b/i,  // EXECUTE statement
   ];
 
   for (const pattern of dangerousPatterns) {
-    if (pattern.test(path)) {
-      throw new Error(`Potentially dangerous IoTDB path detected: "${path}"`);
+    if (pattern.test(trimmedPath)) {
+      throw new Error(`Potentially dangerous IoTDB path detected: "${trimmedPath}"`);
     }
+  }
+
+  // Additional check: path length limit
+  if (trimmedPath.length > 1000) {
+    throw new Error('Invalid IoTDB path: path too long (max 1000 characters)');
   }
 }
 

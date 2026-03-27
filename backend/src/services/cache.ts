@@ -9,6 +9,10 @@ import { metrics } from '@/middleware/prometheus';
 
 let redisClient: RedisClientType | null = null;
 
+// Cache null values to prevent cache penetration (short TTL)
+const NULL_CACHE_TTL = 60; // 1 minute
+const NULL_CACHE_PREFIX = 'null:';
+
 /**
  * Initialize Redis connection
  */
@@ -66,6 +70,18 @@ export async function get<T>(key: string): Promise<T | null> {
     const data = await redisClient.get(key);
 
     if (!data) {
+      // Check if this is a cached null value (cache penetration protection)
+      const nullKey = `${NULL_CACHE_PREFIX}${key}`;
+      const isNullCached = await redisClient.exists(nullKey);
+
+      if (isNullCached) {
+        // Return null for cached null values (cache hit)
+        if (Math.random() < 0.1) {
+          metrics.recordCacheHit('redis');
+        }
+        return null;
+      }
+
       // Record cache miss (10% sampling for performance)
       if (Math.random() < 0.1) {
         metrics.recordCacheMiss('redis');
@@ -260,7 +276,7 @@ export async function mset(items: Array<{ key: string; value: unknown }>): Promi
 }
 
 /**
- * Cache wrapper - memoizes function results
+ * Cache wrapper - memoizes function results with null value protection
  */
 export function cache<T extends (...args: unknown[]) => Promise<unknown>>(
   keyPrefix: string,
@@ -279,16 +295,29 @@ export function cache<T extends (...args: unknown[]) => Promise<unknown>>(
       : `${keyPrefix}:${JSON.stringify(args)}`;
 
     // Try to get from cache
-    const cached = await get(cacheKey);
+    const cached = await get<unknown>(cacheKey);
     if (cached !== null) {
-      return cached;
+      return cached as Awaited<ReturnType<T>>;
     }
 
     // Execute function
     const result = await fn(...args);
 
-    // Store in cache
-    await set(cacheKey, result, ttl);
+    // Store in cache (including null values to prevent cache penetration)
+    if (result === null || result === undefined) {
+      // Cache null values with short TTL to prevent cache penetration
+      if (redisClient) {
+        const nullKey = `${NULL_CACHE_PREFIX}${cacheKey}`;
+        try {
+          await redisClient.setEx(nullKey, NULL_CACHE_TTL, 'NULL');
+        } catch (error) {
+          logger.error(`Failed to cache null value for ${cacheKey}: ${error}`);
+        }
+      }
+    } else {
+      // Store normal result
+      await set(cacheKey, result, ttl);
+    }
 
     return result;
   }) as T;
