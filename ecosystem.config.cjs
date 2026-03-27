@@ -38,8 +38,9 @@ module.exports = {
   apps: [
     {
       name: 'iotdb-backend',
-      script: './backend/dist/src/server.js',
-      cwd: PROJECT_ROOT,
+      script: 'npm',
+      args: 'run dev',
+      cwd: path.join(PROJECT_ROOT, 'backend'),
       instances: 1, // Use single instance (cluster mode has issues with CommonJS)
       exec_mode: 'fork',
       autorestart: true,
@@ -51,14 +52,59 @@ module.exports = {
       env: {
         NODE_ENV: 'development',
         PORT: 8000,
+        // Database
+        DATABASE_URL: 'postgresql://iotdb_user:iotdb_password@localhost:5432/iotdb_enhanced?schema=public',
+        // Redis
+        REDIS_URL: 'redis://localhost:6379',
+        // JWT Secrets
+        JWT_SECRET: 'dev-jwt-secret-key-minimum-32-chars-for-development-only',
+        JWT_EXPIRES_IN: '1h',
+        REFRESH_TOKEN_EXPIRES_IN: '7d',
+        // Session
+        SESSION_SECRET: 'dev-session-secret-minimum-32-chars-for-development-only',
+        // IoTDB
+        IOTDB_HOST: 'localhost',
+        IOTDB_PORT: '6667',
+        IOTDB_USERNAME: 'root',
+        IOTDB_PASSWORD: 'root',
+        IOTDB_REST_URL: 'http://localhost:18080',
+        // AI Node
+        AI_NODE_HOST: 'localhost',
+        AI_NODE_PORT: '10810',
       },
       env_development: {
         NODE_ENV: 'development',
         PORT: 8000,
+        DATABASE_URL: 'postgresql://iotdb_user:iotdb_password@localhost:5432/iotdb_enhanced?schema=public',
+        REDIS_URL: 'redis://localhost:6379',
+        JWT_SECRET: 'dev-jwt-secret-key-minimum-32-chars-for-development-only',
+        JWT_EXPIRES_IN: '1h',
+        REFRESH_TOKEN_EXPIRES_IN: '7d',
+        SESSION_SECRET: 'dev-session-secret-minimum-32-chars-for-development-only',
+        IOTDB_HOST: 'localhost',
+        IOTDB_PORT: '6667',
+        IOTDB_USERNAME: 'root',
+        IOTDB_PASSWORD: 'root',
+        IOTDB_REST_URL: 'http://localhost:18080',
+        AI_NODE_HOST: 'localhost',
+        AI_NODE_PORT: '10810',
       },
       env_staging: {
         NODE_ENV: 'staging',
         PORT: 8000,
+        DATABASE_URL: 'postgresql://iotdb_user:iotdb_password@localhost:5432/iotdb_enhanced?schema=public',
+        REDIS_URL: 'redis://localhost:6379',
+        JWT_SECRET: 'dev-jwt-secret-key-minimum-32-chars-for-development-only',
+        JWT_EXPIRES_IN: '1h',
+        REFRESH_TOKEN_EXPIRES_IN: '7d',
+        SESSION_SECRET: 'dev-session-secret-minimum-32-chars-for-development-only',
+        IOTDB_HOST: 'localhost',
+        IOTDB_PORT: '6667',
+        IOTDB_USERNAME: 'root',
+        IOTDB_PASSWORD: 'root',
+        IOTDB_REST_URL: 'http://localhost:18080',
+        AI_NODE_HOST: 'localhost',
+        AI_NODE_PORT: '10810',
       },
       // Logging
       error_file: path.join(PROJECT_ROOT, './logs/backend-error.log'),
@@ -81,8 +127,8 @@ module.exports = {
     },
     {
       name: 'iotdb-frontend',
-      script: './node_modules/.bin/next',
-      args: 'dev -p 3000',
+      script: 'npm',
+      args: 'run dev',
       cwd: path.join(PROJECT_ROOT, 'frontend'),
       instances: 1,
       exec_mode: 'fork',
