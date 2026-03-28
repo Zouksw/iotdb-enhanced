@@ -1,87 +1,104 @@
 # IoTDB Enhanced - Documentation
 
-**Version**: 1.3.0
-**Last Updated**: 2026-03-27
+**Version**: 1.3.0 | **Last Updated**: 2026-03-28
 
 ---
 
 ## Quick Navigation
 
-### Core Documentation
-- [README](../README.md) - Project overview and quick start
+### Getting Started
+- [README](../README.md) - Project overview and quick start guide
 - [API Reference](API.md) - Complete REST API documentation
-- [Security](SECURITY.md) - Security configuration and best practices
+- [Deployment Guide](deployment/) - Production deployment instructions
+
+### Core Documentation
+- [Security](SECURITY.md) - Security policies and best practices
 - [Design System](DESIGN.md) - Architecture and design decisions
-- [Roadmap](ROADMAP.md) - Development roadmap and future plans
+- [Roadmap](ROADMAP.md) - Development roadmap
 
 ### Developer Resources
-- [Claude Instructions](developer/CLAUDE.md) - AI assistant development guidelines
 - [Contributing](guides/CONTRIBUTING.md) - Contribution guidelines
-
-### Operations
-- [Deployment Checklist](deployment/DEPLOYMENT-CHECKLIST.md) - Pre-deployment verification
-- [AI Node Setup](ai-node-setup.md) - AI Node configuration guide
-
-### Archive
-- [Change Log](CHANGELOG.md) - Version history and changes
+- [Claude Instructions](developer/CLAUDE.md) - AI assistant guidelines
+- [Secrets Management](guides/SECRETS-MANAGEMENT.md) - Credentials handling
 
 ---
 
-## By Audience
+## By Topic
 
-### For Users
-1. Read [README](../README.md) for project overview
-2. Follow quick start to deploy the system
-3. Refer to [API Reference](API.md) for integration
+### Authentication & Security
+- [SECURITY.md](SECURITY.md) - Complete security guide
+  - JWT authentication
+  - CSRF protection
+  - Rate limiting
+  - Input validation
 
-### For Developers
-1. Read [Design System](DESIGN.md) for architecture understanding
-2. Review [Claude Instructions](developer/CLAUDE.md) for development guidelines
-3. Check [Contributing](guides/CONTRIBUTING.md) before submitting changes
+### API & Integration
+- [API.md](API.md) - REST API reference
+  - Authentication endpoints
+  - Time series CRUD
+  - AI/ML endpoints
+  - Alert management
 
-### For Operators
-1. Review [Deployment Checklist](deployment/DEPLOYMENT-CHECKLIST.md) before going live
-2. Configure [AI Node Setup](ai-node-setup.md) for AI features
-3. Follow [Security](SECURITY.md) for hardening guidelines
+### Deployment & Operations
+- [Deployment Checklist](deployment/DEPLOYMENT-CHECKLIST.md) - Pre-deployment verification
+- [AI Node Setup](ai-node-setup.md) - AI features configuration
+
+### Development
+- [Design System](DESIGN.md) - System architecture
+- [Contributing](guides/CONTRIBUTING.md) - Development workflow
 
 ---
 
 ## Document Index
 
-| Document | Description | Status |
-|----------|-------------|--------|
-| [API.md](API.md) | Complete REST API reference | Current |
-| [SECURITY.md](SECURITY.md) | Security configuration | Current |
-| [DESIGN.md](DESIGN.md) | System architecture and design | Current |
-| [ROADMAP.md](ROADMAP.md) | Development phases | Current |
-| [ai-node-setup.md](ai-node-setup.md) | AI Node deployment guide | Current |
-| [CHANGELOG.md](CHANGELOG.md) | Version history | Archived |
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [API.md](API.md) | REST API endpoints and schemas | Developers |
+| [SECURITY.md](SECURITY.md) | Security configuration | Operators, Developers |
+| [DESIGN.md](DESIGN.md) | Architecture and design | Developers |
+| [ROADMAP.md](ROADMAP.md) | Future development | All |
+| [ai-node-setup.md](ai-node-setup.md) | AI Node deployment | Operators |
+| [CHANGELOG.md](CHANGELOG.md) | Version history | All |
 
 ---
 
-## Maintenance Guidelines
+## Quick Links
 
-### Creating New Documentation
+### Common Tasks
 
-1. Use standard Markdown format
-2. Add YAML metadata header
-3. Place in appropriate directory (user/developer/ops/archive)
-4. Update this index
+**Start Development**:
+```bash
+./start.sh    # Start all services
+./check.sh    # Verify status
+```
 
-### Updating Documentation
+**Run Tests**:
+```bash
+cd backend && npm test
+```
 
-1. Update `lastUpdated` field in YAML metadata
-2. Check all links are valid
-3. Add version record to CHANGELOG.md
+**Deploy**:
+```bash
+# See deployment/DEPLOYMENT-CHECKLIST.md
+```
 
-### Archiving Documentation
+---
 
-1. Move outdated documents to appropriate subdirectories
-2. Rename with `{name}-archived-{date}.md` format
-3. Remove from active index
+## Document Standards
+
+### Format
+- Markdown with YAML metadata
+- Clear section headers
+- Code examples with syntax highlighting
+- Links to related documents
+
+### Maintenance
+- Update `lastUpdated` field on changes
+- Review quarterly
+- Archive outdated documents
 
 ---
 
 **Maintainer**: IoTDB Enhanced Team
-**Last Review**: 2026-03-27
-**Next Review**: 2026-06-27
+**Last Review**: 2026-03-28
+**Next Review**: 2026-06-28

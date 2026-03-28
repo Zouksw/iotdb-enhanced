@@ -1,6 +1,6 @@
 # IoTDB Enhanced
 
-Enterprise time-series data analytics platform with AI-powered forecasting and anomaly detection.
+Enterprise-grade time series database platform with AI-powered forecasting and real-time analytics.
 
 **Version**: 1.3.0 | **Status**: Production Ready | **Tests**: 1369 passing (70.22% coverage)
 
@@ -8,29 +8,41 @@ Enterprise time-series data analytics platform with AI-powered forecasting and a
 
 ## Overview
 
-IoTDB Enhanced extends Apache IoTDB 2.0.5 with AI capabilities, providing a complete solution for time-series data management, prediction, and anomaly detection.
+IoTDB Enhanced extends Apache IoTDB 2.0.5 with AI capabilities, providing a complete solution for time series data management, prediction, and anomaly detection.
 
 **Core Features**:
-- Time-series data storage and querying (IoTDB integration)
+- High-performance time series data storage and querying
 - AI-powered forecasting (ARIMA, LSTM, Transformer, Holt-Winters)
-- Anomaly detection with configurable algorithms
-- RESTful API with Next.js 14 frontend
-- Enterprise security (JWT, CSRF protection, rate limiting)
-- Comprehensive monitoring (Prometheus, Grafana, Sentry)
+- Real-time anomaly detection with configurable algorithms
+- Modern web interface with responsive design
+- Enterprise security (JWT, CSRF, rate limiting, encryption)
+- Comprehensive monitoring and alerting
 
-**Tech Stack**: Node.js 18, Express, TypeScript 5, PostgreSQL 15, Redis 7, IoTDB 2.0.5, AI Node 2.0.5
+**Tech Stack**: Node.js 18, Express, TypeScript 5.8, PostgreSQL 15, Redis 7, IoTDB 2.0.5, Next.js 14, React 19
 
 ---
 
 ## Quick Start
 
-### Production Deployment (Systemd)
+### Development Environment
 
 ```bash
 # Clone repository
 git clone https://github.com/Zouksw/iotdb-enhanced.git
 cd iotdb-enhanced
 
+# Install dependencies
+pnpm install
+
+# Start all services
+./start.sh    # Start backend, frontend, and databases
+./check.sh    # Verify status
+./stop.sh     # Stop services
+```
+
+### Production Deployment (Systemd)
+
+```bash
 # Install dependencies
 sudo apt install -y postgresql redis-server nginx
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -42,26 +54,11 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 # Edit environment files with your configuration
 
-# Install systemd services
-sudo cp config/systemd/*.service /etc/systemd/system/
-sudo systemctl daemon-reload
-
 # Start all services
-./scripts/systemd/start-all-services.sh
+./start.sh
 
 # Check status
-./scripts/systemd/check-services.sh
-```
-
-### Development Environment (PM2)
-
-```bash
-git clone https://github.com/Zouksw/iotdb-enhanced.git
-cd iotdb-enhanced
-
-./start.sh    # Start all services
-./check.sh    # Verify status
-./stop.sh     # Stop services
+pm2 status
 ```
 
 ---
@@ -73,25 +70,94 @@ cd iotdb-enhanced
 | Frontend | http://localhost:3000 | Web management interface |
 | Backend API | http://localhost:8000 | RESTful API |
 | API Docs | http://localhost:8000/api-docs | Swagger documentation |
-| IoTDB REST | http://localhost:18080 | Native IoTDB API |
 | Prometheus | http://localhost:9090 | Metrics monitoring |
 | Grafana | http://localhost:3001 | Monitoring dashboards |
-| AlertManager | http://localhost:9093 | Alert management |
+
+---
+
+## Project Structure
+
+```
+iotdb-enhanced/
+├── backend/              # Express API server
+│   ├── src/
+│   │   ├── routes/      # API endpoints
+│   │   ├── services/    # Business logic
+│   │   ├── middleware/  # Express middleware
+│   │   └── lib/         # Utilities
+│   ├── prisma/          # Database schema
+│   └── config/          # Configuration
+├── frontend/            # Next.js web app
+│   ├── src/
+│   │   ├── app/        # App Router pages
+│   │   ├── components/ # React components
+│   │   └── lib/        # Utilities
+│   └── public/         # Static assets
+├── scripts/             # Operations scripts
+├── docs/                # Documentation
+└── ecosystem.config.cjs # PM2 configuration
+```
+
+---
+
+## Features
+
+### Data Management
+- Multi-dataset support with flexible schemas
+- Real-time data ingestion and querying
+- Time series data visualization
+- Export to CSV, JSON, and Excel
+- Bulk import from CSV and JSON
+
+### AI/ML Capabilities
+- **Forecasting Models**: ARIMA, Prophet, LSTM, Transformer, Holt-Winters
+- **Automated Training**: Model selection and hyperparameter tuning
+- **Anomaly Detection**: Statistical and ML-based methods
+- **Confidence Intervals**: Prediction uncertainty quantification
+- **Model Management**: Version control and performance tracking
+
+### Security
+- JWT-based authentication with HttpOnly cookies
+- CSRF protection on all state-changing operations
+- Rate limiting with Redis backend
+- Input validation and sanitization
+- SQL injection prevention
+- Role-based access control (RBAC)
+- Comprehensive audit logging
+
+### Monitoring
+- Real-time alert rules with multiple conditions
+- Alert notifications via email and webhooks
+- Prometheus metrics integration
+- Grafana dashboards
+- Performance tracking
+- Health check endpoints
+
+---
+
+## Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [docs/INDEX.md](docs/INDEX.md) | Documentation index |
+| [docs/API.md](docs/API.md) | Complete API reference |
+| [docs/SECURITY.md](docs/SECURITY.md) | Security policies |
+| [docs/DESIGN.md](docs/DESIGN.md) | System architecture |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Development roadmap |
+| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Version history |
 
 ---
 
 ## AI Capabilities
 
-**Security**: AI functions use process isolation (prlimit + su ai-executor), admin-only access, audit logging.
+**Security**: AI functions use process isolation, admin-only access, and audit logging.
 
-**Prediction Models**:
+**Available Models**:
 - ARIMA - AutoRegressive Integrated Moving Average
-- Timer_XL - LSTM Long Short-Term Memory
-- Sundial - Transformer model
+- LSTM - Long Short-Term Memory networks
+- Transformer - Attention-based sequence modeling
+- Prophet - Facebook's forecasting algorithm
 - Holt-Winters - Triple exponential smoothing
-- Exponential Smoothing
-- Naive Forecaster
-- STL Forecaster - Seasonal-Trend decomposition
 
 **API Endpoints**:
 ```bash
@@ -112,55 +178,42 @@ POST /api/iotdb/ai/anomalies
   "timeseries": "root.sg.device1.temperature",
   "method": "statistical"
 }
-
-# Train custom model
-POST /api/iotdb/ai/models/train
 ```
 
 ---
 
-## Project Structure
+## Environment Variables
 
-```
-iotdb-enhanced/
-├── backend/              # Node.js API server
-│   ├── src/
-│   │   ├── routes/       # API endpoints
-│   │   ├── services/     # Business logic
-│   │   ├── middleware/   # Auth, cache, security
-│   │   └── lib/          # Utilities (Sentry, Redis, JWT)
-│   ├── prisma/           # Database schema
-│   └── jest.config.cjs   # Test configuration
-├── frontend/             # Next.js web application
-│   └── src/
-│       ├── app/          # Pages
-│       └── components/   # React components
-├── scripts/              # Operations scripts
-│   ├── systemd/         # Service management
-│   ├── auto-backup.sh
-│   ├── health-check.sh
-│   └── user-management.sh
-├── config/               # Configuration files
-│   ├── systemd/         # Service units
-│   ├── logrotate/       # Log rotation
-│   └── cron/            # Scheduled tasks
-├── prometheus/           # Monitoring configuration
-├── grafana/              # Dashboard configurations
-├── docs/                 # Documentation
-└── nginx/                # Reverse proxy config
+**Backend** (`backend/.env`):
+```bash
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/iotdb_enhanced
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# JWT
+JWT_SECRET=your-secret-key-min-32-chars
+JWT_EXPIRES_IN=1h
+
+# IoTDB
+IOTDB_HOST=localhost
+IOTDB_PORT=6667
+IOTDB_USERNAME=root
+IOTDB_PASSWORD=root
+IOTDB_AI_ENABLED=false
+
+# Email (optional)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
 ```
 
----
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [docs/INDEX.md](docs/INDEX.md) | Documentation index |
-| [docs/API.md](docs/API.md) | Complete API reference |
-| [docs/SECURITY.md](docs/SECURITY.md) | Security configuration |
-| [docs/DESIGN.md](docs/DESIGN.md) | System architecture |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Development roadmap |
+**Frontend** (`frontend/.env.local`):
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
 ---
 
@@ -169,15 +222,9 @@ iotdb-enhanced/
 ### Service Management
 
 ```bash
-# Systemd (production)
-./scripts/systemd/start-all-services.sh  # Start all
-./scripts/systemd/stop-all-services.sh   # Stop all
-./scripts/systemd/check-services.sh      # Check status
-
-# PM2 (development)
-./start.sh    # Start all
-./stop.sh     # Stop all
-./check.sh    # Check status
+./start.sh    # Start all services (backend, frontend)
+./stop.sh     # Stop all services
+./check.sh    # Check service status
 ```
 
 ### Database Operations
@@ -210,55 +257,14 @@ npm run test:watch    # Watch mode
 
 ---
 
-## Development
+## Deployment
 
-```bash
-# Backend development
-cd backend
-npm install
-npm run dev    # Start with tsx watch
-
-# Frontend development
-cd frontend
-npm install
-npm run dev    # Start Next.js dev server
-```
-
----
-
-## Environment Variables
-
-**Backend** (`backend/.env`):
-```bash
-# Database
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=iotdb_enhanced
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your-secure-password
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# IoTDB
-IOTDB_HOST=localhost
-IOTDB_PORT=6667
-IOTDB_USERNAME=root
-IOTDB_PASSWORD=your-iotdb-password
-
-# AI Features (disabled by default)
-AI_FEATURES_DISABLED=true
-
-# Sentry (optional)
-SENTRY_DSN=your-sentry-dsn
-SENTRY_ENVIRONMENT=production
-```
-
-**Frontend** (`frontend/.env.local`):
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
+See [Deployment Guide](docs/deployment/) for:
+- Server requirements
+- Environment configuration
+- SSL/TLS setup
+- Performance optimization
+- Monitoring setup
 
 ---
 
@@ -270,6 +276,13 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 - **Rate Limiting**: Redis-backed (100 req/15min per IP)
 - **Security Headers**: Helmet.js configuration
 - **AI Isolation**: Process isolation with resource limits
+- **Audit Logging**: All sensitive operations logged
+
+---
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](docs/guides/CONTRIBUTING.md) for guidelines.
 
 ---
 
@@ -284,3 +297,8 @@ Apache License 2.0
 - **GitHub**: https://github.com/Zouksw/iotdb-enhanced
 - **Apache IoTDB**: https://iotdb.apache.org/
 - **Documentation**: [docs/](docs/)
+- **Issues**: https://github.com/Zouksw/iotdb-enhanced/issues
+
+---
+
+**IoTDB Enhanced** - Enterprise Time Series Data Platform © 2025
