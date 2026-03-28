@@ -65,36 +65,5 @@ apache-iotdb-*.zip
 debug-*.cjs
 debug-*.js
 
-# System and user files (root directory)
-.bash_history
-.bashrc
-.bun/
-.config/
-.copilot/
-.docker/
-.dotnet/
-.local/
-.npm/
-.npmrc
-.pip/
-.profile
-.pydistutils.cfg
-.rpmdb/
-.sao/
-.ssh/
-.snap/
-.viminfo
-.vscode-server/
-.wget-hsts
-.claude.json
-.claude.json.backup
-=0.0.25
-LinusTorvalds.md
-package.json
-pnpm-lock.yaml
-node_modules/
-
-# Claude Code
-.claude/
-.gstack/
-.gnupg/
+# Temporary and cache directories
+.gstack-screenshots/

@@ -1,0 +1,60 @@
+# IoTDB Enhanced Blog
+
+title: IoTDB Enhanced Blog
+description: Enterprise time series database platform with AI-powered forecasting
+author: IoTDB Enhanced Team
+lang: en
+timezone: UTC
+url: "https://your-username.github.io/iotdb-enhanced"
+baseurl: "/iotdb-enhanced"
+
+# Build settings
+markdown: kramdown
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - LICENSE
+  - README.md
+
+# Collections
+collections:
+  posts:
+    output: true
+    permalink: /blog/:year/:month/:day/:title/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      author: "IoTDB Enhanced Team"
+
+# Social
+github_username: Zouksw
+twitter_username: iotdb_enhanced
+
+# SEO
+logo: /assets/img/logo.png
+google_site_verification: your-verification-code
+
+# Navigation
+nav:
+  - title: Home
+    url: /
+  - title: Blog
+    url: /blog/
+  - title: Documentation
+    url: https://your-username.github.io/iotdb-enhanced/docs
+  - title: GitHub
+    url: https://github.com/Zouksw/iotdb-enhanced
