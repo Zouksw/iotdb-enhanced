@@ -177,7 +177,7 @@ export default function ProfileSettingsPage() {
                 style={{ border: "3px solid #1890ff" }}
               />
               <div style={{ textAlign: "center" }}>
-                <Title level={4} style={{ marginBottom: 4 }}>
+                <Title level={4} style={{ fontSize: "18px", marginBottom: 4 }}>
                   {user?.name || "User"}
                 </Title>
                 <Text type="secondary">{user?.email}</Text>

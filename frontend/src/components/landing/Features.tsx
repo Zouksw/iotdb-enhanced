@@ -1,20 +1,14 @@
 "use client";
 
 import React from "react";
-import { Row, Col, Typography, Space, Progress, Card } from "antd";
+import { Row, Col, Typography, Card } from "antd";
 import {
   ThunderboltOutlined,
   LineChartOutlined,
-  DatabaseOutlined,
   AlertOutlined,
   ApiOutlined,
-  CloudServerOutlined,
   LockOutlined,
-  SettingOutlined,
-  RocketOutlined,
-  NodeIndexOutlined,
   ExperimentOutlined,
-  FundOutlined,
 } from "@ant-design/icons";
 
 const { Title, Paragraph, Text } = Typography;
@@ -35,13 +29,6 @@ const features = [
     gradient: "blue" as const,
   },
   {
-    icon: <DatabaseOutlined />,
-    title: "Scalable Storage",
-    description: "Efficiently store and compress time series data with automatic partitioning. Support for petabyte-scale datasets.",
-    details: ["10x compression ratio", "Auto partitioning", "Petabyte scale"],
-    gradient: "sunset" as const,
-  },
-  {
     icon: <ExperimentOutlined />,
     title: "AI Forecasting",
     description: "Multiple ML algorithms including ARIMA, Prophet, LSTM, and Transformer models for accurate time series predictions.",
@@ -56,13 +43,6 @@ const features = [
     gradient: "blue" as const,
   },
   {
-    icon: <ApiOutlined />,
-    title: "RESTful API",
-    description: "Easy-to-use REST API for seamless integration with your existing applications. Full CRUD operations and query capabilities.",
-    details: ["OpenAPI spec", "SDK support", "Webhook alerts"],
-    gradient: "sunset" as const,
-  },
-  {
     icon: <LockOutlined />,
     title: "Enterprise Security",
     description: "End-to-end encryption, role-based access control (RBAC), API key management, and secure session handling.",
@@ -70,19 +50,34 @@ const features = [
     gradient: "purple" as const,
   },
   {
-    icon: <CloudServerOutlined />,
-    title: "Cloud Native",
-    description: "Built for the cloud with support for AWS, GCP, and Azure deployments. Kubernetes-ready with Helm charts included.",
-    details: ["AWS/GCP/Azure", "Kubernetes ready", "Auto-scaling"],
-    gradient: "blue" as const,
-  },
-  {
-    icon: <NodeIndexOutlined />,
-    title: "Data Pipelines",
-    description: "Built-in ETL capabilities with support for batch and streaming data. Native integrations with Kafka, MQTT, and more.",
-    details: ["Kafka, MQTT", "Batch & streaming", "Data transformation"],
+    icon: <ApiOutlined />,
+    title: "RESTful API",
+    description: "Easy-to-use REST API for seamless integration with your existing applications. Full CRUD operations and query capabilities.",
+    details: ["OpenAPI spec", "SDK support", "Webhook alerts"],
     gradient: "sunset" as const,
   },
+  // Temporarily hidden to reduce landing page length
+  // {
+  //   icon: <DatabaseOutlined />,
+  //   title: "Scalable Storage",
+  //   description: "Efficiently store and compress time series data with automatic partitioning. Support for petabyte-scale datasets.",
+  //   details: ["10x compression ratio", "Auto partitioning", "Petabyte scale"],
+  //   gradient: "sunset" as const,
+  // },
+  // {
+  //   icon: <CloudServerOutlined />,
+  //   title: "Cloud Native",
+  //   description: "Built for the cloud with support for AWS, GCP, and Azure deployments. Kubernetes-ready with Helm charts included.",
+  //   details: ["AWS/GCP/Azure", "Kubernetes ready", "Auto-scaling"],
+  //   gradient: "blue" as const,
+  // },
+  // {
+  //   icon: <NodeIndexOutlined />,
+  //   title: "Data Pipelines",
+  //   description: "Built-in ETL capabilities with support for batch and streaming data. Native integrations with Kafka, MQTT, and more.",
+  //   details: ["Kafka, MQTT", "Batch & streaming", "Data transformation"],
+  //   gradient: "sunset" as const,
+  // },
 ];
 
 const metrics = [
@@ -106,20 +101,20 @@ export const Features: React.FC = () => {
     <section
       id="features"
       style={{
-        padding: "100px 24px",
+        padding: "clamp(40px, 6vw, 100px) 24px",
         background: "#FFFFFF",
       }}
     >
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "60px" }}>
+        <div style={{ textAlign: "center", marginBottom: "clamp(32px, 5vw, 60px)" }}>
           <div
             style={{
               display: "inline-block",
-              padding: "8px 20px",
+              padding: "clamp(4px, 1vw, 8px) clamp(12px, 2vw, 20px)",
               background: "rgba(0, 102, 204, 0.08)",
               borderRadius: "3px",
-              marginBottom: "16px",
+              marginBottom: "clamp(10px, 2vw, 16px)",
             }}
           >
             <Text
@@ -146,7 +141,7 @@ export const Features: React.FC = () => {
           </Title>
           <Paragraph
             style={{
-              fontSize: "18px",
+              fontSize: "clamp(15px, 2.2vw, 18px)",
               color: "#64748b",
               maxWidth: "600px",
               margin: "0 auto",
@@ -157,12 +152,12 @@ export const Features: React.FC = () => {
         </div>
 
         {/* Metrics Section */}
-        <Row gutter={[24, 24]} style={{ marginBottom: "60px" }}>
+        <Row gutter={[12, 12]} style={{ marginBottom: "clamp(32px, 5vw, 60px)" }}>
           {metrics.map((metric, index) => (
             <Col xs={12} sm={12} lg={6} key={index}>
               <div
                 style={{
-                  padding: "28px 20px",
+                  padding: "clamp(16px, 3vw, 28px) clamp(12px, 3vw, 20px)",
                   borderRadius: "6px",
                   background: "#fff",
                   border: "1px solid #f1f5f9",
@@ -183,14 +178,14 @@ export const Features: React.FC = () => {
               >
                 <div
                   style={{
-                    width: "48px",
-                    height: "48px",
+                    width: "clamp(36px, 5vw, 48px)",
+                    height: "clamp(36px, 5vw, 48px)",
                     borderRadius: "4px",
                     background: "rgba(0, 102, 204, 0.08)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    margin: "0 auto 16px",
+                    margin: "0 auto clamp(10px, 2vw, 16px)",
                   }}
                 >
                   <span style={{
@@ -223,13 +218,13 @@ export const Features: React.FC = () => {
         </Row>
 
         {/* Features Grid */}
-        <Row gutter={[24, 24]}>
+        <Row gutter={[12, 12]}>
           {features.map((feature, index) => (
             <Col xs={24} sm={12} lg={8} key={index}>
               <Card
                 style={{
                   height: "100%",
-                  padding: "32px",
+                  padding: "clamp(12px, 2.5vw, 24px)",
                   background: "#fff",
                   border: "1px solid #f1f5f9",
                   borderRadius: "8px",
@@ -248,24 +243,24 @@ export const Features: React.FC = () => {
               >
                 <div
                   style={{
-                    width: "56px",
-                    height: "56px",
+                    width: "clamp(40px, 5vw, 56px)",
+                    height: "clamp(40px, 5vw, 56px)",
                     borderRadius: "4px",
                     background: featureColors[feature.gradient],
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    marginBottom: "20px",
-                    fontSize: "24px",
+                    marginBottom: "clamp(12px, 2vw, 20px)",
+                    fontSize: "clamp(18px, 2.5vw, 24px)",
                     color: "#fff",
                   }}
                 >
                   {feature.icon}
                 </div>
-                <Title level={4} style={{ marginBottom: "12px", fontSize: "18px" }}>
+                <Title level={4} style={{ marginBottom: "clamp(8px, 1.5vw, 12px)", fontSize: "clamp(16px, 2.2vw, 18px)" }}>
                   {feature.title}
                 </Title>
-                <Paragraph style={{ color: "#64748b", marginBottom: "16px", lineHeight: 1.6, fontSize: "14px" }}>
+                <Paragraph style={{ color: "#64748b", marginBottom: "clamp(10px, 2vw, 16px)", lineHeight: 1.5, fontSize: "clamp(13px, 2vw, 14px)" }}>
                   {feature.description}
                 </Paragraph>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>

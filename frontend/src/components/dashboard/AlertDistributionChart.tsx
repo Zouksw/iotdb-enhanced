@@ -125,7 +125,7 @@ export const AlertDistributionChart: React.FC<AlertDistributionChartProps> = ({
       style={{ height: "100%" }}
       styles={{ body: { padding: "16px" } }}
     >
-      <Title level={5} style={{ marginBottom: 16 }}>
+      <Title level={5} style={{ fontSize: "16px", marginBottom: 16 }}>
         Alert Distribution
       </Title>
       {total > 0 ? (

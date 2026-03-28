@@ -174,7 +174,7 @@ export const RecentActivity = React.memo<RecentActivityProps>(({
       styles={{ body: { padding: "16px" } }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <Title level={5} style={{ margin: 0 }}>
+        <Title level={5} style={{ fontSize: "16px", margin: 0 }}>
           Recent Activity
         </Title>
         <Button

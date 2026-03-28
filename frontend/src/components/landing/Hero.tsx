@@ -21,13 +21,13 @@ export const Hero: React.FC = () => {
   return (
     <section
       style={{
-        minHeight: "90vh",
+        minHeight: "auto",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         position: "relative",
         overflow: "hidden",
-        padding: "60px 24px",
+        padding: "clamp(40px, 8vw, 60px) 24px",
         background: `
           radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 102, 204, 0.25), transparent),
           radial-gradient(ellipse 60% 40% at 80% 50%, rgba(0, 168, 232, 0.15), transparent),
@@ -77,11 +77,11 @@ export const Hero: React.FC = () => {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            padding: "6px 16px",
+            padding: "clamp(4px, 1vw, 6px) clamp(10px, 2vw, 16px)",
             borderRadius: "3px",
             background: "rgba(0, 102, 204, 0.08)",
             border: "1px solid rgba(0, 102, 204, 0.2)",
-            marginBottom: "24px",
+            marginBottom: "clamp(16px, 3vw, 24px)",
           }}
         >
           <ThunderboltOutlined style={{ color: "#0066cc", marginRight: "8px" }} />
@@ -121,11 +121,11 @@ export const Hero: React.FC = () => {
 
         <Paragraph
           style={{
-            fontSize: "18px",
+            fontSize: "clamp(15px, 2.2vw, 18px)",
             color: "#64748b",
             maxWidth: "600px",
-            margin: "0 auto 40px",
-            lineHeight: 1.6,
+            margin: "0 auto clamp(24px, 4vw, 40px)",
+            lineHeight: 1.5,
           }}
         >
           High-performance time series data platform with built-in anomaly detection,
@@ -133,7 +133,7 @@ export const Hero: React.FC = () => {
         </Paragraph>
 
         {/* CTA Buttons */}
-        <Space size="middle" style={{ marginBottom: "60px" }}>
+        <Space size="middle" style={{ marginBottom: "clamp(32px, 5vw, 60px)" }}>
           <Button
             type="primary"
             size="large"
@@ -173,9 +173,9 @@ export const Hero: React.FC = () => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: "24px",
-            marginTop: "40px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: "clamp(12px, 2vw, 24px)",
+            marginTop: "clamp(24px, 4vw, 40px)",
           }}
         >
           <GlassCard intensity="medium" style={{ padding: "24px" }}>
@@ -193,7 +193,7 @@ export const Hero: React.FC = () => {
             >
               <ThunderboltOutlined style={{ fontSize: "24px", color: "#fff" }} />
             </div>
-            <Title level={4} style={{ marginBottom: "8px" }}>
+            <Title level={4} style={{ fontSize: "18px", marginBottom: "8px" }}>
               Lightning Fast
             </Title>
             <Paragraph style={{ color: "#64748b", margin: 0 }}>
@@ -216,7 +216,7 @@ export const Hero: React.FC = () => {
             >
               <LineChartOutlined style={{ fontSize: "24px", color: "#fff" }} />
             </div>
-            <Title level={4} style={{ marginBottom: "8px" }}>
+            <Title level={4} style={{ fontSize: "18px", marginBottom: "8px" }}>
               AI-Powered Insights
             </Title>
             <Paragraph style={{ color: "#64748b", margin: 0 }}>
@@ -239,7 +239,7 @@ export const Hero: React.FC = () => {
             >
               <SafetyOutlined style={{ fontSize: "24px", color: "#fff" }} />
             </div>
-            <Title level={4} style={{ marginBottom: "8px" }}>
+            <Title level={4} style={{ fontSize: "18px", marginBottom: "8px" }}>
               Enterprise Security
             </Title>
             <Paragraph style={{ color: "#64748b", margin: 0 }}>

@@ -1,5 +1,5 @@
 /**
- * Login Form Component
+ * Modern Login Form Component
  */
 
 "use client";
@@ -11,12 +11,13 @@ import { MailOutlined, LockOutlined } from "@ant-design/icons";
 import axios from "axios";
 import Cookies from "js-cookie";
 
-import { inputStyle, buttonStyle, API_URL } from "./auth-helpers";
 import { validationRules, required } from "@/lib/validation";
 import { sanitizer } from "@/lib/sanitizer";
 import { errorHandler } from "@/lib/errorHandler";
 import { csrfProtection } from "@/lib/csrf";
 import { tokenManager } from "@/lib/tokenManager";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export function LoginForm() {
   const [form] = Form.useForm();
@@ -83,63 +84,82 @@ export function LoginForm() {
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    borderRadius: "8px",
+    padding: "12px 16px",
+    fontSize: "15px",
+    border: "1px solid #e5e7eb",
+    transition: "all 0.2s",
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    height: "48px",
+    borderRadius: "8px",
+    fontSize: "16px",
+    fontWeight: 600,
+    background: "#0066CC",
+    border: "none",
+    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+  };
+
   return (
     <Form
       form={form}
       layout="vertical"
       onFinish={handleSubmit}
       validateTrigger="onBlur"
+      requiredMark={false}
     >
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "#374151" }}>Email</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151", fontSize: "15px" }}>Email</span>}
         name="email"
-        validateStatus={form.getFieldError("email").length > 0 ? "error" : ""}
         rules={[
           validationRules.getAntRule(required("Email")),
           validationRules.getAntRule(validationRules.email),
         ]}
-        extra="Enter the email address associated with your account"
       >
         <Input
           placeholder="your.email@example.com"
           size="large"
           style={inputStyle}
-          prefix={<MailOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
+          prefix={<MailOutlined style={{ fontSize: 16, color: "#9ca3af" }} />}
           autoComplete="email"
         />
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "#374151" }}>Password</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151", fontSize: "15px" }}>Password</span>}
         name="password"
-        validateStatus={form.getFieldError("password").length > 0 ? "error" : ""}
         rules={[validationRules.getAntRule(required("Password"))]}
-        extra={
-          <span style={{ fontSize: 12 }}>
-            Enter your password. <a href="/forgot-password" style={{ color: "#0066CC" }}>Forgot password?</a>
-          </span>
-        }
       >
         <Input.Password
           placeholder="Enter your password"
           size="large"
           style={inputStyle}
-          prefix={<LockOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
+          prefix={<LockOutlined style={{ fontSize: 16, color: "#9ca3af" }} />}
           autoComplete="current-password"
         />
       </Form.Item>
 
       <Form.Item>
-        <Form.Item name="remember" valuePropName="checked" noStyle>
-          <Checkbox>Remember me for 30 days</Checkbox>
-        </Form.Item>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Form.Item name="remember" valuePropName="checked" noStyle>
+            <Checkbox style={{ fontSize: "14px" }}>Remember me</Checkbox>
+          </Form.Item>
+          <a
+            href="/forgot-password"
+            style={{ fontSize: "14px", color: "#0066CC", textDecoration: "none" }}
+          >
+            Forgot password?
+          </a>
+        </div>
       </Form.Item>
 
-      <Form.Item>
+      <Form.Item style={{ marginBottom: 0 }}>
         <Button
           type="primary"
           htmlType="submit"
-          style={buttonStyle as React.CSSProperties}
+          style={buttonStyle}
           className="w-full"
           disabled={loading}
           loading={loading}

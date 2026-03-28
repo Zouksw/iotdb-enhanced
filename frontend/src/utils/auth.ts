@@ -134,7 +134,7 @@ export const isAuthenticated = (): boolean => {
  */
 export async function verifyAuthentication(): Promise<boolean> {
   try {
-    const response = await authFetch('/auth/verify', {
+    const response = await authFetch('/api/auth/verify', {
       method: 'GET',
     });
     return response.ok;

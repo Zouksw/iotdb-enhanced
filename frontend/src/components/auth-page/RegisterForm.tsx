@@ -1,22 +1,23 @@
 /**
- * Register Form Component
+ * Modern Register Form Component
  */
 
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { Form, Input, message, Button, Progress } from "antd";
 import { useRouter } from "next/navigation";
-import { MailOutlined, LockOutlined, UserOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { MailOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
 import axios from "axios";
 import Cookies from "js-cookie";
 
-import { inputStyle, buttonStyle, API_URL } from "./auth-helpers";
 import { validationRules, required, confirmation } from "@/lib/validation";
 import { sanitizer } from "@/lib/sanitizer";
 import { errorHandler } from "@/lib/errorHandler";
 import { csrfProtection } from "@/lib/csrf";
 import { tokenManager } from "@/lib/tokenManager";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export function RegisterForm() {
   const [form] = Form.useForm();
@@ -121,52 +122,66 @@ export function RegisterForm() {
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    borderRadius: "8px",
+    padding: "12px 16px",
+    fontSize: "15px",
+    border: "1px solid #e5e7eb",
+    transition: "all 0.2s",
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    height: "48px",
+    borderRadius: "8px",
+    fontSize: "16px",
+    fontWeight: 600,
+    background: "#0066CC",
+    border: "none",
+    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+  };
+
   return (
     <Form
       form={form}
       layout="vertical"
       onFinish={handleSubmit}
       validateTrigger="onBlur"
+      requiredMark={false}
     >
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "#374151" }}>Full Name</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151", fontSize: "15px" }}>Full Name</span>}
         name="name"
-        validateStatus={form.getFieldError("name").length > 0 ? "error" : ""}
         rules={[validationRules.getAntRule(required("Name"))]}
-        extra="Enter your full name for your profile"
       >
         <Input
           placeholder="John Doe"
           size="large"
           style={inputStyle}
-          prefix={<UserOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
+          prefix={<UserOutlined style={{ fontSize: 16, color: "#9ca3af" }} />}
           autoComplete="name"
         />
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "#374151" }}>Email</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151", fontSize: "15px" }}>Email</span>}
         name="email"
-        validateStatus={form.getFieldError("email").length > 0 ? "error" : ""}
         rules={[
           validationRules.getAntRule(required("Email")),
           validationRules.getAntRule(validationRules.email),
         ]}
-        extra="We'll send you a confirmation email"
       >
         <Input
           placeholder="your.email@example.com"
           size="large"
           style={inputStyle}
-          prefix={<MailOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
+          prefix={<MailOutlined style={{ fontSize: 16, color: "#9ca3af" }} />}
           autoComplete="email"
         />
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "#374151" }}>Password</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151", fontSize: "15px" }}>Password</span>}
         name="password"
-        validateStatus={form.getFieldError("password").length > 0 ? "error" : ""}
         rules={[validationRules.getAntRule(required("Password"))]}
         extra={
           <div style={{ marginTop: 8 }}>
@@ -193,37 +208,35 @@ export function RegisterForm() {
           placeholder="Create a strong password"
           size="large"
           style={inputStyle}
-          prefix={<LockOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
+          prefix={<LockOutlined style={{ fontSize: 16, color: "#9ca3af" }} />}
           autoComplete="new-password"
           onChange={handlePasswordChange}
         />
       </Form.Item>
 
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "#374151" }}>Confirm Password</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151", fontSize: "15px" }}>Confirm Password</span>}
         name="confirmPassword"
         dependencies={["password"]}
-        validateStatus={form.getFieldError("confirmPassword").length > 0 ? "error" : ""}
         rules={[
           validationRules.getAntRule(required("Confirm Password")),
           validationRules.getAntRule(confirmation("password")),
         ]}
-        extra="Re-enter your password to confirm"
       >
         <Input.Password
           placeholder="Confirm your password"
           size="large"
           style={inputStyle}
-          prefix={<LockOutlined style={{ fontSize: 16, color: "#0066CC" }} />}
+          prefix={<LockOutlined style={{ fontSize: 16, color: "#9ca3af" }} />}
           autoComplete="new-password"
         />
       </Form.Item>
 
-      <Form.Item>
+      <Form.Item style={{ marginBottom: 0 }}>
         <Button
           type="primary"
           htmlType="submit"
-          style={buttonStyle as React.CSSProperties}
+          style={buttonStyle}
           className="w-full"
           disabled={loading}
           loading={loading}

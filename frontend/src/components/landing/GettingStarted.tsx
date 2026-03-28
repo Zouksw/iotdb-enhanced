@@ -65,7 +65,7 @@ export default function GettingStarted() {
   return (
     <section
       style={{
-        padding: "100px 24px",
+        padding: "clamp(40px, 6vw, 100px) 24px",
         background: "#fff",
         position: "relative",
         overflow: "hidden",
@@ -88,7 +88,7 @@ export default function GettingStarted() {
 
       <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative" }}>
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "80px" }}>
+        <div style={{ textAlign: "center", marginBottom: "clamp(40px, 6vw, 80px)" }}>
           <div
             style={{
               display: "inline-block",
@@ -131,7 +131,7 @@ export default function GettingStarted() {
         </div>
 
         {/* Steps */}
-        <Row gutter={[32, 48]} style={{ marginBottom: "80px" }}>
+        <Row gutter={[16, 24]} style={{ marginBottom: "clamp(40px, 6vw, 80px)" }}>
           {steps.map((step, index) => (
             <Col xs={24} sm={12} lg={6} key={index}>
               <div
@@ -166,7 +166,7 @@ export default function GettingStarted() {
                 {/* Step Card */}
                 <div
                   style={{
-                    padding: "32px 24px 24px",
+                    padding: "clamp(20px, 3vw, 32px) clamp(16px, 3vw, 24px) clamp(16px, 3vw, 24px)",
                     borderRadius: "6px",
                     background: "#fff",
                     border: "1px solid #f1f5f9",
@@ -244,7 +244,7 @@ export default function GettingStarted() {
         </Row>
 
         {/* Features List */}
-        <Row gutter={[16, 16]} style={{ maxWidth: "900px", margin: "0 auto 48px" }}>
+        <Row gutter={[8, 8]} style={{ maxWidth: "900px", margin: "0 auto clamp(32px, 5vw, 48px)" }}>
           {features.map((feature, index) => (
             <Col xs={24} sm={12} md={8} key={index}>
               <div

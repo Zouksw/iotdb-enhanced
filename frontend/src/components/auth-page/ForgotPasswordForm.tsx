@@ -1,19 +1,20 @@
 /**
- * Forgot Password Form Component
+ * Modern Forgot Password Form Component
  */
 
 "use client";
 
 import React from "react";
-import { Form, Input, message } from "antd";
+import { Form, Input, message, Button } from "antd";
 import { MailOutlined } from "@ant-design/icons";
 import axios from "axios";
 
-import { inputStyle, buttonStyle, API_URL } from "./auth-helpers";
 import { validationRules, required } from "@/lib/validation";
 import { sanitizer } from "@/lib/sanitizer";
 import { errorHandler } from "@/lib/errorHandler";
 import { csrfProtection } from "@/lib/csrf";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export function ForgotPasswordForm() {
   const [form] = Form.useForm();
@@ -56,34 +57,61 @@ export function ForgotPasswordForm() {
     }
   };
 
+  const inputStyle: React.CSSProperties = {
+    borderRadius: "8px",
+    padding: "12px 16px",
+    fontSize: "15px",
+    border: "1px solid #e5e7eb",
+    transition: "all 0.2s",
+  };
+
+  const buttonStyle: React.CSSProperties = {
+    height: "48px",
+    borderRadius: "8px",
+    fontSize: "16px",
+    fontWeight: 600,
+    background: "#0066CC",
+    border: "none",
+    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+  };
+
   return (
-    <Form form={form} layout="vertical" onFinish={handleSubmit}>
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={handleSubmit}
+      validateTrigger="onBlur"
+      requiredMark={false}
+    >
       <Form.Item
-        label={<span style={{ fontWeight: 500, color: "rgba(0, 0, 0, 0.85)" }}>Email</span>}
+        label={<span style={{ fontWeight: 500, color: "#374151", fontSize: "15px" }}>Email</span>}
         name="email"
         rules={[
           validationRules.getAntRule(required("Email")),
           validationRules.getAntRule(validationRules.email),
         ]}
+        extra="We'll send you a password reset link"
       >
         <Input
           placeholder="your.email@example.com"
           size="large"
           style={inputStyle}
-          prefix={<MailOutlined style={{ fontSize: 18, color: "#0066cc" }} />}
+          prefix={<MailOutlined style={{ fontSize: 16, color: "#9ca3af" }} />}
           autoComplete="email"
         />
       </Form.Item>
 
-      <Form.Item>
-        <button
-          type="submit"
-          style={buttonStyle as React.CSSProperties}
-          className="w-full text-white hover:opacity-90"
+      <Form.Item style={{ marginBottom: 0 }}>
+        <Button
+          type="primary"
+          htmlType="submit"
+          style={buttonStyle}
+          className="w-full"
           disabled={loading}
+          loading={loading}
         >
           {loading ? "Sending..." : "Send Reset Link"}
-        </button>
+        </Button>
       </Form.Item>
     </Form>
   );

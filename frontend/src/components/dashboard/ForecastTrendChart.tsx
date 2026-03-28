@@ -84,7 +84,7 @@ export const ForecastTrendChart: React.FC<ForecastTrendChartProps> = ({
       style={{ height: "100%" }}
       styles={{ body: { padding: "16px" } }}
     >
-      <Title level={5} style={{ marginBottom: 16 }}>
+      <Title level={5} style={{ fontSize: "16px", marginBottom: 16 }}>
         Forecast Trend (7 Days)
       </Title>
       <ResponsiveContainer width="100%" height={250}>

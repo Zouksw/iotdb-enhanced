@@ -3,11 +3,25 @@
 import React from "react";
 import { Button, Typography, Col, Row, Divider } from "antd";
 import { ArrowUpOutlined, GithubOutlined, TwitterOutlined } from "@ant-design/icons";
-import Hero from "@/components/landing/Hero";
-import Features from "@/components/landing/Features";
-import Pricing from "@/components/landing/Pricing";
-import FAQ from "@/components/landing/FAQ";
-import GettingStarted from "@/components/landing/GettingStarted";
+import dynamic from "next/dynamic";
+
+// Lazy load sections for better performance
+const Hero = dynamic(() => import("@/components/landing/Hero"), {
+  loading: () => <div style={{ height: "400px", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff" }}>Loading...</div>,
+  ssr: true,
+});
+const Features = dynamic(() => import("@/components/landing/Features"), {
+  loading: () => <div style={{ height: "200px" }} />,
+  ssr: false,
+});
+const GettingStarted = dynamic(() => import("@/components/landing/GettingStarted"), {
+  loading: () => <div style={{ height: "200px" }} />,
+  ssr: false,
+});
+const FAQ = dynamic(() => import("@/components/landing/FAQ"), {
+  loading: () => <div style={{ height: "200px" }} />,
+  ssr: false,
+});
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -113,8 +127,8 @@ export default function LandingPage() {
       {/* Features Section */}
       <Features />
 
-      {/* Pricing Section */}
-      <Pricing />
+      {/* Pricing Section - Temporarily hidden */}
+      {/* <Pricing /> */}
 
       {/* Getting Started Section */}
       <GettingStarted />
@@ -125,7 +139,7 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section
         style={{
-          padding: "100px 24px",
+          padding: "clamp(60px, 8vw, 100px) 24px",
           background: "#0066CC",
           textAlign: "center",
         }}
@@ -174,7 +188,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer
         style={{
-          padding: "60px 24px",
+          padding: "clamp(32px, 5vw, 60px) 24px",
           background: "#0f172a",
           color: "#fff",
         }}
@@ -214,7 +228,7 @@ export default function LandingPage() {
             </Col>
 
             <Col xs={24} sm={8} md={4}>
-              <Title level={5} style={{ color: "#fff", marginBottom: "16px" }}>
+              <Title level={5} style={{ fontSize: "16px", color: "#fff", marginBottom: "16px" }}>
                 Product
               </Title>
               <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -223,11 +237,13 @@ export default function LandingPage() {
                     Features
                   </a>
                 </li>
+                {/* Hidden temporarily
                 <li style={{ marginBottom: "8px" }}>
                   <a href="#pricing" style={{ color: "#94a3b8", textDecoration: "none" }}>
                     Pricing
                   </a>
                 </li>
+                */}
                 <li style={{ marginBottom: "8px" }}>
                   <a href="#faq" style={{ color: "#94a3b8", textDecoration: "none" }}>
                     FAQ

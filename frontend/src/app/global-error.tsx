@@ -1,19 +1,20 @@
-"use client";
-
 import React from "react";
 import { Button, Typography } from "antd";
-import { useRouter } from "next/navigation";
 import {
-  FileSearchOutlined,
+  BugOutlined,
   HomeOutlined,
-  ArrowLeftOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
-export default function NotFound() {
-  const router = useRouter();
-
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   return (
     <div
       style={{
@@ -21,9 +22,7 @@ export default function NotFound() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: `
-          linear-gradient(135deg, #667eea 0%, #764ba2 100%)
-        `,
+        background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
         padding: "24px",
       }}
     >
@@ -34,7 +33,7 @@ export default function NotFound() {
           width: "600px",
           height: "600px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%)",
           top: "-200px",
           left: "-200px",
           filter: "blur(60px)",
@@ -47,7 +46,7 @@ export default function NotFound() {
           width: "500px",
           height: "500px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)",
           bottom: "-150px",
           right: "-150px",
           filter: "blur(60px)",
@@ -63,27 +62,13 @@ export default function NotFound() {
           textAlign: "center",
         }}
       >
-        {/* 404 Number */}
+        {/* Error Icon */}
         <div
           style={{
-            fontSize: "clamp(120px, 20vw, 200px)",
-            fontWeight: 900,
-            color: "rgba(255, 255, 255, 0.2)",
-            lineHeight: 1,
-            marginBottom: "-20px",
-            userSelect: "none",
-          }}
-        >
-          404
-        </div>
-
-        {/* Icon */}
-        <div
-          style={{
-            width: "100px",
-            height: "100px",
-            borderRadius: "24px",
-            background: "rgba(255, 255, 255, 0.2)",
+            width: "120px",
+            height: "120px",
+            borderRadius: "30px",
+            background: "rgba(255, 255, 255, 0.25)",
             backdropFilter: "blur(10px)",
             display: "flex",
             alignItems: "center",
@@ -92,7 +77,7 @@ export default function NotFound() {
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
           }}
         >
-          <FileSearchOutlined style={{ fontSize: "50px", color: "#fff" }} />
+          <BugOutlined style={{ fontSize: "60px", color: "#fff" }} />
         </div>
 
         {/* Title */}
@@ -106,7 +91,7 @@ export default function NotFound() {
             lineHeight: 1.2,
           }}
         >
-          Page Not Found
+          Something went wrong
         </Title>
 
         {/* Description */}
@@ -118,14 +103,58 @@ export default function NotFound() {
             lineHeight: 1.6,
           }}
         >
-          Sorry, we couldn&apos;t find the page you&apos;re looking for. The page
-          might have been removed or is temporarily unavailable.
+          We encountered an unexpected error. Don&apos;t worry, our team has been
+          notified and we&apos;re working to fix it.
         </Paragraph>
+
+        {/* Error Details (Development only) */}
+        {process.env.NODE_ENV === "development" && error.message && (
+          <div
+            style={{
+              background: "rgba(0, 0, 0, 0.2)",
+              backdropFilter: "blur(10px)",
+              borderRadius: "8px",
+              padding: "16px",
+              marginBottom: "32px",
+              textAlign: "left",
+            }}
+          >
+            <Paragraph
+              style={{
+                fontSize: "13px",
+                color: "rgba(255, 255, 255, 0.8)",
+                margin: 0,
+                fontFamily: "monospace",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            >
+              {error.message}
+            </Paragraph>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
           <Button
             type="primary"
+            size="large"
+            icon={<ReloadOutlined />}
+            style={{
+              height: "48px",
+              padding: "0 32px",
+              fontSize: "16px",
+              fontWeight: 600,
+              borderRadius: "8px",
+              background: "#fff",
+              color: "#f5576c",
+              border: "none",
+            }}
+            onClick={() => reset()}
+          >
+            Try Again
+          </Button>
+          <Button
             size="large"
             icon={<HomeOutlined />}
             style={{
@@ -134,40 +163,29 @@ export default function NotFound() {
               fontSize: "16px",
               fontWeight: 600,
               borderRadius: "8px",
-              background: "#fff",
-              color: "#667eea",
-              border: "none",
-            }}
-            onClick={() => router.push("/")}
-          >
-            Go Home
-          </Button>
-          <Button
-            size="large"
-            icon={<ArrowLeftOutlined />}
-            style={{
-              height: "48px",
-              padding: "0 32px",
-              fontSize: "16px",
-              fontWeight: 600,
-              borderRadius: "8px",
-              background: "rgba(255, 255, 255, 0.2)",
+              background: "rgba(255, 255, 255, 0.25)",
               backdropFilter: "blur(10px)",
               color: "#fff",
               border: "1px solid rgba(255, 255, 255, 0.3)",
             }}
-            onClick={() => router.back()}
+            href="/"
           >
-            Go Back
+            Go Home
           </Button>
         </div>
 
-        {/* Helpful Links */}
+        {/* Additional Help */}
         <div style={{ marginTop: "48px" }}>
-          <Text style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.7)" }}>
-            Or try these:
-          </Text>
-          <div style={{ marginTop: "16px", display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap" }}>
+          <Paragraph
+            style={{
+              fontSize: "14px",
+              color: "rgba(255, 255, 255, 0.8)",
+              marginBottom: "16px",
+            }}
+          >
+            Need help? Here are some useful links:
+          </Paragraph>
+          <div style={{ display: "flex", gap: "24px", justifyContent: "center", flexWrap: "wrap" }}>
             <a
               href="/dashboard"
               style={{
@@ -177,13 +195,11 @@ export default function NotFound() {
                 opacity: 0.9,
                 transition: "opacity 0.2s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.9")}
             >
               Dashboard
             </a>
             <a
-              href="/timeseries"
+              href="/login"
               style={{
                 fontSize: "14px",
                 color: "#fff",
@@ -191,13 +207,13 @@ export default function NotFound() {
                 opacity: 0.9,
                 transition: "opacity 0.2s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.9")}
             >
-              Time Series
+              Login
             </a>
             <a
-              href="/alerts"
+              href="https://github.com/your-repo/issues"
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 fontSize: "14px",
                 color: "#fff",
@@ -205,24 +221,8 @@ export default function NotFound() {
                 opacity: 0.9,
                 transition: "opacity 0.2s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.9")}
             >
-              Alerts
-            </a>
-            <a
-              href="/forecasts"
-              style={{
-                fontSize: "14px",
-                color: "#fff",
-                textDecoration: "none",
-                opacity: 0.9,
-                transition: "opacity 0.2s",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.9")}
-            >
-              Forecasts
+              Report Issue
             </a>
           </div>
         </div>

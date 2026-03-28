@@ -69,7 +69,7 @@ export const QuickActions: React.FC = () => {
       variant="borderless"
       styles={{ body: { padding: "16px" } }}
     >
-      <Title level={5} style={{ marginBottom: 16 }}>
+      <Title level={5} style={{ fontSize: "16px", marginBottom: 16 }}>
         Quick Actions
       </Title>
       <Row gutter={[12, 12]}>

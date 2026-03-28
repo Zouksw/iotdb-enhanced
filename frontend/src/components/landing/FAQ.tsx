@@ -63,7 +63,7 @@ export default function FAQ() {
     <section
       id="faq"
       style={{
-        padding: "100px 24px",
+        padding: "clamp(40px, 6vw, 100px) 24px",
         background: "#FFFFFF",
       }}
     >
@@ -107,13 +107,13 @@ export default function FAQ() {
         </div>
 
         {/* FAQ Items */}
-        <Row gutter={[16, 16]}>
+        <Row gutter={[8, 8]}>
           {faqs.map((faq, index) => (
             <Col xs={24} key={index}>
               <div
                 onClick={() => toggleFAQ(index)}
                 style={{
-                  padding: "24px",
+                  padding: "clamp(16px, 3vw, 24px)",
                   borderRadius: "6px",
                   background: expandedIndex === index
                     ? "linear-gradient(135deg, #0066cc 0%, #0077e6 50%, #0088ff 100%)"
@@ -135,8 +135,8 @@ export default function FAQ() {
                 >
                   <div
                     style={{
-                      width: "48px",
-                      height: "48px",
+                      width: "clamp(36px, 5vw, 48px)",
+                      height: "clamp(36px, 5vw, 48px)",
                       borderRadius: "4px",
                       background: expandedIndex === index
                         ? "rgba(255, 255, 255, 0.2)"
@@ -232,7 +232,7 @@ export default function FAQ() {
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
           }}
         >
-          <Title level={4} style={{ marginBottom: "12px" }}>
+          <Title level={4} style={{ fontSize: "18px", marginBottom: "12px" }}>
             Still have questions?
           </Title>
           <Text style={{ color: "#64748b", fontSize: "16px" }}>

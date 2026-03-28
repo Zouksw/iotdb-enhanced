@@ -91,7 +91,7 @@ export const Pricing: React.FC = () => {
   return (
     <section
       style={{
-        padding: "100px 24px",
+        padding: "clamp(40px, 6vw, 100px) 24px",
         background: "#f8fafc",
       }}
     >
@@ -133,13 +133,13 @@ export const Pricing: React.FC = () => {
         </div>
 
         {/* Pricing Cards */}
-        <Row gutter={[24, 24]} align="stretch">
+        <Row gutter={[12, 12]} align="stretch">
           {plans.map((plan, index) => (
             <Col xs={24} md={8} key={index}>
               <Card
                 style={{
                   height: "100%",
-                  padding: plan.popular ? "40px 32px" : "32px",
+                  padding: plan.popular ? "clamp(24px, 4vw, 40px) clamp(16px, 3vw, 32px)" : "clamp(20px, 3vw, 32px)",
                   position: "relative",
                   background: "#fff",
                   border: plan.popular ? "2px solid #0066cc" : "1px solid #f1f5f9",
@@ -179,7 +179,7 @@ export const Pricing: React.FC = () => {
                 )}
 
                 <div style={{ textAlign: "center", marginBottom: "24px" }}>
-                  <Title level={3} style={{ marginBottom: "8px" }}>
+                  <Title level={3} style={{ fontSize: "20px", marginBottom: "8px" }}>
                     {plan.name}
                   </Title>
                   <Text type="secondary">{plan.description}</Text>
