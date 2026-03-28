@@ -25,7 +25,6 @@ jest.mock('@/lib/redisPool', () => ({
   getRedisClient: jest.fn().mockImplementation(() => Promise.resolve(mockRedis)) as any,
 }));
 jest.mock('@/lib/logger');
-jest.mock('@/middleware/prometheus');
 
 describe('cacheDecorator Integration Tests', () => {
   let app: express.Express;

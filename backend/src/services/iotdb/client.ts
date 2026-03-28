@@ -1,5 +1,4 @@
 import { logger } from '@/utils/logger';
-import { metrics } from '@/middleware/prometheus';
 import {
   validateIoTDBPath,
   validateDataType,
@@ -243,7 +242,6 @@ export class IoTDBClient {
         // Extract device type (e.g., "root.sg.device1" -> "root.sg")
         const deviceType = record.device.split('.').slice(0, 2).join('.');
         for (const measurement of record.measurements) {
-          metrics.recordDataPointIngested(deviceType, measurement);
         }
       }
     }
@@ -283,13 +281,11 @@ export class IoTDBClient {
       // Record query metrics (10% sampling for performance)
       if (Math.random() < 0.1) {
         const duration = (Date.now() - startTime) / 1000;
-        metrics.recordIotdbQuery('select', duration);
       }
 
       return result;
     } catch (error) {
       // Record error metrics (always record errors)
-      metrics.recordIotdbQuery('error', (Date.now() - startTime) / 1000);
       throw error;
     }
   }

@@ -7,7 +7,6 @@
 
 import { prisma } from '@/lib';
 import { z } from 'zod';
-import { metrics } from '@/middleware/prometheus';
 
 // Re-export types
 export * from './alert-types';
@@ -103,11 +102,6 @@ export async function markAlertAsRead(userId: string, alertId: string) {
     where: { id: alertId },
     data: { isRead: true },
   });
-
-  // Record alert resolved metrics (10% sampling for performance)
-  if (Math.random() < 0.1 && !alert.isRead) {
-    metrics.recordAlertResolved(alert.severity, alert.type);
-  }
 
   return { success: true };
 }

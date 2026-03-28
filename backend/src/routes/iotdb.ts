@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { iotdbClient, iotdbRPCClient, iotdbAIService } from '@/services/iotdb';
 import { aiRateLimiter } from '@/middleware/rateLimiter';
 import { asyncHandler, BadRequestError } from '@/middleware/errorHandler';
-import { metrics } from '@/middleware/prometheus';
 import { logger } from '@/utils/logger';
 import {
   sqlQuerySchema,
@@ -202,7 +201,6 @@ router.post('/ai/predict', aiRateLimiter, asyncHandler(async (req: Request, res:
 
     // Record prediction metrics (10% sampling for performance)
     if (Math.random() < 0.1) {
-      metrics.recordPrediction(normalizedAlgorithm, 'forecast', duration, true);
     }
 
     // Cache the result for 15 minutes
@@ -212,7 +210,6 @@ router.post('/ai/predict', aiRateLimiter, asyncHandler(async (req: Request, res:
   } catch (error) {
     // Record error metrics (always record errors)
     const duration = (Date.now() - startTime) / 1000;
-    metrics.recordPrediction(normalizedAlgorithm, 'forecast', duration, false);
     logger.error(`AI prediction failed for ${timeseries}: ${error}`);
     throw error;
   }
@@ -338,14 +335,12 @@ router.post('/ai/anomalies', asyncHandler(async (req: Request, res: Response) =>
 
     // Record anomaly detection metrics (10% sampling for performance)
     if (Math.random() < 0.1) {
-      metrics.recordPrediction(validatedData.method || 'ml', 'anomaly_detection', duration, true);
     }
 
     res.json(result);
   } catch (error) {
     // Record error metrics (always record errors)
     const duration = (Date.now() - startTime) / 1000;
-    metrics.recordPrediction(validatedData.method || 'ml', 'anomaly_detection', duration, false);
     logger.error(`AI anomaly detection failed for ${validatedData.timeseries}: ${error}`);
     throw error;
   }

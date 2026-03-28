@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma, jwtUtils, config, logger } from '@/lib';
 import { isTokenBlacklisted } from '@/services/tokenBlacklist';
-import { metrics } from '@/middleware/prometheus';
 
 export interface AuthRequest extends Request {
   userId?: string;
@@ -60,7 +59,6 @@ export const authenticate = async (
             },
           },
         }).then(count => {
-          metrics.setActiveUserSessions(count);
         }).catch(err => {
           logger.error(`Failed to count active sessions: ${err}`);
         });

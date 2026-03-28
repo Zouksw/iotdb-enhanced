@@ -17,7 +17,6 @@ import { errorHandler } from '@/middleware/errorHandler';
 import { logger } from '@/utils/logger';
 import { securityHeaders } from '@/middleware/security';
 import { config } from './lib';
-import { prometheusMiddleware, metricsEndpoint, healthWithMetrics } from '@/middleware/prometheus';
 import { loggingMiddleware, errorLoggingMiddleware } from '@/middleware/logging';
 
 dotenv.config();
@@ -92,15 +91,8 @@ app.use(compression({
 
 // Production monitoring middleware (only in production)
 if (config.server.nodeEnv === 'production') {
-  // Prometheus metrics middleware
-  app.use(prometheusMiddleware);
-
   // Enhanced logging middleware
   app.use(...loggingMiddleware);
-} else {
-  // Development: enable Prometheus middleware for testing
-  app.use(prometheusMiddleware);
-  logger.info('📊 Prometheus middleware enabled for development testing');
 }
 
 // Error logging middleware
@@ -119,18 +111,6 @@ if (config.server.nodeEnv !== 'production') {
 
 // Health check routes
 app.use('/health', healthRouter);
-
-// Metrics endpoint (for Prometheus scraping)
-if (config.server.nodeEnv === 'production') {
-  app.get('/metrics', metricsEndpoint);
-  // Enhanced health check with metrics
-  app.get('/health/metrics', healthWithMetrics);
-} else {
-  // Development: enable metrics endpoint for testing
-  app.get('/metrics', metricsEndpoint);
-  app.get('/health/metrics', healthWithMetrics);
-  logger.info('📊 Metrics endpoint enabled for development testing');
-}
 
 // API routes
 app.use('/api/auth', authRouter);

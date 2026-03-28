@@ -7,7 +7,6 @@
 
 import { prisma, logger } from '@/lib';
 import type { Prisma } from '@prisma/client';
-import { metrics } from '@/middleware/prometheus';
 import { sendNotification } from './alert-notifications';
 import type {
   AlertRule,
@@ -309,11 +308,6 @@ export async function triggerAlert(params: TriggerAlertParams): Promise<void> {
       metadata: alertData as any,
     },
   });
-
-  // Record alert triggered metrics (10% sampling for performance)
-  if (Math.random() < 0.1) {
-    metrics.recordAlertTriggered(rule.severity, rule.type);
-  }
 
   // Convert to AlertWithMetadata format
   const alert: AlertWithMetadata = {

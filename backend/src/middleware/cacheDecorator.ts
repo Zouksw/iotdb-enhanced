@@ -16,7 +16,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '@/lib/logger';
 import { getRedisClient } from '@/lib/redisPool';
-import { metrics } from '@/middleware/prometheus';
 
 /**
  * Add jitter to TTL to prevent cache avalanche
@@ -119,16 +118,7 @@ async function getCached(key: string): Promise<CachedResponse | null> {
 
     const data = await redis.get(key);
     if (!data) {
-      // Record cache miss (10% sampling)
-      if (Math.random() < 0.1) {
-        metrics.recordCacheMiss('redis');
-      }
       return null;
-    }
-
-    // Record cache hit (10% sampling)
-    if (Math.random() < 0.1) {
-      metrics.recordCacheHit('redis');
     }
 
     return JSON.parse(data) as CachedResponse;

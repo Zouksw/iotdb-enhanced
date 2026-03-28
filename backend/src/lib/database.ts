@@ -4,7 +4,6 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { metrics } from '@/middleware/prometheus';
 
 // Declare global type for Prisma singleton
 declare global {
@@ -18,37 +17,9 @@ export const prisma =
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 
-// Add Prisma middleware for metrics recording
+// Add Prisma middleware for query logging
 prisma.$use(async (params, next) => {
-  const startTime = Date.now();
-
-  try {
-    const result = await next(params);
-
-    // Record query metrics (10% sampling for performance)
-    if (Math.random() < 0.1) {
-      const duration = (Date.now() - startTime) / 1000;
-      const operation = params.action;
-      const model = params.model;
-
-      if (model) {
-        metrics.recordDbQuery(operation, model, duration, true);
-      }
-    }
-
-    return result;
-  } catch (error) {
-    // Record error metrics (always record errors)
-    const duration = (Date.now() - startTime) / 1000;
-    const operation = params.action;
-    const model = params.model;
-
-    if (model) {
-      metrics.recordDbQuery(operation, model, duration, false);
-    }
-
-    throw error;
-  }
+  return await next(params);
 });
 
 // In development, attach to global to prevent hot-reload creating multiple instances
